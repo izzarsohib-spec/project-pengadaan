@@ -4766,7 +4766,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   function miniHtml(m) {
     const w = m.gap.worst;
     return `<div class="hero card${m.gauges ? ' g' : ''}"><div><small>${esc(m.kecil)}</small><h2>${esc(m.judul)}</h2>
-        ${m.gauges ? '' : `<div class="rabtotal"><small>${esc(m.labelAngka)}</small><b class="num">${esc(m.angka)}</b></div>`}<button class="cta" ${aksiAttr(m.key, m.cta[1], m.cta[2])}>${esc(m.cta[0])}</button>${m.gauges ? `<div class="gauges">${m.gauges.map(gaugeHtml).join('')}</div>` : ''}</div>
+        ${m.gauges ? '' : `<div class="rabtotal"><small>${esc(m.labelAngka)}</small><b class="num">${esc(m.angka)}</b></div>`}${m.cta ? `<button class="cta" ${aksiAttr(m.key, m.cta[1], m.cta[2])}>${esc(m.cta[0])}</button>` : ''}${m.gauges ? `<div class="gauges">${m.gauges.map(gaugeHtml).join('')}</div>` : ''}</div>
       ${m.gauges ? '' : `<div class="ringhero">${cincin(m.key, m.persen)}<div class="t"><b>${m.persen.toFixed(1).replace('.', ',')}%</b><span>${esc(m.labelRing)}</span></div></div>`}
       <div class="kpi">${m.kpi.map(([a, b, c]) => `<div><b>${esc(a)}</b><span><i style="background:${c}"></i>${esc(b)}</span></div>`).join('')}</div></div>
       <div class="rcol${m.pimpinan ? ' dua' : ''}">${m.pimpinan ? kartuPimpinan(MP.sel) + kartuTutorialMinta() : `<div class="chartcard card"><div class="ttl"><b>${esc(m.grafik.judul)}</b></div>${grafikGaris('md-' + m.key, m.grafik.sumbu, m.grafik.seri, m.grafik.fmt)}</div>`}
@@ -4811,7 +4811,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     const sumbu = bulan30(), sM = deret(sumbu, gerak.filter(x => x.jenis === 'masuk'), x => x.tanggal, x => x.qty), sK = deret(sumbu, gerak.filter(x => x.jenis === 'keluar'), x => x.tanggal, x => x.qty);
     const kritis = [...habis, ...tipis].sort((a, b) => a.saldo - b.saldo)[0];
     return { key: 'inventaris', kecil: 'Inventaris', judul: 'Pantau stok gudang tiap ukuran', labelAngka: 'Stok di gudang', angka: `${idn(pcs)} pcs`,
-      persen: stok.length ? 100 * aman / stok.length : 0, labelRing: stok.length ? 'ukuran stok aman' : 'belum ada stok', cta: ['+ Barang masuk dari supplier', 'masuk'],
+      persen: stok.length ? 100 * aman / stok.length : 0, labelRing: stok.length ? 'ukuran stok aman' : 'belum ada stok', cta: null,
       kpi: [[idn(new Set(stok.filter(x => x.saldo > 0).map(x => x.item_no)).size), 'Jenis barang ada stok', BULAT.info], [idn(tipis.length), 'Ukuran menipis', BULAT.jingga], [idn(habis.length), 'Ukuran habis', BULAT.bahaya], [idn(sM.reduce((a, b) => a + b, 0)), 'Pcs masuk 30 hari', BULAT.ok]],
       grafik: { judul: 'Barang masuk dan keluar 30 hari terakhir', sumbu, seri: [{ nama: 'Masuk', warna: WD.s1, nilai: sM }, { nama: 'Keluar', warna: WD.s2, nilai: sK }] },
       gap: { label: 'Perlu diisi ulang', besar: idn(habis.length + tipis.length), pill: `${habis.length} habis · ${tipis.length} menipis`, ket: 'ukuran dengan stok 2 pcs atau kurang',

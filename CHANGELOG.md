@@ -4,6 +4,10 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 2 Nov 2026
+
+- **v1.319** Inventaris: tombol **+ Barang masuk dari supplier** di kartu atas dihapus dari halaman.
+
 ## 31 Okt 2026
 
 - **v1.318** Administrator: tombol aksi di tiap baris tabel (Keluar, Riwayat, Ubah, Hapus) kini **sebaris ke kanan**, tidak lagi bertumpuk ke bawah, sehingga baris tabel lebih pendek.
