@@ -567,19 +567,7 @@
   .subtabs { margin:0 0 14px; }
   .subtabs .chip { padding:7px 16px; font-size:.85rem; cursor:pointer; }
   /* ringkasan alur di Dashboard Utama */
-  .alur { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:0 0 16px; }
-  .ak { text-align:left; border:1px solid var(--stroke); background:var(--panel); border-radius:22px; padding:14px 16px; color:inherit; cursor:pointer; font:inherit; display:flex; flex-direction:column; justify-content:flex-start; align-items:stretch; }
-  .ak:hover { background:var(--panel2); }
-  .ak .ah { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
-  .ak .an { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#111; font-weight:700; font-size:.78rem; display:grid; place-items:center; flex:none; }
-  .ak .ah b { font-size:.92rem; line-height:1.2; }
-  .ak .ar { display:flex; justify-content:space-between; gap:8px; font-size:.82rem; color:var(--muted); padding:2px 0; }
-  .ak .ar b { color:var(--text); font-weight:600; text-align:right; }
-  .ak .at { margin-top:7px; font-size:.75rem; padding:4px 10px; border-radius:99px; width:fit-content; max-width:100%; }
-  .ak .at.warn { background:rgba(251,191,36,.16); color:#fbbf24; } .ak .at.bad { background:rgba(255,138,128,.16); color:#ff8a80; } .ak .at.ok { background:rgba(185,243,111,.14); color:#b9f36f; }
   .tahap { font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:3px; }
-  @media (max-width: 1100px) { .alur { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  @media (max-width: 560px) { .alur { grid-template-columns:1fr; } }
   /* dibuka di dalam halaman Administrator (Laporan Harian): tanpa sidebar dan kop */
   /* dibuka di dalam portal: menu ada di sidebar portal, jadi sidebar, menu HP, dan sub-tab milik modul disembunyikan */
   body.dalam .side, body.dalam .mobnav { display:none !important; }
@@ -790,7 +778,6 @@
    <div class="page" id="pg-ringkasan">
     <header class="kop"><img src="../aset/logo-ray.png" alt="Logo PT. Ray Mitra Perkasa"><div><h1>SISTEM ADMINISTRASI SERAGAM KARYAWAN</h1><div class="perusahaan">PT. RAY MITRA PERKASA</div><div class="sub">Alur pengadaan seragam, dari data karyawan sampai tagihan · tiap bagian punya filter sendiri</div></div></header>
     <div id="filterInfo" class="filterinfo" hidden></div>
-    <section class="alur" id="alur"></section>
     <nav class="chips" id="dNav" style="margin-bottom:14px"></nav>
     <div id="dash"></div>
    </div>
@@ -4619,32 +4606,13 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     { k: 'tagihan', tahap: 'Tahap 4 · Tagihan', judul: 'Tagihan', sumber: 'invoice dan pembayaran', pg: 'tagihan', isi: isiTagihan, filter: () => [['status', 'Status', [['semua', 'Semua'], ['belum', 'Belum lunas'], ['sebagian', 'Dibayar sebagian'], ['lunas', 'Lunas']]], ['hari', 'Periode invoice', HARI_SEMUA]] },
   ];
   // ---- ringkasan alur: empat tahap, angka kunci, dan apa yang menunggu tindakan ----
-  function renderAlur() {
-    const el = $('alur'); if (!el) return;
+  function renderInfoFilter() {
     const fi = $('filterInfo'); if (fi) { fi.hidden = !Saring.aktif(); fi.textContent = Saring.aktif() ? `Menampilkan: ${Saring.label()} · ${lokasi.length} lokasi dipantau. Stok gudang tetap menampilkan seluruh gudang.` : ''; }
-    const Mk = (no, judul, pg, baris, tindak) => `<button type="button" class="ak" data-pg="${pg}"><div class="ah"><span class="an">${no}</span><b>${judul}</b></div>${baris.map(([a, b]) => `<div class="ar"><span>${esc(a)}</span><b>${esc(b)}</b></div>`).join('')}${tindak.map(([t, w]) => `<div class="at ${w}">${esc(t)}</div>`).join('') || '<div class="at ok">Tidak ada yang menunggu</div>'}</button>`;
-    const adaLok = lokasi.length > 0, rows = lokasi.map(l => ({ t: l.bagian.reduce((a, b) => a + b.target, 0), i: l.bagian.reduce((a, b) => a + b.isi, 0) })).filter(x => x.t > 0);
-    const T = rows.reduce((a, x) => a + x.t, 0), I = rows.reduce((a, x) => a + x.i, 0);
-    const minta = statusMuat ? daftarMinta : [], menunggu = minta.filter(p => !['disetujui', 'ditolak'].includes(stReq(p))).length, ditolak = minta.filter(p => stReq(p) === 'ditolak').length, setuju = minta.filter(p => stReq(p) === 'disetujui').length;
-    const t1 = Mk('1', 'Monitoring & Permintaan', 'monitor', [['Pengisian ukuran', adaLok ? pct(I, T) : '…'], ['Lokasi lengkap', adaLok ? `${rows.filter(x => x.i >= x.t).length} / ${rows.length}` : '…'], ['Permintaan disetujui', statusMuat ? idn(setuju) : '…']],
-      [...(menunggu ? [[`${menunggu} permintaan menunggu persetujuan`, 'warn']] : []), ...(ditolak ? [[`${ditolak} permintaan ditolak / revisi`, 'bad']] : []), ...(adaLok && T - I > 0 ? [[`${idn(T - I)} anggota belum mengisi`, 'warn']] : [])]);
-    const pcs = stok.reduce((a, x) => a + Number(x.saldo), 0), habis = stok.filter(x => x.saldo <= 0).length, tipis = stok.filter(x => x.saldo > 0 && x.saldo <= 2).length;
-    const t2 = Mk('2', 'Rekap Permintaan & Inventaris', 'inventaris', [['Stok di gudang', hilirMuat ? idn(pcs) + ' pcs' : '…'], ['Ukuran habis', hilirMuat ? idn(habis) : '…'], ['Ukuran menipis', hilirMuat ? idn(tipis) : '…']],
-      [...(hilirMuat && habis ? [[`${idn(habis)} ukuran habis, perlu dipesan`, 'bad']] : []), ...(hilirMuat && tipis ? [[`${idn(tipis)} ukuran menipis`, 'warn']] : [])]);
-    const sp = statusMuat ? ringkasPlot() : { total: 0, sudah: 0 }, dip = statusMuat ? [...setujuTerakhir().values()].filter(p => p.diploting_pada) : [];
-    const tot = dip.reduce((a, p) => a + Number((progres.get(p.id) || {}).total_qty || 0), 0), krm = dip.reduce((a, p) => a + Number((progres.get(p.id) || {}).terkirim_qty || 0), 0), blmTerima = kirimAll.filter(g => g.status === 'dikirim').length;
-    const t3 = Mk('3', 'Ploting & Pengiriman', 'ploting', [['Bagian diploting', statusMuat ? `${sp.sudah} / ${sp.total}` : '…'], ['Terkirim', hilirMuat ? pct(krm, tot) : '…'], ['Surat jalan belum diterima', hilirMuat ? idn(blmTerima) : '…']],
-      [...(statusMuat && sp.total - sp.sudah > 0 ? [[`${sp.total - sp.sudah} bagian belum diploting`, 'warn']] : []), ...(hilirMuat && tot - krm > 0 ? [[`${idn(tot - krm)} pcs belum dikirim`, 'warn']] : []), ...(hilirMuat && blmTerima ? [[`${blmTerima} pengiriman menunggu penerimaan`, 'warn']] : [])]);
-    const aktifT = tagihanAll.filter(x => x.status !== 'batal'), buka = aktifT.filter(x => x.status !== 'lunas'), hari0 = hariIni();
-    const siap = hilirMuat && statusMuat ? entriTagihan().filter(x => x.s === 'siap').length : 0, lewat = buka.filter(x => x.jatuh_tempo && tanggalLokal(x.jatuh_tempo) < hari0).length;
-    const t4 = Mk('4', 'Tagihan', 'tagihan', [['Siap ditagih', hilirMuat ? idn(siap) : '…'], ['Sisa tagihan', hilirMuat ? rpRingkas(buka.reduce((a, x) => a + Number(x.total) - Number(x.terbayar), 0)) : '…'], ['Total ditagih', hilirMuat ? rpRingkas(aktifT.reduce((a, x) => a + Number(x.total), 0)) : '…']],
-      [...(siap ? [[`${siap} lokasi siap ditagih`, 'warn']] : []), ...(lewat ? [[`${lewat} tagihan lewat jatuh tempo`, 'bad']] : [])]);
-    el.innerHTML = t1 + t2 + t3 + t4;
   }
   function isiSek(s) { const r = s.isi(); $('dk-' + s.k).innerHTML = r.kpi; $('dg-' + s.k).innerHTML = r.grid; }
   let dAktif = ''; // satu bagian dashboard tampil sekali; sisanya dipilih lewat tab
   function renderDash() {
-    renderAlur();
+    renderInfoFilter();
     if (!SEK.some(s => s.k === dAktif)) dAktif = SEK[0].k;
     $('dNav').innerHTML = SEK.map(s => `<button class="chip ${s.k === dAktif ? 'on' : ''}" data-d="${s.k}">${s.judul}</button>`).join('');
     $('dash').innerHTML = SEK.map(s => `<section class="card dsec" id="ds-${s.k}" ${s.k === dAktif ? '' : 'hidden'}><div class="dh"><div><div class="tahap">${s.tahap}</div><h3>${s.judul}</h3><span class="muted">${s.sumber}</span></div><button class="btn" data-pg="${s.pg}">Buka halaman ›</button></div>
