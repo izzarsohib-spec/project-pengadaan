@@ -627,6 +627,7 @@
   .mini .ringhero b { font-size:1.35rem; } .mini .ringhero span { display:block; font-size:.66rem; }
   .mini .kpi { grid-area:kpi; padding:10px 14px; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px 8px; }
   .mini .kpi b { font-size:1.3rem; } .mini .kpi span { align-items:flex-start; font-size:.68rem; line-height:1.25; } .mini .kpi i { margin-top:3px; }
+  .pie { width:100%; aspect-ratio:1; border-radius:50%; } .pie.kosong { background:var(--line,#2a2a2e); }
   .mini .ringhero .t { padding:0 22px; } .mini .ringhero span { line-height:1.15; }
   .mini .rcol { grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); grid-template-rows:none; }
   .mini .chartcard { padding:12px 14px 8px; } .mini .gap { padding:12px 14px; grid-template-columns:1fr; gap:10px; }
@@ -4763,11 +4764,18 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
         <li>Cek <b>Ringkasan pesanan</b> dan <b>Sisa RAB</b> di kartu Rekap &amp; kirim. Sisa merah berarti melebihi anggaran.</li>
         <li>Opsional: isi memo, lampirkan RAB (PDF), lalu <b>Preview surat</b>.</li>
         <li>Tekan <b>Kirim ke Pak Yasir &amp; Pak Ferry</b>. Statusnya tampil di kartu pimpinan: <i>hijau</i> disetujui, <i>oranye</i> menunggu, <i>merah</i> ditolak atau revisi. Surat disetujui bila kedua pimpinan setuju.</li></ol></div>`;
+  // pie chart sederhana (conic-gradient); irisan = [nama, nilai, warna]
+  function pieHtml(irisan) {
+    const tot = irisan.reduce((a, x) => a + x[1], 0);
+    if (!tot) return '<div class="pie kosong" role="img" aria-label="Belum ada stok"></div>';
+    let u = 0; const seg = irisan.map(([, v, w]) => { const a = u; u += 100 * v / tot; return `${w} ${a.toFixed(2)}% ${u.toFixed(2)}%`; });
+    return `<div class="pie" style="background:conic-gradient(${seg.join(',')})" role="img" aria-label="${esc(irisan.map(x => x[0] + ' ' + x[1] + ' pcs').join(', '))}"></div>`;
+  }
   function miniHtml(m) {
     const w = m.gap.worst;
     return `<div class="hero card${m.gauges ? ' g' : ''}"><div><small>${esc(m.kecil)}</small><h2>${esc(m.judul)}</h2>
         ${m.gauges ? '' : `<div class="rabtotal"><small>${esc(m.labelAngka)}</small><b class="num">${esc(m.angka)}</b></div>`}${m.cta ? `<button class="cta" ${aksiAttr(m.key, m.cta[1], m.cta[2])}>${esc(m.cta[0])}</button>` : ''}${m.gauges ? `<div class="gauges">${m.gauges.map(gaugeHtml).join('')}</div>` : ''}</div>
-      ${m.gauges ? '' : `<div class="ringhero">${cincin(m.key, m.persen)}<div class="t"><b>${m.persen.toFixed(1).replace('.', ',')}%</b><span>${esc(m.labelRing)}</span></div></div>`}
+      ${m.pie ? `<div class="ringhero">${pieHtml(m.pie)}</div>` : m.gauges ? '' : `<div class="ringhero">${cincin(m.key, m.persen)}<div class="t"><b>${m.persen.toFixed(1).replace('.', ',')}%</b><span>${esc(m.labelRing)}</span></div></div>`}
       <div class="kpi">${m.kpi.map(([a, b, c]) => `<div><b>${esc(a)}</b><span><i style="background:${c}"></i>${esc(b)}</span></div>`).join('')}</div></div>
       <div class="rcol${m.pimpinan ? ' dua' : ''}">${m.pimpinan ? kartuPimpinan(MP.sel) + kartuTutorialMinta() : `<div class="chartcard card"><div class="ttl"><b>${esc(m.grafik.judul)}</b></div>${grafikGaris('md-' + m.key, m.grafik.sumbu, m.grafik.seri, m.grafik.fmt)}</div>`}
         ${m.pimpinan ? '' : `<div class="gap card"><div><div class="lbl">${esc(m.gap.label)}</div><div class="big">${esc(m.gap.besar)}</div><span class="pill">${esc(m.gap.pill)}</span><div class="muted" style="margin-top:6px">${esc(m.gap.ket)}</div></div>
@@ -4810,9 +4818,12 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     const pcs = stok.reduce((a, x) => a + Number(x.saldo), 0), aman = stok.filter(x => x.saldo > 2).length, tipis = stok.filter(x => x.saldo > 0 && x.saldo <= 2), habis = stok.filter(x => x.saldo <= 0);
     const sumbu = bulan30(), sM = deret(sumbu, gerak.filter(x => x.jenis === 'masuk'), x => x.tanggal, x => x.qty), sK = deret(sumbu, gerak.filter(x => x.jenis === 'keluar'), x => x.tanggal, x => x.qty);
     const kritis = [...habis, ...tipis].sort((a, b) => a.saldo - b.saldo)[0];
+    const perJenis = new Map(); for (const x of stok) if (x.saldo > 0) perJenis.set(x.item_nama, (perJenis.get(x.item_nama) || 0) + Number(x.saldo));
+    const WP = ['#2F7D6D', '#1D4ED8', '#C98A6B', '#D9A441', '#8B5CF6', '#C9645E', '#4B8F9E'], urutJ = [...perJenis].sort((a, b) => b[1] - a[1]), lain = urutJ.slice(7).reduce((a, x) => a + x[1], 0);
+    const pie = urutJ.slice(0, 7).map(([n, v], i) => [namaRapi(n), v, WP[i]]); if (lain) pie.push(['Lainnya', lain, '#94A3B8']);
     return { key: 'inventaris', kecil: 'Inventaris', judul: 'Pantau stok gudang tiap ukuran', labelAngka: 'Stok di gudang', angka: `${idn(pcs)} pcs`,
-      persen: stok.length ? 100 * aman / stok.length : 0, labelRing: stok.length ? 'ukuran stok aman' : 'belum ada stok', cta: null,
-      kpi: [[idn(new Set(stok.filter(x => x.saldo > 0).map(x => x.item_no)).size), 'Jenis barang ada stok', BULAT.info], [idn(tipis.length), 'Ukuran menipis', BULAT.jingga], [idn(habis.length), 'Ukuran habis', BULAT.bahaya], [idn(sM.reduce((a, b) => a + b, 0)), 'Pcs masuk 30 hari', BULAT.ok]],
+      pie, persen: 0, labelRing: '', cta: null,
+      kpi: pie.map(([n, v, w]) => [idn(v) + ' pcs', n, w]),
       grafik: { judul: 'Barang masuk dan keluar 30 hari terakhir', sumbu, seri: [{ nama: 'Masuk', warna: WD.s1, nilai: sM }, { nama: 'Keluar', warna: WD.s2, nilai: sK }] },
       gap: { label: 'Perlu diisi ulang', besar: idn(habis.length + tipis.length), pill: `${habis.length} habis · ${tipis.length} menipis`, ket: 'ukuran dengan stok 2 pcs atau kurang',
         worst: kritis && { kecil: kritis.saldo <= 0 ? 'Stok habis' : 'Paling tipis', nama: kritis.item_nama, detail: `${NAMA_JENIS[kritis.jenis_ukuran]}${kritis.jenis_ukuran === '-' ? '' : ' ' + kritis.ukuran} · sisa ${kritis.saldo}`, aksi: 'item', arg: kritis.item_nama } } };

@@ -6,6 +6,8 @@ Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permin
 
 ## 2 Nov 2026
 
+- **v1.320** Inventaris: cincin persen stok aman diganti **pie chart jenis seragam di gudang**, dan empat kartu di bawahnya diganti kartu per jenis seragam (pcs dan warna sesuai irisan; 7 terbanyak + Lainnya).
+
 - **v1.319** Inventaris: tombol **+ Barang masuk dari supplier** di kartu atas dihapus dari halaman.
 
 ## 31 Okt 2026
