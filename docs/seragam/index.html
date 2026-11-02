@@ -615,8 +615,6 @@
   .mini .ringhero b { font-size:1.35rem; } .mini .ringhero span { display:block; font-size:.66rem; }
   .mini .kpi { grid-area:kpi; padding:10px 14px; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px 8px; }
   .mini .kpi b { font-size:1.3rem; } .mini .kpi span { align-items:flex-start; font-size:.68rem; line-height:1.25; } .mini .kpi i { margin-top:3px; }
-  .cmp { display:grid; gap:7px; margin-top:8px; } .cmpleg { display:flex; gap:14px; font-size:.76rem; color:var(--muted); margin-top:6px; } .cmpleg i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; }
-  .cr { display:grid; grid-template-columns:minmax(90px,34%) 1fr auto; gap:10px; align-items:center; } .cb { display:grid; gap:3px; } .cb i { display:block; height:7px; border-radius:0 4px 4px 0; min-width:2px; } .hv.kurang { color:var(--bad); font-weight:600; }
   .pie { width:100%; aspect-ratio:1; border-radius:50%; } .pie.kosong { background:var(--line,#2a2a2e); }
   .mini .ringhero .t { padding:0 22px; } .mini .ringhero span { line-height:1.15; }
   .mini .rcol { grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); grid-template-rows:none; }
@@ -4741,11 +4739,10 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     let u = 0; const seg = irisan.map(([, v, w]) => { const a = u; u += 100 * v / tot; return `${w} ${a.toFixed(2)}% ${u.toFixed(2)}%`; });
     return `<div class="pie" style="background:conic-gradient(${seg.join(',')})" role="img" aria-label="${esc(irisan.map(x => x[0] + ' ' + x[1] + ' pcs').join(', '))}"></div>`;
   }
-  // perbandingan permintaan vs stok per jenis seragam: dua batang tipis per baris, skala sama
+  // jenis seragam yang stoknya menipis dibanding permintaan (sisa = stok - permintaan <= 2 pcs); baris = {nama, minta, stok}
   function bandingHtml(rows) {
-    if (!rows.length) return '<div class="kosongnya">Belum ada permintaan maupun stok.</div>';
-    const maks = Math.max(1, ...rows.flatMap(r => [r.minta, r.stok]));
-    return `<div class="vleg cmpleg"><span><i style="background:${WD.s2}"></i>Permintaan</span><span><i style="background:${WD.s1}"></i>Stok gudang</span></div><div class="cmp">${rows.map(r => `<div class="cr" title="${esc(r.nama)}: diminta ${r.minta} pcs, stok ${r.stok} pcs"><span class="hl">${esc(r.nama)}</span><div class="cb"><i style="width:${(100 * r.minta / maks).toFixed(1)}%;background:${WD.s2}"></i><i style="width:${(100 * r.stok / maks).toFixed(1)}%;background:${WD.s1}"></i></div><span class="hv${r.stok < r.minta ? ' kurang' : ''}">${idn(r.minta)} / ${idn(r.stok)}</span></div>`).join('')}</div>`;
+    if (!rows.length) return '<div class="kosongnya">Semua permintaan masih tercukupi stok gudang ✓</div>';
+    return `<div class="vlist">${rows.map(r => { const sisa = r.stok - r.minta; return `<div class="vi"><div><b>${esc(r.nama)}</b><div class="muted">diminta ${idn(r.minta)} pcs · stok ${idn(r.stok)} pcs</div></div><div class="r"><span class="badge ${sisa < 0 ? 'bad' : 'warn'}">${sisa < 0 ? 'Kurang ' + idn(-sisa) : 'Sisa ' + idn(sisa)} pcs</span></div></div>`; }).join('')}</div>`;
   }
   function miniHtml(m) {
     const w = m.gap.worst;
@@ -4798,7 +4795,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     const minta = new Map(), adaStok = new Map();
     for (const r of kebutuhan) minta.set(r.item_nama, (minta.get(r.item_nama) || 0) + butuhBaris(r).reduce((a, x) => a + x.q, 0));
     for (const x of stok) adaStok.set(x.item_nama, (adaStok.get(x.item_nama) || 0) + Math.max(0, Number(x.saldo)));
-    const banding = [...new Set([...minta.keys(), ...adaStok.keys()])].map(n => ({ nama: namaRapi(n), minta: minta.get(n) || 0, stok: adaStok.get(n) || 0 })).filter(r => r.minta || r.stok).sort((a, b) => Math.max(b.minta, b.stok) - Math.max(a.minta, a.stok)).slice(0, 8);
+    const banding = [...new Set([...minta.keys(), ...adaStok.keys()])].map(n => ({ nama: namaRapi(n), minta: minta.get(n) || 0, stok: adaStok.get(n) || 0 })).filter(r => r.minta > 0 && r.stok - r.minta <= 2).sort((a, b) => (a.stok - a.minta) - (b.stok - b.minta));
     const kurangList = [...minta].map(([n, q]) => ({ n, kurang: q - (adaStok.get(n) || 0) })).filter(x => x.kurang > 0).sort((a, b) => b.kurang - a.kurang), kurangTot = kurangList.reduce((a, x) => a + x.kurang, 0);
     const perJenis = new Map(); for (const x of stok) if (x.saldo > 0) perJenis.set(x.item_nama, (perJenis.get(x.item_nama) || 0) + Number(x.saldo));
     const WP = ['#2F7D6D', '#1D4ED8', '#C98A6B', '#D9A441', '#8B5CF6', '#C9645E', '#4B8F9E'], urutJ = [...perJenis].sort((a, b) => b[1] - a[1]), lain = urutJ.slice(7).reduce((a, x) => a + x[1], 0);
@@ -4806,7 +4803,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     return { key: 'inventaris', kecil: 'Inventaris', judul: 'Pantau stok gudang tiap ukuran', labelAngka: 'Stok di gudang', angka: `${idn(pcs)} pcs`,
       pie, persen: 0, labelRing: '', cta: null,
       kpi: pie.map(([n, v, w]) => [idn(v) + ' pcs', n, w]),
-      banding, grafik: { judul: 'Permintaan vs stok gudang per jenis seragam (pcs)' },
+      banding, grafik: { judul: 'Stok menipis menurut permintaan' },
       gap: { label: 'Stok kurang dari permintaan', besar: idn(kurangTot), pill: `${kurangList.length} jenis seragam`, ket: 'pcs permintaan belum tertutup stok gudang',
         worst: kurangList[0] && { kecil: 'Paling kurang', nama: namaRapi(kurangList[0].n), detail: `diminta ${idn(minta.get(kurangList[0].n))} · stok ${idn(adaStok.get(kurangList[0].n) || 0)} · kurang ${idn(kurangList[0].kurang)}`, aksi: 'item', arg: kurangList[0].n } } };
   }

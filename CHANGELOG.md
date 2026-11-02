@@ -6,6 +6,8 @@ Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permin
 
 ## 2 Nov 2026
 
+- **v1.323** Inventaris: grafik perbandingan permintaan vs stok diganti daftar **stok menipis menurut permintaan** (jenis seragam yang sisa stoknya setelah permintaan tinggal 2 pcs atau kurang, atau sudah kurang), berkaitan dengan kartu 'Stok kurang dari permintaan' di sebelahnya.
+
 - **v1.322** Dashboard utama: empat kartu ringkasan alur (Monitoring & Permintaan, Rekap Permintaan & Inventaris, Ploting & Pengiriman, Tagihan) dihapus. Baris info filter tetap tampil bila filter aktif.
 
 - **v1.321** Inventaris: grafik garis dan kartu 'Perlu diisi ulang' diganti **perbandingan permintaan vs stok gudang per jenis seragam** (batang ganda, angka merah bila stok kurang) dan kartu 'Stok kurang dari permintaan'. Permintaan = barang disetujui dan diploting yang belum terkirim.
