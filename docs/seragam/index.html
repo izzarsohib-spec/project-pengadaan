@@ -787,7 +787,7 @@
       <div class="p3k ptuto" id="pTuto"></div>
       <div class="p3k pmain">
         <div class="bar-top"><h3>Daftar lokasi</h3>
-          <label class="search"><span aria-hidden="true">🔍</span><input id="pCari" type="search" placeholder="Cari lokasi, mis. bps cilacap"></label>
+          <label class="search"><span aria-hidden="true">🔍</span><input id="pCari" type="search" placeholder="Cari lokasi, mis. bps cilacap" autocomplete="off"></label>
           <button class="btn" id="pCetakBtn">PDF gudang</button><button class="btn" id="pMuat">Muat ulang</button></div>
         <div class="pcard" id="pCetak" hidden style="margin-bottom:14px"></div>
         <div class="chips" id="pChips" style="margin-bottom:14px"></div>
@@ -806,7 +806,7 @@
    <div class="page" id="pg-penerimaan" hidden>
     <header><div><h1>Penerimaan Seragam</h1><div class="sub" id="infoTerima">Memuat data…</div><div class="sub">Surat jalan untuk dicetak (tanda tangan di kertas), form sederhana untuk penerima di lokasi (nama, tanggal, foto), dan bukti penerimaan PDF.</div></div></header>
     <section class="bawah card">
-      <div class="bar-top"><h3>Daftar surat jalan</h3><label class="search"><span aria-hidden="true">🔍</span><input id="pnCari" type="search" placeholder="Cari no. surat jalan, lokasi, resi"></label><button class="btn" id="pnMuat">Muat ulang</button></div>
+      <div class="bar-top"><h3>Daftar surat jalan</h3><label class="search"><span aria-hidden="true">🔍</span><input id="pnCari" type="search" placeholder="Cari no. surat jalan, lokasi, resi" autocomplete="off"></label><button class="btn" id="pnMuat">Muat ulang</button></div>
       <div class="chips" id="pnChips" style="margin-bottom:14px"></div>
       <div id="pnList"></div>
     </section>
@@ -816,7 +816,7 @@
     <section class="top mini" id="md-pengiriman"></section>
     <section class="card pcard" id="kBoard" hidden></section>
     <section class="bawah card">
-      <div class="bar-top"><h3>Daftar lokasi</h3><label class="search"><span aria-hidden="true">🔍</span><input id="kCari" type="search" placeholder="Cari lokasi"></label><button class="btn" id="kMuat">Muat ulang</button></div>
+      <div class="bar-top"><h3>Daftar lokasi</h3><label class="search"><span aria-hidden="true">🔍</span><input id="kCari" type="search" placeholder="Cari lokasi" autocomplete="off"></label><button class="btn" id="kMuat">Muat ulang</button></div>
       <div class="chips" id="kChips" style="margin-bottom:14px"></div>
       <div class="layout">
         <div class="list"><div class="scroll" id="kDaftar"></div></div>
@@ -830,7 +830,7 @@
     <section class="card pcard">
       <div class="row" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div class="chips" id="rkTab"></div>
-        <label class="search" hidden><span aria-hidden="true">🔍</span><input id="rkCari" type="search" placeholder="Cari lokasi atau bagian kerja"></label>
+        <label class="search" hidden><span aria-hidden="true">🔍</span><input id="rkCari" type="search" placeholder="Cari lokasi atau bagian kerja" autocomplete="off"></label>
       </div>
       <div class="rkper" id="rkPeriode" hidden><label>Dari tanggal<input type="date" id="rkDari"></label><label>Sampai tanggal<input type="date" id="rkSampai"></label><div class="chips" id="rkPreset"></div></div>
       <div class="rkkpi" id="rkKpi"></div>
@@ -949,14 +949,14 @@
       <div class="hint" style="margin:0 0 10px">Isi kolom <b>Fisik</b> hanya untuk barang yang sudah Anda hitung. Baris yang dikosongkan tidak diubah. Selisih dicatat sebagai penyesuaian stok (masuk bila fisik lebih banyak, keluar bila lebih sedikit).</div>
       <div class="fgrid" style="grid-template-columns:1fr 2fr 2fr">
         <label>Tanggal<input type="date" id="oTgl"></label><label>Catatan<input id="oCat" maxlength="200" placeholder="opsional, mis. opname akhir bulan"></label>
-        <label class="search" style="align-self:end"><span aria-hidden="true">🔍</span><input id="oCari" type="search" placeholder="Cari barang"></label></div>
+        <label class="search" style="align-self:end"><span aria-hidden="true">🔍</span><input id="oCari" type="search" placeholder="Cari barang" autocomplete="off"></label></div>
       <div class="wrap tabelminta" style="margin-top:12px;max-height:420px;overflow:auto"><table><thead><tr><th style="min-width:230px">Barang</th><th>Ukuran</th><th class="r">Sistem</th><th style="width:110px">Fisik</th><th class="r">Selisih</th><th style="min-width:190px">Alasan (bila selisih)</th></tr></thead><tbody id="oBody"></tbody></table></div>
       <div class="hint" id="oPesan"></div>
       <div class="bgact" style="margin-top:12px"><button class="cta" id="oSimpan">Simpan opname</button><button class="btn" id="oBatal">Batal</button></div>
     </section>
     <section class="card pcard" id="opRingkas">
       <div class="rkkpi" id="opKpi"></div>
-      <div class="row" style="flex-wrap:wrap;gap:10px;margin-bottom:12px"><div class="chips" id="opTab"></div><label class="search"><span aria-hidden="true">🔍</span><input id="opCari" type="search" placeholder="Cari barang"></label></div>
+      <div class="row" style="flex-wrap:wrap;gap:10px;margin-bottom:12px"><div class="chips" id="opTab"></div><label class="search"><span aria-hidden="true">🔍</span><input id="opCari" type="search" placeholder="Cari barang" autocomplete="off"></label></div>
       <div class="chips" id="opChips" style="margin-bottom:12px"></div>
       <div id="opIsi"></div>
     </section>
@@ -968,7 +968,7 @@
       <div class="bgact"><button class="btn" id="iMuat">Muat ulang</button></div></header>
     <section class="top mini" id="md-inventaris"></section>
     <section class="bawah card">
-      <div class="bar-top"><div class="chips" id="iTab"></div><label class="search"><span aria-hidden="true">🔍</span><input id="iCari" type="search" placeholder="Cari barang, supplier, atau tujuan"></label></div>
+      <div class="bar-top"><div class="chips" id="iTab"></div><label class="search"><span aria-hidden="true">🔍</span><input id="iCari" type="search" placeholder="Cari barang, supplier, atau tujuan" autocomplete="off"></label></div>
       <div class="chips" id="iChips" style="margin-bottom:12px"></div>
       <div class="wrap tabelminta"><table><thead id="iHead"></thead><tbody id="iBody"></tbody></table></div>
     </section>
@@ -977,7 +977,7 @@
     <header><div><h1>Tagihan</h1><div class="sub" id="infoTag">Memuat data…</div></div></header>
     <section class="top mini" id="md-tagihan"></section>
     <section class="bawah card">
-      <div class="bar-top"><h3>Siap ditagih</h3><label class="search"><span aria-hidden="true">🔍</span><input id="tCari" type="search" placeholder="Cari lokasi"></label><button class="btn" id="tMuat">Muat ulang</button></div>
+      <div class="bar-top"><h3>Siap ditagih</h3><label class="search"><span aria-hidden="true">🔍</span><input id="tCari" type="search" placeholder="Cari lokasi" autocomplete="off"></label><button class="btn" id="tMuat">Muat ulang</button></div>
       <div class="chips" id="tChips" style="margin-bottom:14px"></div>
       <div class="layout">
         <div class="list"><div class="scroll" id="tDaftar"></div></div>
@@ -1040,7 +1040,7 @@
       <div class="bar-top">
         <h3>Daftar lokasi</h3>
         <label class="search"><span aria-hidden="true">🔍</span>
-          <input id="cari" type="search" placeholder="Cari lokasi, mis. pengadilan negeri kudus">
+          <input id="cari" type="search" placeholder="Cari lokasi, mis. pengadilan negeri kudus" autocomplete="off">
         </label>
         <select id="fPic" class="psel" aria-label="Filter PIC"></select>
       </div>

@@ -1,5 +1,5 @@
 // Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.323', tanggal: '2026-11-02', catatan: 'Inventaris: stok menipis menurut permintaan' };
+window.VERSI = { no: '1.324', tanggal: '2026-11-02', catatan: 'Kolom cari tidak terisi otomatis' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');

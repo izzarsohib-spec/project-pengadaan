@@ -6,6 +6,8 @@ Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permin
 
 ## 2 Nov 2026
 
+- **v1.324** Seragam: kolom pencarian (Inventaris, Ploting, Pengiriman, Tagihan, Rekap, dan lainnya) tidak lagi terisi otomatis oleh isian peramban (sebelumnya muncul alamat email di kolom cari Inventaris).
+
 - **v1.323** Inventaris: grafik perbandingan permintaan vs stok diganti daftar **stok menipis menurut permintaan** (jenis seragam yang sisa stoknya setelah permintaan tinggal 2 pcs atau kurang, atau sudah kurang), berkaitan dengan kartu 'Stok kurang dari permintaan' di sebelahnya.
 
 - **v1.322** Dashboard utama: empat kartu ringkasan alur (Monitoring & Permintaan, Rekap Permintaan & Inventaris, Ploting & Pengiriman, Tagihan) dihapus. Baris info filter tetap tampil bila filter aktif.
