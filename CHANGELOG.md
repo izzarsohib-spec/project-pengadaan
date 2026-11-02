@@ -6,6 +6,8 @@ Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permin
 
 ## 2 Nov 2026
 
+- **v1.325** Ploting: kartu lokasi di daftar kiri kini menampilkan **tanggal dan jam lokasi itu diplot** (ploting terakhir di lokasi tersebut). Tanggal per bagian kerja sudah ada sebelumnya.
+
 - **v1.324** Seragam: kolom pencarian (Inventaris, Ploting, Pengiriman, Tagihan, Rekap, dan lainnya) tidak lagi terisi otomatis oleh isian peramban (sebelumnya muncul alamat email di kolom cari Inventaris).
 
 - **v1.323** Inventaris: grafik perbandingan permintaan vs stok diganti daftar **stok menipis menurut permintaan** (jenis seragam yang sisa stoknya setelah permintaan tinggal 2 pcs atau kurang, atau sudah kurang), berkaitan dengan kartu 'Stok kurang dari permintaan' di sebelahnya.

@@ -2592,7 +2592,8 @@ Alasan (boleh kosong):`); if (alasan === null) return;
     const per = l.bagian.map(b => setuju.get(l.lokasi + '|' + b.nama)).filter(Boolean), sudah = per.filter(p => p.diploting_pada).length;
     const semuaBagian = l.bagian.filter(b => b.target > 0).length, menunggu = Math.max(0, semuaBagian - per.length);
     const pcs = per.reduce((a, p) => a + (p.items || []).reduce((b, i) => b + (Number(i.qty) || 0), 0), 0);
-    return { s: !per.length ? 'kosong' : sudah === per.length ? 'selesai' : sudah ? 'sebagian' : 'belum', total: per.length, sudah, semuaBagian, menunggu, pcs };
+    const tgl = per.filter(p => p.diploting_pada).map(p => p.diploting_pada).sort().pop(); // waktu ploting terakhir di lokasi ini
+    return { s: !per.length ? 'kosong' : sudah === per.length ? 'selesai' : sudah ? 'sebagian' : 'belum', total: per.length, sudah, semuaBagian, menunggu, pcs, tgl };
   }
   const LP = { belum: ['Belum diplot', 'warn'], sebagian: ['Sebagian diplot', 'warn'], selesai: ['Sudah diplot', 'ok'] };
   // prioritas kerja: lokasi yang semua jenis pekerjaannya sudah disetujui dan paling dekat selesai diplot didahulukan; lokasi yang masih menunggu bagian lain menyusul; yang sudah selesai paling bawah
@@ -2620,7 +2621,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
       return `<button class="item ${l.lokasi === pSel ? 'sel' : ''}" data-k="${esc(l.lokasi)}"><div class="nm">${esc(l.client)}</div>
          <div class="muted" style="font-size:.74rem;margin:-2px 0 4px">${area ? esc(area.nama) : 'area belum diatur'}${pic ? ' · PIC ' + esc(pic.nama) : ''}</div>
          <div class="bar ${cls}"><i style="width:${pct}%"></i></div>
-         <div class="mt"><span>${l.pi.sudah}/${l.pi.total} pekerjaan diplot · ${idn(l.pi.pcs)} pcs${l.pi.menunggu ? ' · ' + l.pi.menunggu + ' menunggu' : ''}</span><span class="badge ${l.pi.menunggu && l.pi.s !== 'selesai' ? 'neu' : cls}">${l.pi.menunggu && l.pi.s !== 'selesai' ? 'Menunggu pekerjaan lain' : lbl}</span></div></button>`;
+         <div class="mt"><span>${l.pi.sudah}/${l.pi.total} pekerjaan diplot · ${idn(l.pi.pcs)} pcs${l.pi.menunggu ? ' · ' + l.pi.menunggu + ' menunggu' : ''}</span><span class="badge ${l.pi.menunggu && l.pi.s !== 'selesai' ? 'neu' : cls}">${l.pi.menunggu && l.pi.s !== 'selesai' ? 'Menunggu pekerjaan lain' : lbl}</span></div>${l.pi.tgl ? `<div class="muted" style="font-size:.74rem;margin-top:4px">Diplot ${tglP(l.pi.tgl)}</div>` : ''}</button>`;
     };
     const kosongPlot = `<div class="kosongnya">${semua.length ? 'Lokasi tidak ditemukan.' : 'Belum ada permintaan yang sudah disetujui kedua pimpinan.'}</div>`;
     if (!f.length) $('pDaftar').innerHTML = kosongPlot;
