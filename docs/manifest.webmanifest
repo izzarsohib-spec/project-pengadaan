@@ -1,0 +1,22 @@
+{
+  "name": "Sistem Administrasi Pengadaan - PT. Ray Mitra Perkasa",
+  "short_name": "Pengadaan",
+  "description": "Pengadaan seragam dan peralatan: ukuran karyawan, permintaan, stok, pengiriman, dan tagihan.",
+  "lang": "id",
+  "start_url": "./?dari=aplikasi",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0b0d",
+  "theme_color": "#19191c",
+  "icons": [
+    { "src": "aset/ikon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "aset/ikon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "aset/ikon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Monitoring pengisian", "url": "./#seragam/monitor", "icons": [{ "src": "aset/ikon-192.png", "sizes": "192x192" }] },
+    { "name": "Peralatan", "url": "./#peralatan", "icons": [{ "src": "aset/ikon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
+<meta name="theme-color" content="#19191c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="aset/ikon-192.png">
+<link rel="apple-touch-icon" href="aset/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pengadaan">
 <title>Sistem Administrasi Pengadaan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -54,6 +60,8 @@
   .akun { margin-top:auto; padding:12px 8px 0; border-top:1px solid var(--stroke); }
   .versi { padding:10px 8px 0; font-size:.7rem; letter-spacing:.06em; color:var(--muted); cursor:help; }
   .akun .st { font-size:.74rem; color:var(--muted); margin-bottom:8px; line-height:1.4; }
+  .pasang { display:block; width:100%; margin-top:8px; padding:7px 10px; border:1px solid var(--stroke); border-radius:99px; background:rgba(255,255,255,.06); font-size:.8rem; font-weight:600; cursor:pointer; }
+  .pasang:hover { background:var(--panel2); } .pasang[hidden] { display:none; }
 
   /* ---- isi ---- */
   .isi { position:relative; z-index:1; min-width:0; min-height:0; }
@@ -128,7 +136,7 @@
     <button class="menu" data-p="peralatan"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg><span class="lb">Peralatan</span></button>
     <button class="menu" disabled title="Segera hadir"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 15h9"/></svg><span class="lb">Chemical</span><span class="tag">Segera</span></button>
     <button class="menu kecil" data-p="administrator"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span class="lb">Administrator</span></button>
-    <div class="akun"><div class="st" id="akunSt"></div><div id="akun"></div></div>
+    <div class="akun"><div class="st" id="akunSt"></div><div id="akun"></div><button type="button" class="pasang" id="pasang" hidden>Pasang aplikasi</button></div>
     <div class="versi" id="versi" aria-label="Versi aplikasi"></div>
   </nav>
 
@@ -168,6 +176,7 @@
   </div>
 </div>
 <script>document.write('<script src="aset/versi.js?t=' + Math.floor(Date.now() / 60000) + '"><\/script>');</script>
+<script src="aset/nama-bagian.js"></script>
 <script src="aset/auth.js"></script>
 <script src="aset/filter.js"></script>
 <script>
@@ -234,6 +243,12 @@
   const tulisSt = () => { document.getElementById('akunSt').textContent = Masuk.masuk() ? 'Masuk sebagai admin. Semua fitur menyimpan aktif.' : 'Belum masuk. Halaman bisa dibuka; menyimpan dan mengirim butuh login.'; };
   window.addEventListener('masuk-ubah', tulisSt); tulisSt();
   dariHash();
+  // aplikasi: service worker (nomor versi ikut ke alamatnya supaya versi baru membuang cache lama) dan tombol pasang
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=' + ((window.VERSI && window.VERSI.no) || '0')).catch(() => {}));
+  let tundaPasang = null; const tombolPasang = document.getElementById('pasang');
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); tundaPasang = e; tombolPasang.hidden = false; });
+  tombolPasang.onclick = async () => { if (!tundaPasang) return; tundaPasang.prompt(); try { await tundaPasang.userChoice; } catch (x) {} tundaPasang = null; tombolPasang.hidden = true; };
+  window.addEventListener('appinstalled', () => { tombolPasang.hidden = true; });
 </script>
 </body>
 </html>

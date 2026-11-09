@@ -4,6 +4,12 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 9 Nov 2026
+
+- **v1.327** Web bisa dipasang sebagai **aplikasi** di Android, Windows, dan iPhone (PWA): `manifest.webmanifest`, ikon di `aset/ikon-*.png`, service worker `sw.js` (jaringan dulu, salinan terakhir bila offline; data Supabase tidak disimpan), halaman `offline.html`, dan tombol **Pasang aplikasi** di sidebar portal. Cache memakai nomor versi dari `aset/versi.js`.
+
+- **v1.326** Nama bagian kerja **KEAMANAN PRIA (SECURITY)** kini tampil sebagai **KEAMANAN (SECURITY)** di seluruh web (Seragam, Peralatan, Administrator, halaman persetujuan, surat, PDF). Hanya tampilan: nama di database, Google Form, dan kunci lokasi|bagian tidak berubah. Dipasang lewat `aset/nama-bagian.js` (pembungkus fetch: respons Supabase diganti ke nama tampilan, permintaan dikembalikan ke nama asli). Notifikasi ntfy/Telegram/WhatsApp dan nama berkas Drive yang dibuat fungsi server masih memakai nama lama.
+
 ## 2 Nov 2026
 
 - **v1.325** Ploting: kartu lokasi di daftar kiri kini menampilkan **tanggal dan jam lokasi itu diplot** (ploting terakhir di lokasi tersebut). Tanggal per bagian kerja sudah ada sebelumnya.

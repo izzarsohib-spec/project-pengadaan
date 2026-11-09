@@ -1181,6 +1181,7 @@
     <div class="pvbody" id="pvHalaman"></div>
   </div>
 </div>
+<script src="../aset/nama-bagian.js"></script>
 <script src="../aset/auth.js"></script>
 <script src="../aset/filter.js"></script>
 <script src="harga.js"></script>
@@ -1381,8 +1382,8 @@
     renderChips(); renderDetail();
   }
 
-  // Peran security: di Form ada lima pilihan, di anggaran hanya satu bagian (KEAMANAN PRIA (SECURITY)); web tetap menampilkan "security" dan memberi keterangan singkat peran
-  const PERAN = { 'CHIEF SECURITY': 'Chief', 'KOMANDAN REGU SECURITY(DANRU)': 'Danru', 'WAKIL KOMANDAN REGU (WADANRU)': 'Wadanru', 'KEAMANAN PRIA (SECURITY)': 'Anggota pria', 'KEAMANAN WANITA(SECWAN)': 'Anggota wanita' };
+  // Peran security: di Form ada lima pilihan, di anggaran hanya satu bagian (KEAMANAN PRIA (SECURITY) di database, ditampilkan KEAMANAN (SECURITY)); web tetap menampilkan "security" dan memberi keterangan singkat peran
+  const PERAN = { 'CHIEF SECURITY': 'Chief', 'KOMANDAN REGU SECURITY(DANRU)': 'Danru', 'WAKIL KOMANDAN REGU (WADANRU)': 'Wadanru', 'KEAMANAN (SECURITY)': 'Anggota pria', 'KEAMANAN WANITA(SECWAN)': 'Anggota wanita' };
   const URUT_PERAN = ['Chief', 'Danru', 'Wadanru', 'Anggota pria', 'Anggota wanita'];
   const peranRingkas = p => PERAN[String((p && p.peran) || '').toUpperCase()] || '';
   function ringkasPeran(lokasiKunci, bagian) { // "Chief 1 · Danru 2 · Anggota pria 20" untuk satu bagian kerja, kosong bila tidak ada data peran
