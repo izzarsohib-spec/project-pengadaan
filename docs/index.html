@@ -60,6 +60,7 @@
   .akun { margin-top:auto; padding:12px 8px 0; border-top:1px solid var(--stroke); }
   .versi { padding:10px 8px 0; font-size:.7rem; letter-spacing:.06em; color:var(--muted); cursor:help; }
   .akun .st { font-size:.74rem; color:var(--muted); margin-bottom:8px; line-height:1.4; }
+  .akunbtn { display:none; } .info-versi { display:none; }
   .pasang { display:block; width:100%; margin-top:8px; padding:7px 10px; border:1px solid var(--stroke); border-radius:99px; background:rgba(255,255,255,.06); font-size:.8rem; font-weight:600; cursor:pointer; }
   .pasang:hover { background:var(--panel2); } .pasang[hidden] { display:none; }
 
@@ -126,6 +127,7 @@
   }
 </style>
 <link rel="stylesheet" href="aset/tema.css?v=1.291">
+<link rel="stylesheet" href="aset/hp-portal.css?v=1.328">
 </head>
 <body>
 <div class="shell">
@@ -134,9 +136,10 @@
     <button class="menu on" data-p="beranda"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="lb">Beranda</span></button>
     <button class="menu" data-p="seragam"><svg viewBox="0 0 24 24"><path d="M8 3 3 6l2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/></svg><span class="lb">Seragam</span></button>
     <button class="menu" data-p="peralatan"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg><span class="lb">Peralatan</span></button>
-    <button class="menu" disabled title="Segera hadir"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 15h9"/></svg><span class="lb">Chemical</span><span class="tag">Segera</span></button>
+    <button class="menu" data-p="chemical"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 15h9"/></svg><span class="lb">Chemical</span></button>
     <button class="menu kecil" data-p="administrator"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span class="lb">Administrator</span></button>
-    <div class="akun"><div class="st" id="akunSt"></div><div id="akun"></div><button type="button" class="pasang" id="pasang" hidden>Pasang aplikasi</button></div>
+    <button type="button" class="menu akunbtn" id="akunBtn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg><span class="lb">Akun</span></button>
+    <div class="akun" id="akunKotak"><div class="st" id="akunSt"></div><div id="akun"></div><button type="button" class="pasang" id="pasang" hidden>Pasang aplikasi</button><div class="info-versi" id="versi2"></div></div>
     <div class="versi" id="versi" aria-label="Versi aplikasi"></div>
   </nav>
 
@@ -164,12 +167,12 @@
           <p>Permintaan ke pimpinan, belanja, pengiriman ke lokasi, dan riwayat peralatan yang pernah dikirim ke tiap lokasi.</p>
           <div class="bawah"><span class="lencana">Aktif</span><span>Buka ›</span></div>
         </button>
-        <div class="kartu nanti" aria-disabled="true">
+        <button class="kartu" data-p="chemical">
           <div class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 15h9"/></svg></div>
           <h3>Chemical</h3>
-          <p>Pengadaan bahan kimia dan cairan pembersih.</p>
-          <div class="bawah"><span class="lencana nanti">Segera hadir</span></div>
-        </div>
+          <p>Rekap permintaan klien, cek anggaran, pengajuan, belanja, pemisahan per lokasi, pengiriman, biaya operasional, dan laporan bulanan.</p>
+          <div class="bawah"><span class="lencana">Aktif</span><span>Buka ›</span></div>
+        </button>
       </section>
       <div class="catatan">Semua halaman bisa dibuka dan formulirnya bisa diisi tanpa login. Menyimpan, mengirim permintaan, dan membuka data karyawan memerlukan login admin (PIC Pengadaan).</div>
     </div></div>
@@ -182,11 +185,11 @@
 <script>
   // Setiap bidang dibuka dalam iframe (dibuat saat pertama dibuka, lalu dipertahankan supaya isian tidak hilang saat pindah menu).
   // Halaman tiap modul (nama + urutan alur kerja yang sama: Dashboard, Permintaan, ..., Riwayat) dipilih dari sidebar ini dan dikirim ke iframe lewat hash.
-  // Modul chemical nanti cukup menambah satu entri di SUMBER dan MENU.
-  const SUMBER = { seragam: 'seragam/', peralatan: 'peralatan/', administrator: 'administrator/' };
+  const SUMBER = { seragam: 'seragam/', peralatan: 'peralatan/', chemical: 'chemical/', administrator: 'administrator/' };
   const MENU = {
     seragam: [['ringkasan', 'Dashboard Utama'], ['monitor', 'Monitoring & Permintaan'], ['rekap', 'Pemesanan & Barang Datang'], ['inventaris', 'Inventaris & Monitoring Stok Gudang'], ['ploting', 'Ploting & Pengiriman'], ['tagihan', 'Tagihan']], // halaman gabungan; sub-tab-nya ada di dalam modul
     administrator: [['seragam', 'Seragam'], ['peralatan', 'Peralatan'], ['chemical', 'Chemical'], ['organisasi', 'Organisasi'], ['sistem', 'Sistem']], // bidang data acuan; menu di tiap bidang ada di dalam halaman Administrator
+    chemical: [['dashboard', 'Beranda'], ['periode', 'Periode'], ['permintaan', 'Permintaan'], ['anggaran', 'Cek Anggaran'], ['pengajuan', 'Pengajuan'], ['belanja', 'Belanja'], ['pemisahan', 'Pemisahan'], ['pengiriman', 'Pengiriman'], ['biaya', 'Biaya Operasional'], ['laporan', 'Laporan'], ['master', 'Master Data'], ['pengaturan', 'Pengaturan']],
     peralatan: [['dashboard', 'Dashboard'], ['permintaan', 'Permintaan'], ['proses', 'Belanja & Kirim'], ['anggaran', 'Anggaran Lokasi'], ['riwayat', 'Riwayat Permintaan'], ['lokasi', 'Riwayat Lokasi']],
   };
   const subAktif = {}; // halaman terakhir yang dibuka di tiap modul
@@ -243,6 +246,15 @@
   const tulisSt = () => { document.getElementById('akunSt').textContent = Masuk.masuk() ? 'Masuk sebagai admin. Semua fitur menyimpan aktif.' : 'Belum masuk. Halaman bisa dibuka; menyimpan dan mengirim butuh login.'; };
   window.addEventListener('masuk-ubah', tulisSt); tulisSt();
   dariHash();
+  // ponsel: tombol Akun membuka kotak akun (masuk/keluar, pasang aplikasi, versi); ketuk di luar atau pindah halaman menutupnya
+  (function () {
+    const btn = document.getElementById('akunBtn'), kotak = document.getElementById('akunKotak'), v2 = document.getElementById('versi2');
+    const tutup = () => { kotak.classList.remove('buka'); btn.setAttribute('aria-expanded', 'false'); };
+    btn.addEventListener('click', e => { e.stopPropagation(); const b = kotak.classList.toggle('buka'); btn.setAttribute('aria-expanded', String(b)); });
+    document.addEventListener('click', e => { if (!kotak.contains(e.target) && e.target !== btn) tutup(); });
+    window.addEventListener('hashchange', tutup);
+    if (window.VERSI) v2.textContent = 'Versi ' + window.VERSI.no + ' · ' + window.VERSI.catatan;
+  })();
   // aplikasi: service worker (nomor versi ikut ke alamatnya supaya versi baru membuang cache lama) dan tombol pasang
   if ('serviceWorker' in navigator && location.protocol !== 'file:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=' + ((window.VERSI && window.VERSI.no) || '0')).catch(() => {}));
   let tundaPasang = null; const tombolPasang = document.getElementById('pasang');

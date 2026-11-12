@@ -1,0 +1,47 @@
+/* Tampilan ponsel untuk PORTAL (docs/index.html). Hanya aktif di layar <= 860px; desktop tidak berubah.
+   Menu utama pindah ke bilah bawah (mudah dijangkau ibu jari), tab halaman modul satu baris di atas,
+   akun / pasang aplikasi / versi masuk ke kotak kecil di tombol "Akun". */
+@media (max-width: 860px) {
+  html, body { height: 100%; overflow: hidden; }
+  .shell { height: 100vh; height: 100dvh; margin: 0; border: 0; border-radius: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .isi { order: 1; }
+  .side { order: 2; position: relative; z-index: 40; flex-direction: row; flex-wrap: nowrap; align-items: stretch; justify-content: space-around; gap: 0;
+          padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-bottom: 0; border-top: 1px solid var(--stroke); background: #141416; overflow: visible; }
+  .merek, .pemisah, .versi, .menu .tag, .menu[disabled] { display: none !important; }
+  .menu, .menu.kecil { flex: 1 1 0; width: auto; min-width: 0; height: 58px; margin: 0; padding: 6px 2px; flex-direction: column; justify-content: center; align-items: center; gap: 3px; border-radius: 12px; text-align: center; }
+  .menu svg, .menu.kecil svg { width: 25px; height: 25px; }
+  .menu.kecil { font-size: inherit; }
+  .menu .lb { display: block; opacity: 1; font-size: .74rem; line-height: 1.1; font-weight: 700; }
+  .menu.on { background: rgba(255, 255, 255, .14); }
+  .menu.on svg { color: var(--accent); }
+  .menu.akunbtn { display: flex; }
+
+  /* kotak akun: muncul di atas bilah bawah saat tombol Akun ditekan */
+  .akun { display: none; position: fixed; right: 8px; bottom: calc(70px + env(safe-area-inset-bottom)); width: min(310px, calc(100vw - 16px)); margin: 0; padding: 16px; z-index: 60;
+          background: #26262b; border: 1px solid var(--stroke); border-radius: 18px; box-shadow: 0 16px 44px rgba(0, 0, 0, .55); }
+  .akun.buka { display: block; }
+  .akun .st { display: block; font-size: .86rem; margin-bottom: 12px; color: var(--text); }
+  .akun .mk-chip { font-size: .95rem; }
+  .akun .mk-chip button, .pasang { min-height: 44px; font-size: .95rem; }
+  .akun .info-versi { display: block; margin-top: 10px; font-size: .78rem; color: var(--muted); }
+
+  /* tab halaman modul: satu baris, bisa digeser, mudah ditekan */
+  .atas { position: static; flex: none; height: auto; padding: 0 8px; gap: 0; flex-wrap: nowrap; background: #141416; backdrop-filter: none; border-bottom: 1px solid var(--stroke); }
+  .atas .tab { flex: 1 1 auto; height: 50px; gap: 6px; align-items: stretch; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+  .atas .tab button { padding: 0 12px; font-size: .95rem; scroll-snap-align: center; }
+  .isi.beratas { display: flex; flex-direction: column; }
+  .isi.beratas iframe { position: static; flex: 1 1 auto; width: 100%; height: auto; min-height: 0; top: auto; }
+
+  /* beranda portal */
+  .beranda { padding: 18px 14px 20px; }
+  .kop h1 { font-size: 1.35rem; }
+  .kop .perusahaan { font-size: .85rem; letter-spacing: .1em; }
+  .judul { margin: 20px 0 12px; font-size: 1rem; }
+  .grid { gap: 12px; }
+  .kartu { min-height: 0; padding: 18px; gap: 8px; border-radius: 20px; }
+  .kartu:hover { transform: none; }
+  .kartu h3 { font-size: 1.2rem; }
+  .ikon { width: 42px; height: 42px; border-radius: 12px; }
+  .catatan { margin-top: 18px; padding: 12px 14px; font-size: .84rem; }
+  #toastBox { top: 10px; right: 10px; left: 10px; width: auto; }
+}

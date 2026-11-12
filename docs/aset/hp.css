@@ -1,0 +1,115 @@
+/* Tampilan ponsel untuk MODUL (Seragam, Peralatan, Administrator). Hanya aktif di layar <= 760px; desktop tidak berubah.
+   Dimuat paling akhir di <head> supaya mengalahkan gaya bawaan halaman. Tujuan: huruf terbaca, sasaran sentuh >= 44px,
+   kartu tidak berdesakan, dan halaman tidak terlalu panjang (bagian yang jarang dipakai di ponsel dilipat atau disembunyikan). */
+/* LAYAR <= 980px (ponsel dan tablet kecil).
+   Aturan bawaan halaman mengubah .detail menjadi lembar layar penuh (position:fixed) yang baru tampil saat sebuah baris dipilih (kelas .open).
+   Pada halaman bertipe tiga kolom (.detail.tiga: Permintaan, Stock opname, Retur, Rekap, Pengiriman, dst.) panel itu justru isi halaman, bukan lembar,
+   tetapi aturan khusus halamannya membuatnya langsung tampil sambil tetap fixed, sehingga menimpa judul dan kartu di belakangnya. Kembalikan ke aliran normal. */
+@media (max-width: 980px) {
+  .detail.tiga:not(.open), .rk3.detail:not(.open), .rk2.detail:not(.open), .rk3:not(.open), .rk2:not(.open) { position: static !important; inset: auto !important; z-index: auto !important; overflow: visible !important; background: transparent !important; }
+  .layout, .layout > .detail.tiga:not(.open) { height: auto !important; min-height: 0 !important; }
+}
+
+@media (max-width: 760px) {
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
+  body { font-size: 16px; line-height: 1.45; overflow-x: hidden; }
+  .shell { margin: 0 !important; border: 0 !important; border-radius: 0 !important; min-height: 100vh; }
+  .content, main { padding: 12px 12px 28px !important; }
+
+  /* judul dan teks */
+  h1 { font-size: 1.4rem !important; line-height: 1.15; }
+  h2 { font-size: 1.15rem; line-height: 1.2; }
+  .sub, .hint { font-size: .86rem !important; line-height: 1.4; }
+  header { margin-bottom: 10px; gap: 8px; }
+  .kop { display: none !important; }
+
+  /* sasaran sentuh dan isian (16px mencegah iPhone memperbesar layar saat mengetik) */
+  input, select, textarea { font-size: 16px !important; min-height: 44px; max-width: 100%; }
+  input[type=checkbox], input[type=radio] { min-height: 0 !important; width: 22px; height: 22px; flex: none; }
+  button, .btn { min-height: 44px; }
+  .btn.mini { min-height: 40px; padding: 6px 16px !important; font-size: .9rem !important; }
+  .chips, .areachips { gap: 8px; }
+  .chip, .chips button { min-height: 40px; padding: 8px 14px !important; font-size: .92rem !important; }
+  select { padding-right: 30px; }
+
+  /* kartu */
+  .card, .pcard, .blok { border-radius: 16px; }
+  .pcard { padding: 14px !important; }
+  .top, .pantau, .dgrid, .gapcard, .gap { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; }
+  .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; padding: 14px !important; }
+  .kpi b { font-size: 1.45rem; }
+
+  /* kartu utama (hero): lingkaran persen tidak lagi menimpa judul */
+  .hero { position: relative; padding: 16px !important; min-height: 118px !important; gap: 10px; }
+  .hero h2 { max-width: calc(100% - 96px) !important; margin: 4px 0 6px !important; font-size: 1.25rem !important; }
+  .ringhero { position: absolute !important; right: 12px !important; top: 12px !important; width: 80px !important; margin: 0; }
+  .ringhero b { font-size: .95rem; }
+  .ringhero span { display: none; }
+  .rabtotal b { font-size: 1.5rem; }
+  /* kartu angka: keterangan panjang di bawah tiap angka dibuang, angka dan namanya cukup */
+  #kpi em, .kpi span em { display: none !important; }
+  .kpi { gap: 10px 8px; }
+
+  /* progres per PIC: nama dan tombol satu baris, bar di bawahnya, legenda dibuang (angka sudah ada di teks) */
+  .picrow { grid-template-columns: minmax(0, 1fr) auto !important; gap: 4px 12px !important; padding: 10px 0 !important; }
+  .picrow .pn { grid-column: 1; grid-row: 1; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .picrow .pn small { font-size: .85rem !important; }
+  .picrow .pk .kr { display: none; }
+  .picrow .btn.mini { grid-column: 2; grid-row: 1; margin: 0; }
+  .picrow .pm { grid-column: 1 / -1; grid-row: 2; }
+  .picrow .pl { display: none; }
+  .picrow .pb { height: 12px; }
+  .picrow .pk { font-size: .88rem; }
+  .toprow, .siaprow { padding: 10px 2px; }
+
+  /* formulir: satu kolom (kolom tetap seperti 1fr 1fr 2fr membuat isian tanggal melebar keluar layar); isian tidak boleh lebih lebar dari kolomnya */
+  .fgrid, .formminta .fgrid, .grid2, .grid3 { grid-template-columns: minmax(0, 1fr) !important; }
+  .fgrid > *, .grid2 > *, .grid3 > * { min-width: 0; }
+  input, select, textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+  input[type=checkbox], input[type=radio] { width: 22px; }
+  .fgrid > .muted { grid-column: 1 / -1; padding-bottom: 0 !important; }
+
+  /* kolom tetap (panduan 42px + isi 280px dst.) menjadi satu kolom, supaya panduan yang disembunyikan tidak menggeser kartu isi */
+  .tiga, .detail.tiga, .rk3, .rk2, .plot3, .opkanan, [class*="tiga"] { grid-template-columns: minmax(0, 1fr) !important; }
+
+  /* panduan "Cara mengisi" panjang: disembunyikan di ponsel (tetap ada di desktop) */
+  .ptuto, .tutor, .card.tutor { display: none !important; }
+
+  /* tabel: geser ke samping, jangan memaksa halaman melebar */
+  .wrap, .tabel, .tablewrap, .tabel-gulir { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { font-size: .9rem; }
+  th, td { padding: 8px 8px; }
+
+
+  /* tabel stok (matriks ukuran): tiga kolom terlalu sempit di ponsel (kolom ukuran terhimpit dan baris jadi ~900px), ubah jadi kartu bertumpuk */
+  .wrap:has(.mxs) { overflow: visible; max-height: none; }
+  table:has(.mxs), table:has(.mxs) tbody, table:has(.mxs) tr, table:has(.mxs) td { display: block; width: 100% !important; }
+  table:has(.mxs) thead { display: none; }
+  table:has(.mxs) tr { padding: 14px 4px; border-bottom: 1px solid var(--stroke, #DCE3EC); }
+  table:has(.mxs) td { padding: 4px 0 !important; border: 0; text-align: left; }
+  table:has(.mxs) td.mxt { display: flex; justify-content: space-between; align-items: baseline; padding-top: 8px !important; font-weight: 700; }
+  table:has(.mxs) td.mxt::before { content: 'Total'; font-weight: 400; opacity: .7; }
+  .mxg { margin-bottom: 10px; }
+  .mxl { display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 700; }
+  .mxs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mxc { min-width: 58px; flex: 0 0 auto; }
+
+
+  /* kartu riwayat di Rekap: isi sedikit lebih lebar dari kartu dan terpotong; boleh digeser ke samping */
+  .pcard.k3 { overflow: visible !important; }
+  .riw2w, .riw2 { overflow-x: auto !important; -webkit-overflow-scrolling: touch; max-width: 100%; }
+
+
+  /* filter riwayat (Dari / Sampai / Cari barang): aturan desktop memaksa tiga kolom 150+150+0px sehingga isian ketiga menyusut jadi nol dan keluar layar */
+  .riw2w .dfilter, .riw2 .dfilter, .dfilter { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  .riw2w .dfilter label:last-child, .dfilter label:last-child { grid-column: 1 / -1 !important; }
+  /* baris isian barang (Barang masuk, Retur, Kekurangan): selectnya tidak lagi dipaksa min-width 92px sehingga baris tidak melebar menimpa tepi kartu */
+  #iBaris select.im-jenis, #kcBaris select.im-jenis, #rBaris select.im-jenis { min-width: 0 !important; }
+  #iBaris tr, #kcBaris tr, #rBaris tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 80px 36px !important; padding: 10px !important; box-sizing: border-box; }
+  #iBaris select, #kcBaris select, #rBaris select, #iBaris input, #kcBaris input, #rBaris input { font-size: 15px !important; padding-left: 8px; padding-right: 8px; }
+
+  /* jendela dialog (mis. Ingatkan PIC) memenuhi layar */
+  #ingatModal { padding: 8px; align-items: end; }
+  #ingatModal .mbox { width: 100%; max-height: 92vh; border-radius: 20px 20px 0 0; padding: 16px; }
+  dialog, .modal .box { max-width: 100vw; }
+}

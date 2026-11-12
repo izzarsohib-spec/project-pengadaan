@@ -4,7 +4,13 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 12 Nov 2026
+
+- **v1.329** Modul **Chemical** aktif (`docs/chemical/index.html`), dibuat dari PRD Sistem Belanja & Distribusi Chemical Bulanan. Satu periode per bulan dengan status DRAFT sampai TUTUP; halaman Beranda, Periode, Permintaan (form, impor Sheets/CSV, rekap per barang dan per klien), Cek Anggaran (CUKUP / HAMPIR HABIS / KURANG dan tindakan), Pengajuan (dokumen berkop, keputusan per barang, transfer), Belanja (checklist per toko, harga aktual, LAIN-LAIN), Pemisahan (alokasi proporsional / prioritas, checklist packing, sisa stok), Pengiriman (status, rute, surat jalan), Biaya Operasional (alokasi proporsional / rata / manual / langsung), Laporan (ringkasan dana, sisa dana, rekap klien, perbandingan bulan lalu, berita acara, ekspor CSV), Master Data, dan Pengaturan (ambang, penandatangan, cadangan, log). Periode TUTUP tidak bisa diubah. **Data sementara tersimpan di peramban (localStorage)**, belum di Supabase; ada unduh dan pulihkan cadangan JSON. Portal: menu dan kartu Chemical diaktifkan, `sw.js` menyimpan halaman chemical.
+
 ## 9 Nov 2026
+
+- **v1.328** Tampilan **ponsel** diperbarui dan bagian yang saling menimpa dibereskan (layar sampai 860 px; desktop tidak berubah). Portal: menu utama pindah ke bilah bawah (Beranda, Seragam, Peralatan, Administrator, Akun), tab halaman satu baris di atas, akun / pasang aplikasi / versi masuk ke kotak Akun. Modul: huruf dan tombol lebih besar (sasaran sentuh minimal 44 px, isian 16 px), lingkaran persen tidak lagi menimpa judul, kartu angka dan daftar PIC dipadatkan (daftar PIC terlipat otomatis), panduan *Cara mengisi* disembunyikan di ponsel, tabel bisa digeser. Perbaikan tumpang tindih: panel rincian halaman tiga kolom (Permintaan, Stock opname, Retur, Rekap, Pengiriman) tidak lagi menjadi lembar `position:fixed` yang menutupi isi; kolom tetap diubah menjadi satu kolom; formulir tanggal Laporan dan filter Riwayat tidak lagi melebihi layar; tabel stok matriks ukuran menjadi kartu bertumpuk; baris isian barang tidak lagi terhimpit. Berkas baru: `aset/hp-portal.css`, `aset/hp.css`, `aset/hp.js`.
 
 - **v1.327** Web bisa dipasang sebagai **aplikasi** di Android, Windows, dan iPhone (PWA): `manifest.webmanifest`, ikon di `aset/ikon-*.png`, service worker `sw.js` (jaringan dulu, salinan terakhir bila offline; data Supabase tidak disimpan), halaman `offline.html`, dan tombol **Pasang aplikasi** di sidebar portal. Cache memakai nomor versi dari `aset/versi.js`.
 

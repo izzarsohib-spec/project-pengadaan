@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Sistem Belanja Chemical</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root { --bg:#EDF1F6; --panel:#FFFFFF; --panel2:#EEF2F7; --stroke:#DCE3EC; --text:#0F172A; --muted:#5B6577; --accent:#2F7F79; --ok:#3F7F6B; --ok-bg:#E5F1EC; --warn:#9A7432; --warn-bg:#F7EFDC; --bad:#B0584F; --bad-bg:#F8E7E4; --info:#4B8F9E; --navy:#33475B; --head:"IBM Plex Sans", system-ui, sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  button, input, select, textarea { font:inherit; color:inherit; } button { cursor:pointer; }
+  h1, h2, h3 { margin:0; letter-spacing:-.01em; font-family:var(--head); }
+  .wrap { max-width:1320px; margin:0 auto; padding:18px 22px 64px; }
+  .muted { color:var(--muted); } .r { text-align:right; } .neg { color:var(--bad); } .pos { color:var(--ok); } .num { font-variant-numeric:tabular-nums; } small { color:var(--muted); }
+  [hidden] { display:none !important; }
+  .kop { display:flex; flex-direction:column; gap:2px; margin-bottom:14px; }
+  .kop h1 { font-size:clamp(1.2rem, 2.4vw, 1.8rem); } .kop .perusahaan { color:var(--accent); font-weight:700; letter-spacing:.14em; font-size:.95rem; }
+  body.dalam .kop, body.dalam .tabs { display:none; } body.dalam { background:transparent; } body.dalam .wrap { padding-top:6px; }
+  .tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:8px; }
+  .tabs button { flex:none; border:1px solid var(--stroke); background:#fff; border-radius:99px; padding:7px 14px; }
+  .tabs button.on { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .bar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; background:#fff; border:1px solid var(--stroke); border-radius:16px; padding:12px 16px; margin-bottom:16px; }
+  .bar select { width:auto; min-width:170px; font-weight:600; }
+  .bar .langkah { flex:1 1 280px; font-size:.9rem; } .bar .langkah b { color:var(--accent); }
+  .ph { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:10px; margin:4px 0 14px; } .ph h2 { font-size:1.4rem; } .ph .aks { display:flex; flex-wrap:wrap; gap:8px; }
+  .card { background:#fff; border:1px solid var(--stroke); border-radius:16px; padding:18px 20px; margin-bottom:16px; box-shadow:0 1px 2px rgba(15,23,42,.04), 0 6px 18px rgba(15,23,42,.05); }
+  .card h3 { font-size:1.05rem; margin-bottom:10px; } .card > p:first-of-type { margin-top:0; }
+  .kpi { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:12px; margin-bottom:16px; }
+  .kpi > div { background:#F4F7FB; border:1px solid var(--stroke); border-radius:14px; padding:12px 16px; } .kpi small { display:block; } .kpi b { display:block; font-size:1.3rem; margin:2px 0; } .kpi em { font-style:normal; font-size:.78rem; color:var(--muted); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:980px) { .grid2 { grid-template-columns:1fr; } }
+  input, select, textarea { width:100%; background:#fff; border:1px solid #CBD5E1; border-radius:10px; padding:8px 11px; }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline:2px solid rgba(47,127,121,.6); outline-offset:1px; }
+  input[type=checkbox] { width:auto; }
+  .btn, .cta { border:1px solid #CBD5E1; background:#fff; border-radius:10px; padding:8px 14px; } .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .cta { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; } .cta:hover { background:#26665F; border-color:#26665F; color:#fff; } .cta:disabled, .btn:disabled { opacity:.5; cursor:default; }
+  .btn.mini { padding:3px 10px; font-size:.82rem; border-radius:8px; } .btn.bahaya:hover { border-color:var(--bad); color:var(--bad); }
+  .chip { display:inline-block; border:1px solid var(--stroke); background:#fff; border-radius:99px; padding:4px 12px; font-size:.84rem; } button.chip.on { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .lencana { display:inline-block; border-radius:99px; padding:2px 10px; font-size:.76rem; font-weight:600; background:var(--panel2); color:var(--muted); white-space:nowrap; }
+  .lencana.ok { background:var(--ok-bg); color:var(--ok); } .lencana.warn { background:var(--warn-bg); color:var(--warn); } .lencana.bad { background:var(--bad-bg); color:var(--bad); } .lencana.info { background:#E1F0F4; color:#2E6E7C; }
+  .subtabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .tw { overflow-x:auto; } table.tbl { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .tbl th { background:var(--navy); color:#fff; text-align:left; font-weight:600; padding:8px 10px; white-space:nowrap; cursor:pointer; user-select:none; } .tbl th.r { text-align:right; }
+  .tbl td { padding:8px 10px; border-bottom:1px solid #E5EAF1; vertical-align:top; } .tbl tbody tr:hover td { background:#F4F7FB; } .tbl tr.batal td { color:#9AA3B2; text-decoration:line-through; } .tbl tfoot td { font-weight:700; background:#F4F7FB; }
+  .tbl select, .tbl input { padding:4px 8px; font-size:.88rem; } .tbl td input[type=number] { width:96px; text-align:right; }
+  .cari { max-width:320px; margin-bottom:10px; }
+  .peringatan { border-radius:12px; padding:10px 14px; margin-bottom:10px; background:var(--warn-bg); color:#6F5420; } .peringatan.bad { background:var(--bad-bg); color:#8A3B33; } .peringatan.ok { background:var(--ok-bg); color:#2D6350; }
+  .peringatan ul { margin:4px 0 0; padding-left:20px; }
+  .prog { height:12px; background:#E2E8F0; border-radius:99px; overflow:hidden; } .prog > i { display:block; height:100%; background:var(--accent); }
+  .tren { display:grid; grid-template-columns:110px 1fr 130px; gap:6px 10px; align-items:center; font-size:.88rem; }
+  .langkahs { display:flex; flex-wrap:wrap; gap:6px; } .langkahs span { padding:4px 10px; border-radius:8px; font-size:.78rem; background:var(--panel2); color:var(--muted); } .langkahs span.lalu { background:var(--ok-bg); color:var(--ok); } .langkahs span.kini { background:var(--accent); color:#fff; font-weight:600; }
+  .toko { margin-bottom:14px; } .toko > h4 { margin:0 0 6px; font-size:.98rem; }
+  details.kl { border:1px solid var(--stroke); border-radius:12px; padding:8px 14px; margin-bottom:8px; background:#fff; } details.kl summary { cursor:pointer; font-weight:600; }
+  dialog { border:0; border-radius:18px; padding:0; width:min(560px, 94vw); box-shadow:0 20px 60px rgba(15,23,42,.35); } dialog::backdrop { background:rgba(15,23,42,.45); }
+  .fm { padding:20px 22px; max-height:88vh; overflow:auto; } .fg { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; margin-top:12px; } .fg .w2 { grid-column:1 / -1; } @media (max-width:520px) { .fg { grid-template-columns:1fr; } }
+  label.f { display:block; font-size:.8rem; color:var(--muted); margin-bottom:12px; } label.f > :is(input, select, textarea) { margin-top:4px; color:var(--text); } label.ck { display:flex; gap:8px; align-items:center; font-size:.9rem; color:var(--text); }
+  .err { color:var(--bad); font-weight:600; min-height:1.2em; margin-top:4px; } .aks { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+  #toast { position:fixed; right:16px; bottom:16px; z-index:50; display:flex; flex-direction:column; gap:8px; max-width:min(420px, 92vw); }
+  #toast div { background:var(--navy); color:#fff; padding:10px 14px; border-radius:12px; box-shadow:0 8px 24px rgba(15,23,42,.3); } #toast div.bad { background:var(--bad); }
+  #cetak { display:none; }
+  .dok { font-family:"Times New Roman", serif; color:#000; font-size:12pt; line-height:1.4; } .dok img.kop { width:100%; margin-bottom:10px; } .dok h2 { text-align:center; font-size:14pt; margin:8px 0 2px; text-decoration:underline; } .dok .no { text-align:center; margin-bottom:12px; }
+  .dok table { width:100%; border-collapse:collapse; margin:8px 0; font-size:11pt; } .dok th, .dok td { border:1px solid #000; padding:4px 6px; } .dok th { background:#eee; } .dok td.r, .dok th.r { text-align:right; }
+  .dok .ttd { display:flex; justify-content:space-around; margin-top:28px; text-align:center; } .dok .ttd div { min-width:190px; } .dok .ttd .sp { height:70px; }
+  .dok .hal { page-break-after:always; } .dok .hal:last-child { page-break-after:auto; } .dok .kv td { border:0; padding:1px 6px; }
+  @media (max-width:860px) { .wrap { padding:12px 12px 64px; } .card { padding:14px; } .btn, .cta, input, select { min-height:44px; } .btn.mini { min-height:34px; } input, select, textarea { font-size:16px; } }
+  @media print { body > :not(#cetak) { display:none !important; } #cetak { display:block !important; } body { background:#fff; } @page { size:A4; margin:14mm; } }
+</style>
+<link rel="stylesheet" href="../aset/tema.css?v=1.291">
+</head>
+<body>
+<div class="wrap">
+  <header class="kop"><h1>SISTEM BELANJA &amp; DISTRIBUSI CHEMICAL</h1><div class="perusahaan">PT. RAY MITRA PERKASA</div></header>
+  <nav class="tabs" id="tabs" aria-label="Halaman chemical"></nav>
+  <div class="bar" id="bar"></div>
+  <main id="main"></main>
+</div>
+<dialog id="dlg"></dialog>
+<div id="cetak" class="dok"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  'use strict';
+  /* Data disimpan di peramban (localStorage) dulu; semua baca-tulis lewat muatDB / simpan supaya mudah dipindah ke Supabase nanti. */
+  const KEY = 'chemical.v1';
+  const STATUS = ['DRAFT', 'REKAP_PERMINTAAN', 'CEK_ANGGARAN', 'DIAJUKAN', 'DISETUJUI', 'BELANJA', 'DISTRIBUSI', 'SELESAI_KIRIM', 'DILAPORKAN', 'TUTUP'];
+  const NAMA_ST = { DRAFT: 'Draft', REKAP_PERMINTAAN: 'Rekap permintaan', CEK_ANGGARAN: 'Cek anggaran', DIAJUKAN: 'Diajukan', DISETUJUI: 'Disetujui', BELANJA: 'Belanja', DISTRIBUSI: 'Distribusi', SELESAI_KIRIM: 'Selesai kirim', DILAPORKAN: 'Dilaporkan', TUTUP: 'Tutup' };
+  const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+  const KAT_BIAYA = ['Bensin', 'Makan', 'Parkir', 'Tol', 'Oli / servis kendaraan', 'Ongkir / paket', 'Upah bongkar-muat', 'Lain-lain'];
+  const SATUAN = ['liter', 'pcs', 'kg', 'dus', 'botol', 'galon', 'pak'];
+  const ST_KIRIM = ['BELUM DIKIRIM', 'DALAM PENGIRIMAN', 'TERKIRIM', 'DITERIMA'];
+  const ST_BELI = ['TERBELI', 'KURANG DARI RENCANA', 'TIDAK TERSEDIA', 'GANTI MEREK'];
+  const HAL = [['dashboard', 'Beranda'], ['periode', 'Periode'], ['permintaan', 'Permintaan'], ['anggaran', 'Cek Anggaran'], ['pengajuan', 'Pengajuan'], ['belanja', 'Belanja'], ['pemisahan', 'Pemisahan'], ['pengiriman', 'Pengiriman'], ['biaya', 'Biaya Operasional'], ['laporan', 'Laporan'], ['master', 'Master Data'], ['pengaturan', 'Pengaturan']];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const rp = n => { n = Math.round(+n || 0); return (n < 0 ? '-' : '') + 'Rp' + Math.abs(n).toLocaleString('id-ID'); };
+  const jml = n => (+n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+  const tglf = s => s ? new Date(s + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  const jum = (a, f) => a.reduce((s, x) => s + f(x), 0);
+  const rata2 = (a, b) => b ? a / b : 0;
+
+  const kosong = () => ({
+    v: 1, seq: {}, pilih: '', klien: [], barang: [], toko: [], periode: [], permintaan: [], cek: {}, pengajuan: {}, realisasi: [], biaya: [], alokasi: {},
+    metodeBiaya: {}, biayaManual: {}, biayaKunci: {}, distribusi: [], stok: [], ba: {}, ceklis: {}, talangan: {},
+    aturan: { ambangAnggaran: 90, ambangHarga: 10, pihak1: { nama: 'Shohib Izzar Muhammad', jabatan: 'Admin' }, pihak2: { nama: 'Ferry Atmadi, S.E', jabatan: 'Direktur Utama' }, nomorSurat: 0 }, log: []
+  });
+  let DB; const ui = { page: 'dashboard', sub: {} };
+  function muatDB() {
+    try { const s = localStorage.getItem(KEY); if (s) { const d = Object.assign(kosong(), JSON.parse(s)); d.aturan = Object.assign(kosong().aturan, d.aturan); return d; } } catch (e) { /* data rusak atau diblokir: mulai kosong */ }
+    return kosong();
+  }
+  function simpan() { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) { galat('Penyimpanan peramban penuh atau diblokir. Unduh cadangan di halaman Pengaturan.'); } }
+  function nid(pref, pad = 3) { DB.seq[pref] = (DB.seq[pref] || 0) + 1; return pref + '-' + String(DB.seq[pref]).padStart(pad, '0'); }
+
+  /* ---------- pesan, dialog, tulis dengan log ---------- */
+  function pesan(t, cls) { const d = document.createElement('div'); d.textContent = t; if (cls) d.className = cls; $('toast').appendChild(d); setTimeout(() => d.remove(), cls ? 7000 : 3500); }
+  const info = t => pesan(t), galat = t => pesan(t, 'bad');
+  const P = () => DB.periode.find(p => p.id === DB.pilih) || null;
+  const lab = p => BULAN[p.bulan - 1] + ' ' + p.tahun;
+  const si = p => STATUS.indexOf(p.status);
+  const urutPeriode = () => DB.periode.slice().sort((a, b) => a.id < b.id ? -1 : 1);
+  /* Semua perubahan lewat T: menolak bila periode TUTUP, mencatat log, menyimpan, menggambar ulang. Mengembalikan '' bila berhasil, pesan bila ditolak. */
+  function T(aksi, tabel, rid, ring, fn, master) {
+    const p = P();
+    if (!master) {
+      if (!p) return 'Buat atau pilih periode dulu di halaman Periode.';
+      if (p.status === 'TUTUP') return `Periode ${lab(p)} sudah TUTUP dan hanya bisa dibaca. Buka kembali lewat halaman Periode bila perlu.`;
+    }
+    fn();
+    DB.log.push({ w: new Date().toISOString(), u: 'Admin', aksi, tabel, id: rid, r: ring });
+    if (DB.log.length > 3000) DB.log.splice(0, DB.log.length - 3000);
+    simpan(); render(); return '';
+  }
+  const Y = (...a) => { const g = T(...a); if (g) galat(g); return g; };
+
+  function fld(f, v) {
+    const id = 'f_' + f.k, val = v ?? f.def ?? ''; let c;
+    if (f.t === 'select') c = `<select id="${id}">${f.opt.map(([a, b]) => `<option value="${esc(a)}" ${String(a) === String(val) ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>`;
+    else if (f.t === 'textarea') c = `<textarea id="${id}" rows="3">${esc(val)}</textarea>`;
+    else if (f.t === 'check') return `<label class="f ck w2"><input type="checkbox" id="${id}" ${val ? 'checked' : ''}> ${esc(f.l)}</label>`;
+    else c = `<input id="${id}" type="${f.t || 'text'}" ${f.t === 'number' ? 'step="any" inputmode="decimal"' : ''} value="${esc(val)}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}>`;
+    return `<label class="f ${f.w ? 'w2' : ''}">${esc(f.l)}${f.req ? ' *' : ''}${c}${f.h ? `<small>${esc(f.h)}</small>` : ''}</label>`;
+  }
+  function form(judul, fields, nilai, simpanFn, o = {}) {
+    const d = $('dlg');
+    d.innerHTML = `<form class="fm"><h3>${judul}</h3>${o.info || ''}<div class="fg">${fields.map(f => fld(f, nilai[f.k])).join('')}</div><div class="err" id="fe"></div><div class="aks"><button type="button" class="btn" data-a="tutupdlg">Batal</button><button class="cta">${o.tombol || 'Simpan'}</button></div></form>`;
+    d.querySelector('form').onsubmit = e => {
+      e.preventDefault(); const v = {};
+      for (const f of fields) {
+        const el = $('f_' + f.k); let x = f.t === 'check' ? el.checked : el.value.trim();
+        if (f.t === 'number') x = x === '' ? null : +x;
+        if (f.req && (x === '' || x === null || (f.t === 'number' && isNaN(x)))) { $('fe').textContent = `Isi kolom "${f.l}" dulu.`; el.focus(); return; }
+        v[f.k] = x;
+      }
+      const err = simpanFn(v); if (err) { $('fe').textContent = err; return; }
+      d.close();
+    };
+    d.showModal();
+  }
+
+  /* ---------- tabel: cari, urut, ekspor ---------- */
+  let tabelN = 0;
+  function tabel(cols, rows, o = {}) {
+    const id = 'tb' + (++tabelN);
+    const head = cols.map((c, i) => `<th class="${c.r ? 'r' : ''}" data-i="${i}">${c.h}</th>`).join('');
+    const body = rows.map(r => `<tr class="${o.cls ? o.cls(r) : ''}">${cols.map(c => `<td class="${c.r ? 'r num' : ''}" data-v="${esc(c.v ? c.v(r) : '')}">${c.f(r)}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="muted">${o.kosong || 'Belum ada data.'}</td></tr>`;
+    const foot = o.foot ? `<tfoot><tr>${o.foot.map((x, i) => `<td class="${cols[i] && cols[i].r ? 'r' : ''}">${x}</td>`).join('')}</tr></tfoot>` : '';
+    return `${o.cari === false ? '' : `<input class="cari" data-cari="${id}" placeholder="Cari…" aria-label="Cari di tabel">`}<div class="tw" id="${id}"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody>${foot}</table></div>${o.ekspor ? `<p><button class="btn mini" data-a="csv" data-t="${id}" data-n="${esc(o.ekspor)}">Ekspor Excel (CSV)</button></p>` : ''}`;
+  }
+  function unduh(nama, isi, mime) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: mime || 'text/plain' })); a.download = nama; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function csvTabel(tbl, nama) {
+    const q = c => '"' + String(c).replace(/"/g, '""').replace(/\s+/g, ' ').trim() + '"';
+    const baris = [...tbl.querySelectorAll('tr')].map(tr => [...tr.children].map(td => q(td.textContent)).join(';'));
+    unduh(nama + '.csv', '﻿' + baris.join('\r\n'), 'text/csv;charset=utf-8');
+  }
+  function urutTabel(th) {
+    const tb = th.closest('table'), i = +th.dataset.i, naik = th.dataset.o !== 'a';
+    tb.querySelectorAll('th').forEach(x => delete x.dataset.o); th.dataset.o = naik ? 'a' : 'd';
+    const body = tb.tBodies[0], baris = [...body.rows];
+    const nilai = tr => { const td = tr.children[i]; return td ? (td.dataset.v || td.textContent).trim() : ''; };
+    baris.sort((a, b) => { const x = nilai(a), y = nilai(b), nx = parseFloat(x), ny = parseFloat(y); const c = (!isNaN(nx) && !isNaN(ny) && /^-?[\d.]+$/.test(x) && /^-?[\d.]+$/.test(y)) ? nx - ny : x.localeCompare(y, 'id'); return naik ? c : -c; });
+    baris.forEach(r => body.appendChild(r));
+  }
+
+  /* ---------- pencarian data ---------- */
+  const kById = id => DB.klien.find(k => k.id === id), bById = id => DB.barang.find(b => b.id === id), tById = id => DB.toko.find(t => t.id === id);
+  const kNama = id => { const k = kById(id); return k ? k.nama + (k.lokasi ? ' — ' + k.lokasi : '') : id || '—'; };
+  const bNama = id => (bById(id) || {}).nama || id || '—';
+  const tNama = id => (tById(id) || {}).nama || 'Belum ditentukan';
+  const bSat = id => (bById(id) || {}).satuan || '';
+  const hRef = id => (bById(id) || {}).harga_ref || 0;
+  const reqP = per => DB.permintaan.filter(r => r.per === per && !r.batal);
+  const realP = per => DB.realisasi.filter(r => r.per === per && !r.batal);
+  const biayaP = per => DB.biaya.filter(b => b.per === per && !b.batal);
+  const totReal = per => jum(realP(per), r => r.sub);
+  const totOps = per => jum(biayaP(per), b => b.nom);
+  const transferP = per => ((DB.pengajuan[per] || {}).transfer || {}).nominal || 0;
+  const sisaDana = per => transferP(per) - totReal(per) - totOps(per);
+  const beli = (per, brg) => jum(realP(per).filter(r => r.brg === brg), r => r.qty);
+  const hargaRata = (per, brg) => { const l = realP(per).filter(r => r.brg === brg && r.qty > 0); const q = jum(l, r => r.qty); return q ? jum(l, r => r.sub) / q : hRef(brg); };
+  const sortNama = (a, b) => String(a).localeCompare(String(b), 'id');
+
+  /* ---------- cek anggaran ---------- */
+  function cekAnggaran(per) {
+    const m = new Map();
+    for (const r of reqP(per)) { const e = m.get(r.kln) || { kln: r.kln, est: 0, n: 0 }; e.est += r.qty * hRef(r.brg); e.n++; m.set(r.kln, e); }
+    return [...m.values()].map(e => {
+      const k = kById(e.kln) || {}, ang = k.anggaran || 0;
+      const st = e.est > ang ? 'KURANG' : (e.est >= ang * DB.aturan.ambangAnggaran / 100 ? 'HAMPIR HABIS' : 'CUKUP');
+      const t = DB.cek[per + '|' + e.kln] || null;
+      const tunda = !!(t && t.tindakan === 'tunda' && st === 'KURANG');
+      const ok = !tunda && (st !== 'KURANG' || !!(t && (t.tindakan === 'tambah' || t.tindakan === 'lanjut') && t.alasan));
+      return { ...e, ang, sel: ang - e.est, st, t, ok, tunda };
+    }).sort((a, b) => sortNama(kNama(a.kln), kNama(b.kln)));
+  }
+  const totDiajukan = pg => pg ? jum(pg.items, i => i.qty * i.harga) : 0;
+  const totSetuju = pg => pg ? jum(pg.items.filter(i => i.status === 'DISETUJUI'), i => i.qtyS * i.harga) : 0;
+  const daftarBelanja = per => { const pg = DB.pengajuan[per]; return pg ? pg.items.filter(i => i.status === 'DISETUJUI' && i.qtyS > 0) : []; };
+  function statusItem(per, it) {
+    const l = realP(per).filter(r => r.brg === it.brg), q = jum(l, r => r.qty);
+    if (q >= it.qtyS) return 'TERBELI'; if (q > 0) return 'KURANG DARI RENCANA';
+    return l.some(r => r.status === 'TIDAK TERSEDIA') ? 'TIDAK TERSEDIA' : 'BELUM';
+  }
+
+  /* ---------- alokasi barang per klien ---------- */
+  function buatAlokasi(per, aturan) {
+    const pg = DB.pengajuan[per]; if (!pg) return [];
+    const masuk = new Set(pg.klien), rows = [];
+    for (const brg of [...new Set(reqP(per).filter(r => masuk.has(r.kln)).map(r => r.brg))]) {
+      const dem = new Map(); reqP(per).filter(r => masuk.has(r.kln) && r.brg === brg).forEach(r => dem.set(r.kln, (dem.get(r.kln) || 0) + r.qty));
+      const ids = [...dem.keys()].sort((a, b) => ((kById(a) || {}).prioritas || 99) - ((kById(b) || {}).prioritas || 99) || sortNama(kNama(a), kNama(b)));
+      const D = jum(ids, k => dem.get(k)), B = beli(per, brg), alok = new Map();
+      if (B >= D) ids.forEach(k => alok.set(k, dem.get(k)));
+      else if (aturan === 'prioritas') { let sisa = B; ids.forEach(k => { const a = Math.min(dem.get(k), sisa); alok.set(k, a); sisa -= a; }); }
+      else {
+        const q = ids.every(k => Number.isInteger(dem.get(k))) && Number.isInteger(B) ? 1 : 0.01; let pakai = 0;
+        const dasar = ids.map(k => { const x = B * dem.get(k) / D, f = Math.floor(x / q + 1e-9) * q; pakai += f; return { k, f, frac: x - f }; });
+        let sisa = Math.round((B - pakai) / q); dasar.sort((a, b) => b.frac - a.frac).forEach(d => { if (sisa > 0 && d.frac > 1e-9) { d.f += q; sisa--; } });
+        dasar.forEach(d => alok.set(d.k, Math.round(d.f * 100) / 100));
+      }
+      ids.forEach(k => rows.push({ kln: k, brg, diminta: dem.get(k), alok: alok.get(k) || 0 }));
+    }
+    return rows;
+  }
+  function nilaiKlien(per) { const m = new Map(), a = DB.alokasi[per]; if (a) a.rows.forEach(r => m.set(r.kln, (m.get(r.kln) || 0) + r.alok * hargaRata(per, r.brg))); return m; }
+
+  /* ---------- alokasi biaya operasional ---------- */
+  function hitungBiaya(per) {
+    const nk = nilaiKlien(per), ids = new Set(nk.keys()), langsung = new Map(); let umum = 0;
+    for (const b of biayaP(per)) { if (b.tipe === 'klien' && b.kln) { langsung.set(b.kln, (langsung.get(b.kln) || 0) + b.nom); ids.add(b.kln); } else umum += b.nom; }
+    const met = DB.metodeBiaya[per] || 'proporsional', list = [...ids], um = new Map(list.map(k => [k, 0]));
+    if (list.length && umum) {
+      if (met === 'manual') { const m = DB.biayaManual[per] || {}; list.forEach(k => um.set(k, Math.round(+m[k] || 0))); }
+      else {
+        const wt = met === 'proporsional' && list.some(k => (nk.get(k) || 0) > 0) ? list.map(k => nk.get(k) || 0) : list.map(() => 1), sw = jum(wt, x => x); let s = 0;
+        list.forEach((k, i) => { const v = Math.floor(umum * wt[i] / sw + 1e-9); um.set(k, v); s += v; });
+        const besar = list.reduce((a, k) => (nk.get(k) || 0) > (nk.get(a) || 0) ? k : a, list[0]); um.set(besar, um.get(besar) + (umum - s));
+      }
+    }
+    return { met, umum, langsung, um, list, nk, selisih: met === 'manual' ? umum - jum(list, k => um.get(k)) : 0 };
+  }
+
+  /* ---------- halaman ---------- */
+  const PAGES = {};
+  const perlu = fn => () => P() ? fn(P()) : `<div class="card"><h3>Belum ada periode</h3><p>Semua kegiatan bulanan terikat ke satu periode (satu bulan). Buat periode dulu.</p><button class="cta" data-a="periodeBaru">+ Buat periode</button> <button class="btn" data-a="contoh">Muat data contoh Oktober 2026</button></div>`;
+  const lenST = s => `<span class="lencana ${s === 'TUTUP' ? '' : 'info'}">${NAMA_ST[s] || s}</span>`;
+  const lenCek = s => `<span class="lencana ${s === 'KURANG' ? 'bad' : s === 'HAMPIR HABIS' ? 'warn' : 'ok'}">${s}</span>`;
+  const lenKirim = s => `<span class="lencana ${s === 'DITERIMA' ? 'ok' : s === 'TERKIRIM' ? 'ok' : s === 'DALAM PENGIRIMAN' ? 'info' : 'warn'}">${s}</span>`;
+  const kepala = (judul, aksi = '') => `<div class="ph"><h2>${judul}</h2><div class="aks">${aksi}</div></div>`;
+
+  const LANGKAH = {
+    DRAFT: ['Masukkan permintaan chemical tiap klien.', 'permintaan'], REKAP_PERMINTAAN: ['Cek rekap permintaan, lalu periksa anggaran tiap klien.', 'anggaran'],
+    CEK_ANGGARAN: ['Beres-kan klien berstatus KURANG, lalu buat pengajuan ke pimpinan.', 'pengajuan'], DIAJUKAN: ['Catat keputusan pimpinan dan dana yang ditransfer.', 'pengajuan'],
+    DISETUJUI: ['Belanja sesuai daftar yang disetujui dan catat harga aktual.', 'belanja'], BELANJA: ['Selesaikan belanja, lalu pisahkan barang per lokasi.', 'pemisahan'],
+    DISTRIBUSI: ['Kirim barang ke tiap klien dan catat statusnya.', 'pengiriman'], SELESAI_KIRIM: ['Periksa laporan dan sisa dana, lalu tandai sebagai dilaporkan.', 'laporan'],
+    DILAPORKAN: ['Buat berita acara pengembalian dana, lalu tutup periode.', 'laporan'], TUTUP: ['Periode sudah ditutup. Data hanya bisa dibaca.', 'dashboard']
+  };
+  function renderBar() {
+    const p = P(), tabs = $('tabs');
+    tabs.innerHTML = HAL.map(([k, t]) => `<button data-pg="${k}" class="${k === ui.page ? 'on' : ''}">${t}</button>`).join('');
+    if (!p) { $('bar').innerHTML = `<span>Belum ada periode.</span><button class="cta" data-a="periodeBaru">+ Buat periode</button>`; return; }
+    const l = LANGKAH[p.status], sel = urutPeriode().map(x => `<option value="${x.id}" ${x.id === p.id ? 'selected' : ''}>${lab(x)}</option>`).join('');
+    const lanjut = p.status === 'TUTUP' ? '' : `<button class="cta" data-a="lanjut">Lanjut ke tahap: ${NAMA_ST[STATUS[si(p) + 1]]} →</button>`;
+    $('bar').innerHTML = `<select id="pilihPer" aria-label="Periode">${sel}</select>${lenST(p.status)}<div class="langkah"><b>Langkah berikutnya:</b> ${esc(l[0])} <button class="btn mini" data-pg="${l[1]}">Buka halaman</button></div>${lanjut}`;
+  }
+
+  /* Beranda */
+  PAGES.dashboard = perlu(p => {
+    const per = p.id, pg = DB.pengajuan[per], cek = cekAnggaran(per), real = totReal(per), ops = totOps(per), tr = transferP(per), sisa = tr - real - ops;
+    const w = [];
+    cek.filter(c => c.st === 'KURANG' && !c.ok && !c.tunda).forEach(c => w.push(`Anggaran kurang: ${esc(kNama(c.kln))} (estimasi ${rp(c.est)}, anggaran ${rp(c.ang)}). Pilih tindakan di Cek Anggaran.`));
+    if (si(p) >= 4) {
+      const belum = daftarBelanja(per).filter(i => statusItem(per, i) !== 'TERBELI'); if (belum.length) w.push(`${belum.length} barang belum terbeli sesuai rencana.`);
+      const naik = daftarBelanja(per).filter(i => { const q = beli(per, i.brg); return q > 0 && Math.abs(hargaRata(per, i.brg) / i.harga - 1) * 100 > DB.aturan.ambangHarga; }); if (naik.length) w.push(`Harga aktual melewati ambang ${DB.aturan.ambangHarga}% pada ${naik.length} barang: ${naik.map(i => esc(bNama(i.brg))).join(', ')}.`);
+    }
+    if (si(p) >= 6) { const bk = DB.distribusi.filter(d => d.per === per && !['TERKIRIM', 'DITERIMA'].includes(d.status)); if (bk.length) w.push(`${bk.length} klien belum terkirim.`); }
+    if (tr && sisa < 0) w.push(`Total belanja dan biaya melebihi dana ditransfer sebesar ${rp(-sisa)} (kekurangan dana, perlu diganti).`);
+    const dis = DB.distribusi.filter(d => d.per === per), terkirim = dis.filter(d => ['TERKIRIM', 'DITERIMA'].includes(d.status)).length;
+    const tren = urutPeriode().slice(-6).map(x => ({ x, v: totReal(x.id) + totOps(x.id) })), mx = Math.max(1, ...tren.map(t => t.v));
+    return `${kepala(`Beranda — ${lab(p)}`)}
+      <div class="card"><div class="langkahs">${STATUS.map((s, i) => `<span class="${i < si(p) ? 'lalu' : i === si(p) ? 'kini' : ''}">${NAMA_ST[s]}</span>`).join('')}</div></div>
+      <div class="kpi"><div><small>Klien / lokasi</small><b>${cek.length}</b><em>punya permintaan</em></div><div><small>Total permintaan</small><b>${rp(jum(cek, c => c.est))}</b><em>${reqP(per).length} baris (estimasi)</em></div><div><small>Total diajukan</small><b>${rp(totDiajukan(pg))}</b><em>${pg ? 'nomor ' + esc(pg.nomor) : 'belum ada pengajuan'}</em></div><div><small>Terbelanjakan</small><b>${rp(real)}</b><em>${realP(per).length} baris realisasi</em></div><div><small>Biaya operasional</small><b>${rp(ops)}</b><em>${biayaP(per).length} catatan</em></div><div><small>${sisa < 0 ? 'Kekurangan dana' : 'Sisa dana'}</small><b class="${sisa < 0 ? 'neg' : ''}">${rp(Math.abs(sisa))}</b><em>dana ditransfer ${rp(tr)}</em></div></div>
+      <div class="grid2"><div class="card"><h3>Peringatan</h3>${w.length ? `<div class="peringatan"><ul>${w.map(x => `<li>${x}</li>`).join('')}</ul></div>` : '<div class="peringatan ok">Tidak ada peringatan.</div>'}</div>
+      <div class="card"><h3>Progres pengiriman</h3>${dis.length ? `<p><b>${terkirim}</b> dari <b>${dis.length}</b> klien sudah terkirim.</p><div class="prog"><i style="width:${100 * terkirim / dis.length}%"></i></div>` : '<p class="muted">Belum ada data pengiriman. Muncul setelah barang dipisahkan per lokasi.</p>'}</div></div>
+      <div class="card"><h3>Tren biaya per bulan <small>(belanja + operasional)</small></h3><div class="tren">${tren.map(t => `<span>${lab(t.x)}</span><div class="prog"><i style="width:${100 * t.v / mx}%"></i></div><span class="r num">${rp(t.v)}</span>`).join('')}</div></div>`;
+  });
+
+  /* Periode */
+  PAGES.periode = () => {
+    const p = P(), urut = urutPeriode().reverse();
+    return `${kepala('Periode', `<button class="cta" data-a="periodeBaru">+ Periode baru</button>`)}
+      ${p ? `<div class="card"><h3>${lab(p)} — ${NAMA_ST[p.status]}</h3><div class="langkahs">${STATUS.map((s, i) => `<span class="${i < si(p) ? 'lalu' : i === si(p) ? 'kini' : ''}">${NAMA_ST[s]}</span>`).join('')}</div>
+        <p class="muted">Periode berstatus TUTUP tidak bisa diubah. Membuka kembali tercatat di log dan memerlukan alasan.</p>
+        <p>${p.status === 'TUTUP' ? '<button class="btn" data-a="bukaKembali">Buka kembali periode…</button>' : (si(p) > 0 ? '<button class="btn" data-a="mundur">← Kembali ke tahap sebelumnya</button>' : '')}</p></div>` : ''}
+      <div class="card"><h3>Daftar periode</h3>${tabel([{ h: 'Periode', f: x => `<b>${lab(x)}</b>`, v: x => x.id }, { h: 'ID', f: x => x.id }, { h: 'Status', f: x => lenST(x.status), v: x => si(x) }, { h: 'Dibuka', f: x => tglf(x.tglBuka) }, { h: 'Ditutup', f: x => tglf(x.tglTutup) }, { h: 'Belanja', r: 1, f: x => rp(totReal(x.id)), v: x => totReal(x.id) }, { h: '', f: x => x.id === DB.pilih ? '<span class="lencana ok">Dipilih</span>' : `<button class="btn mini" data-a="pilihPer" data-id="${x.id}">Pilih</button>`, cari: 0 }], urut, { cari: false })}</div>`;
+  };
+
+  /* Permintaan */
+  PAGES.permintaan = perlu(p => {
+    const per = p.id, s = ui.sub.permintaan || 'barang', rows = reqP(per), bisa = p.status !== 'TUTUP';
+    const subs = `<div class="subtabs">${[['barang', 'Rekap per barang'], ['klien', 'Rekap per klien'], ['baris', 'Semua baris']].map(([k, t]) => `<button class="chip ${s === k ? 'on' : ''}" data-sub="permintaan:${k}">${t}</button>`).join('')}</div>`;
+    let isi;
+    if (s === 'barang') {
+      const m = new Map(); rows.forEach(r => { const e = m.get(r.brg) || { brg: r.brg, q: 0, k: new Set() }; e.q += r.qty; e.k.add(r.kln); m.set(r.brg, e); });
+      const l = [...m.values()].sort((a, b) => sortNama(bNama(a.brg), bNama(b.brg)));
+      isi = tabel([{ h: 'Barang', f: x => esc(bNama(x.brg)), v: x => bNama(x.brg) }, { h: 'Satuan', f: x => bSat(x.brg) }, { h: 'Total jumlah', r: 1, f: x => jml(x.q), v: x => x.q }, { h: 'Jumlah klien', r: 1, f: x => x.k.size, v: x => x.k.size }, { h: 'Estimasi biaya', r: 1, f: x => rp(x.q * hRef(x.brg)), v: x => x.q * hRef(x.brg) }], l, { ekspor: 'rekap-permintaan-per-barang', foot: ['Total', '', '', '', rp(jum(l, x => x.q * hRef(x.brg)))] });
+    } else if (s === 'klien') {
+      const ids = [...new Set(rows.map(r => r.kln))].sort((a, b) => sortNama(kNama(a), kNama(b)));
+      isi = ids.map(k => { const l = rows.filter(r => r.kln === k); return `<details class="kl"><summary>${esc(kNama(k))} — ${l.length} barang · ${rp(jum(l, r => r.qty * hRef(r.brg)))}</summary>${tabel([{ h: 'Barang', f: r => esc(bNama(r.brg)) }, { h: 'Jumlah', r: 1, f: r => jml(r.qty) + ' ' + esc(r.satuan) }, { h: 'Jenis', f: r => r.jenis === 'tambahan' ? '<span class="lencana warn">Tambahan</span>' : 'Reguler' }, { h: 'Catatan', f: r => esc(r.cat) }], l, { cari: false })}</details>`; }).join('') || '<p class="muted">Belum ada permintaan.</p>';
+    } else {
+      isi = tabel([{ h: 'Klien', f: r => esc(kNama(r.kln)), v: r => kNama(r.kln) }, { h: 'Barang', f: r => esc(bNama(r.brg)), v: r => bNama(r.brg) }, { h: 'Jumlah', r: 1, f: r => jml(r.qty) + ' ' + esc(r.satuan), v: r => r.qty }, { h: 'Jenis', f: r => r.jenis === 'tambahan' ? '<span class="lencana warn">Tambahan</span>' : 'Reguler' }, { h: 'Catatan', f: r => esc(r.cat) }, { h: 'Tgl input', f: r => tglf(r.tgl), v: r => r.tgl }, { h: '', f: r => bisa ? `<button class="btn mini" data-a="ubahReq" data-id="${r.id}">Ubah</button> <button class="btn mini bahaya" data-a="batalReq" data-id="${r.id}">Batalkan</button>` : '' }], rows, { ekspor: 'permintaan-' + per });
+    }
+    return `${kepala('Permintaan', `<button class="cta" data-a="tambahReq">+ Tambah permintaan</button><button class="btn" data-a="imporReq">Impor dari Sheets / CSV</button>`)}${subs}<div class="card">${isi}</div>`;
+  });
+
+  /* Cek anggaran */
+  PAGES.anggaran = perlu(p => {
+    const per = p.id, c = cekAnggaran(per), blok = c.filter(x => !x.ok && !x.tunda).length;
+    const TIND = { kurangi: 'Kurangi jumlah barang', tambah: 'Minta tambahan anggaran', tunda: 'Tunda sebagian permintaan', lanjut: 'Lanjut dengan persetujuan pimpinan' };
+    return `${kepala('Cek Anggaran')}
+      ${blok ? `<div class="peringatan bad">${blok} klien berstatus KURANG belum punya tindakan yang sah, sehingga belum masuk pengajuan.</div>` : (c.length ? '<div class="peringatan ok">Semua klien siap diajukan.</div>' : '')}
+      <div class="card"><p class="muted">Estimasi = jumlah × harga referensi. HAMPIR HABIS bila estimasi ≥ ${DB.aturan.ambangAnggaran}% anggaran (bisa diatur di Pengaturan).</p>
+      ${tabel([{ h: 'Klien', f: x => esc(kNama(x.kln)), v: x => kNama(x.kln) }, { h: 'Anggaran', r: 1, f: x => rp(x.ang), v: x => x.ang }, { h: 'Estimasi', r: 1, f: x => rp(x.est), v: x => x.est }, { h: 'Selisih', r: 1, f: x => `<span class="${x.sel < 0 ? 'neg' : ''}">${rp(x.sel)}</span>`, v: x => x.sel }, { h: 'Status', f: x => lenCek(x.st) }, { h: 'Tindakan', f: x => x.st === 'KURANG' ? (x.t ? `${esc(TIND[x.t.tindakan])}${x.t.alasan ? `<br><small>${esc(x.t.alasan)}</small>` : ''}` : '<span class="neg">Belum dipilih</span>') : '—' }, { h: '', f: x => x.st === 'KURANG' ? `<button class="btn mini" data-a="tindakan" data-id="${x.kln}">Pilih tindakan</button>` : '' }], c, { ekspor: 'cek-anggaran-' + per, kosong: 'Belum ada permintaan di periode ini.' })}</div>`;
+  });
+
+  /* Pengajuan */
+  const kopHTML = () => `<img class="kop" src="../aset/kop-surat.png" alt="PT. Ray Mitra Perkasa">`;
+  const ttdHTML = (a, b) => `<div class="ttd"><div>${esc(a.jabatan)}<div class="sp"></div><b><u>${esc(a.nama)}</u></b></div><div>${esc(b.jabatan)}<div class="sp"></div><b><u>${esc(b.nama)}</u></b></div></div>`;
+  PAGES.pengajuan = perlu(p => {
+    const per = p.id, pg = DB.pengajuan[per], c = cekAnggaran(per), masuk = c.filter(x => x.ok), tahan = c.filter(x => !x.ok), final = pg && ['DISETUJUI', 'REVISI', 'DITOLAK'].includes(pg.keputusan);
+    const bisaBuat = !pg || pg.keputusan !== 'DISETUJUI';
+    const kartuAtas = `<div class="card"><h3>Klien yang masuk pengajuan</h3><p>${masuk.length} klien masuk${tahan.length ? `, ${tahan.length} ditahan (${tahan.map(x => esc(kNama(x.kln))).join(', ')})` : ''}.</p>
+      <button class="cta" data-a="buatPengajuan" ${bisaBuat && masuk.length ? '' : 'disabled'}>${pg ? 'Perbarui daftar dari permintaan' : 'Buat pengajuan'}</button> ${pg && pg.keputusan === 'DISETUJUI' ? '<small>Pengajuan sudah disetujui, tidak bisa dibuat ulang.</small>' : ''}</div>`;
+    if (!pg) return `${kepala('Pengajuan')}${kartuAtas}`;
+    const edit = p.status !== 'TUTUP';
+    const tr = pg.transfer;
+    return `${kepala('Pengajuan ke Pimpinan', `<button class="btn" data-a="cetakPengajuan">Cetak / PDF dokumen</button>`)}${kartuAtas}
+      <div class="kpi"><div><small>Nomor surat</small><b style="font-size:1rem">${esc(pg.nomor)}</b><em>${tglf(pg.tgl)}</em></div><div><small>Total diajukan</small><b>${rp(totDiajukan(pg))}</b></div><div><small>Keputusan pimpinan</small><b style="font-size:1rem">${pg.keputusan || 'Belum dicatat'}</b><em>${pg.tglSetuju ? tglf(pg.tglSetuju) : ''}</em></div><div><small>Total disetujui</small><b>${rp(totSetuju(pg))}</b></div><div><small>Dana ditransfer</small><b>${tr ? rp(tr.nominal) : '—'}</b><em>${tr ? tglf(tr.tgl) : 'belum dicatat'}</em></div></div>
+      <div class="card"><h3>Daftar barang pengajuan</h3>
+      ${tabel([{ h: 'Barang', f: i => esc(bNama(i.brg)), v: i => bNama(i.brg) }, { h: 'Jumlah', r: 1, f: i => jml(i.qty) + ' ' + esc(bSat(i.brg)), v: i => i.qty }, { h: 'Harga estimasi', r: 1, f: i => rp(i.harga), v: i => i.harga }, { h: 'Subtotal', r: 1, f: i => rp(i.qty * i.harga), v: i => i.qty * i.harga }, { h: 'Toko rencana', f: i => edit ? `<select data-chg="toko" data-id="${i.brg}"><option value="">— pilih —</option>${DB.toko.filter(t => t.aktif !== false).map(t => `<option value="${t.id}" ${t.id === i.toko ? 'selected' : ''}>${esc(t.nama)}</option>`).join('')}</select>` : esc(tNama(i.toko)) }, { h: 'Keputusan barang', f: i => edit ? `<select data-chg="itemst" data-id="${i.brg}">${['MENUNGGU', 'DISETUJUI', 'REVISI', 'DITOLAK'].map(s => `<option ${s === i.status ? 'selected' : ''}>${s}</option>`).join('')}</select>` : i.status }, { h: 'Jumlah disetujui', r: 1, f: i => edit ? `<input type="number" step="any" min="0" value="${i.qtyS}" data-chg="itemq" data-id="${i.brg}">` : jml(i.qtyS) }], pg.items, { cari: false, foot: ['Total', '', '', rp(totDiajukan(pg)), '', '', ''] })}
+      <p>${edit ? `<button class="btn" data-a="setujuSemua">Setujui semua barang</button> ` : ''}</p></div>
+      <div class="grid2"><div class="card"><h3>Persetujuan pimpinan</h3><p class="muted">Pimpinan boleh menyetujui lewat chat atau lisan; catat hasilnya di sini.</p><button class="cta" data-a="catatSetuju" ${edit ? '' : 'disabled'}>Catat keputusan</button>${pg.catatan ? `<p><b>Catatan:</b> ${esc(pg.catatan)}</p>` : ''}</div>
+      <div class="card"><h3>Dana ditransfer</h3><p class="muted">Dana yang diterima untuk belanja periode ini.</p><button class="cta" data-a="catatTransfer" ${edit ? '' : 'disabled'}>${tr ? 'Ubah catatan transfer' : 'Catat transfer'}</button>${tr ? `<p>${rp(tr.nominal)} pada ${tglf(tr.tgl)}${tr.rek ? ' ke ' + esc(tr.rek) : ''}</p>` : ''}</div></div>`;
+  });
+
+  /* Belanja */
+  PAGES.belanja = perlu(p => {
+    const per = p.id, db = daftarBelanja(per), real = totReal(per), ops = totOps(per), tr = transferP(per);
+    const grup = new Map(); db.forEach(i => { const k = i.toko || ''; (grup.get(k) || grup.set(k, []).get(k)).push(i); });
+    const tokos = [...grup.keys()].sort((a, b) => sortNama(tNama(a), tNama(b)));
+    const bisaCatat = si(p) >= 4 && p.status !== 'TUTUP';
+    const lenBeli = s => `<span class="lencana ${s === 'TERBELI' ? 'ok' : s === 'BELUM' ? '' : s === 'TIDAK TERSEDIA' ? 'bad' : 'warn'}">${s}</span>`;
+    const daftar = tokos.map(tk => `<div class="toko"><h4>${esc(tNama(tk))}</h4>${tabel([{ h: '✓', f: i => `<input type="checkbox" data-chg="ceklis" data-id="${i.brg}" ${DB.ceklis[per + '|' + i.brg] ? 'checked' : ''} aria-label="Sudah dibeli">` }, { h: 'Barang', f: i => esc(bNama(i.brg)) }, { h: 'Rencana', r: 1, f: i => jml(i.qtyS) + ' ' + esc(bSat(i.brg)) }, { h: 'Harga estimasi', r: 1, f: i => rp(i.harga) }, { h: 'Terbeli', r: 1, f: i => jml(beli(per, i.brg)) }, { h: 'Harga aktual', r: 1, f: i => beli(per, i.brg) ? rp(hargaRata(per, i.brg)) : '—' }, { h: 'Selisih', r: 1, f: i => { if (!beli(per, i.brg)) return '—'; const pc = (hargaRata(per, i.brg) / i.harga - 1) * 100; return `<span class="${Math.abs(pc) > DB.aturan.ambangHarga ? 'neg' : ''}">${pc > 0 ? '+' : ''}${pc.toFixed(1)}%${Math.abs(pc) > DB.aturan.ambangHarga ? ' ⚠' : ''}</span>`; } }, { h: 'Status', f: i => lenBeli(statusItem(per, i)) }, { h: '', f: i => bisaCatat ? `<button class="btn mini" data-a="catatBeli" data-id="${i.brg}">Catat</button>` : '' }], grup.get(tk), { cari: false })}</div>`).join('');
+    const lines = DB.realisasi.filter(r => r.per === per).sort((a, b) => a.tgl < b.tgl ? 1 : -1);
+    return `${kepala('Belanja', `<button class="btn" data-a="cetakChecklist">Cetak checklist per toko</button><button class="cta" data-a="catatLain" ${p.status === 'TUTUP' ? 'disabled' : ''}>+ Pembelian LAIN-LAIN</button>`)}
+      ${si(p) < 4 ? '<div class="peringatan">Belanja barang daftar baru bisa dicatat setelah pengajuan disetujui dan dana ditransfer. Pembelian LAIN-LAIN boleh kapan saja.</div>' : ''}
+      ${tr && real + ops > tr ? `<div class="peringatan bad">Belanja + biaya operasional (${rp(real + ops)}) melebihi dana ditransfer (${rp(tr)}). Kemungkinan dana talangan pribadi; beri alasan di halaman Laporan.</div>` : ''}
+      <div class="kpi"><div><small>Dana ditransfer</small><b>${rp(tr)}</b></div><div><small>Realisasi belanja</small><b>${rp(real)}</b></div><div><small>Biaya operasional</small><b>${rp(ops)}</b></div><div><small>Sisa sementara</small><b class="${tr - real - ops < 0 ? 'neg' : ''}">${rp(tr - real - ops)}</b></div></div>
+      <div class="card"><h3>Checklist belanja per toko</h3>${daftar || '<p class="muted">Belum ada barang yang disetujui. Catat keputusan pimpinan di halaman Pengajuan.</p>'}</div>
+      <div class="card"><h3>Catatan realisasi</h3>${tabel([{ h: 'Tanggal', f: r => tglf(r.tgl), v: r => r.tgl }, { h: 'Toko', f: r => esc(tNama(r.toko)), v: r => tNama(r.toko) }, { h: 'Barang', f: r => r.brg ? esc(bNama(r.brg)) : `<span class="lencana info">LAIN-LAIN</span> ${esc(r.ket)}` }, { h: 'Jumlah', r: 1, f: r => r.brg ? jml(r.qty) + ' ' + esc(bSat(r.brg)) : '—', v: r => r.qty }, { h: 'Harga aktual', r: 1, f: r => rp(r.harga), v: r => r.harga }, { h: 'Subtotal', r: 1, f: r => rp(r.sub), v: r => r.sub }, { h: 'Status', f: r => r.batal ? 'DIBATALKAN' : esc(r.status) + (r.ket && r.brg ? `<br><small>${esc(r.ket)}</small>` : '') }, { h: 'Nota', f: r => r.nota ? (/^https?:/.test(r.nota) ? `<a href="${esc(r.nota)}" target="_blank" rel="noopener">Buka</a>` : esc(r.nota)) : '' }, { h: '', f: r => !r.batal && p.status !== 'TUTUP' ? `<button class="btn mini bahaya" data-a="batalReal" data-id="${r.id}">Batalkan</button>` : '' }], lines, { cls: r => r.batal ? 'batal' : '', ekspor: 'realisasi-' + per, foot: ['Total', '', '', '', '', rp(real), '', '', ''] })}</div>`;
+  });
+
+  /* Pemisahan */
+  PAGES.pemisahan = perlu(p => {
+    const per = p.id, a = DB.alokasi[per], pg = DB.pengajuan[per], edit = p.status !== 'TUTUP' && a && !a.dikunci;
+    const brgs = a ? [...new Set(a.rows.map(r => r.brg))].sort((x, y) => sortNama(bNama(x), bNama(y))) : [];
+    const ringkas = brgs.map(b => { const al = jum(a.rows.filter(r => r.brg === b), r => r.alok), bl = beli(per, b); return { b, bl, al, sisa: Math.round((bl - al) * 100) / 100, dim: jum(a.rows.filter(r => r.brg === b), r => r.diminta) }; });
+    const nk = nilaiKlien(per), klIds = a ? [...new Set(a.rows.map(r => r.kln))].sort((x, y) => sortNama(kNama(x), kNama(y))) : [];
+    const stokAda = DB.stok.filter(s => !s.batal && !s.terpakai);
+    return `${kepala('Pemisahan Barang per Lokasi', a ? `<button class="btn" data-a="cetakPacking">Cetak checklist packing</button>` : '')}
+      ${!pg ? '<div class="peringatan">Buat pengajuan dan belanja dulu; pemisahan memakai daftar klien di pengajuan.</div>' : ''}
+      <div class="card"><h3>Buat alokasi</h3><p class="muted">Jika barang terbeli kurang dari total permintaan: <b>proporsional</b> membagi sesuai jumlah diminta; <b>prioritas</b> memenuhi klien dengan nomor prioritas terkecil dulu (atur di Master Klien). Hasilnya bisa diedit sebelum dikunci.</p>
+        <select id="aturanAlok" style="max-width:260px;display:inline-block"><option value="proporsional" ${a && a.aturan === 'proporsional' ? 'selected' : ''}>Proporsional</option><option value="prioritas" ${a && a.aturan === 'prioritas' ? 'selected' : ''}>Prioritas manual</option></select>
+        <button class="cta" data-a="buatAlokasi" ${pg && (!a || !a.dikunci) ? '' : 'disabled'}>${a ? 'Hitung ulang alokasi' : 'Buat alokasi'}</button>
+        ${a ? `<button class="btn" data-a="kunciAlok">${a.dikunci ? 'Buka kunci' : 'Kunci alokasi'}</button> ${a.dikunci ? '<span class="lencana ok">Terkunci</span>' : ''}` : ''}</div>
+      ${a ? `<div class="card"><h3>Ringkasan per barang</h3>${tabel([{ h: 'Barang', f: r => esc(bNama(r.b)) }, { h: 'Diminta', r: 1, f: r => jml(r.dim) }, { h: 'Terbeli', r: 1, f: r => jml(r.bl) }, { h: 'Dialokasikan', r: 1, f: r => jml(r.al) }, { h: 'Sisa', r: 1, f: r => `<span class="${r.sisa < 0 ? 'neg' : ''}">${jml(r.sisa)}</span>` }, { h: 'Satuan', f: r => esc(bSat(r.b)) }], ringkas, { cari: false })}
+        <p><button class="btn" data-a="catatStok" ${p.status === 'TUTUP' ? 'disabled' : ''}>Catat sisa barang ke stok sederhana</button></p></div>
+      ${klIds.map(k => `<details class="kl" open><summary>${esc(kNama(k))} — nilai barang ${rp(nk.get(k) || 0)}</summary>${tabel([{ h: 'Barang', f: r => esc(bNama(r.brg)) }, { h: 'Diminta', r: 1, f: r => jml(r.diminta) }, { h: 'Dialokasikan', r: 1, f: r => edit ? `<input type="number" step="any" min="0" value="${r.alok}" data-chg="alok" data-k="${r.kln}" data-b="${r.brg}">` : jml(r.alok) }, { h: 'Satuan', f: r => esc(bSat(r.brg)) }, { h: 'Nilai', r: 1, f: r => rp(r.alok * hargaRata(per, r.brg)) }], a.rows.filter(r => r.kln === k), { cari: false })}</details>`).join('')}` : ''}
+      <div class="card"><h3>Sisa stok sederhana</h3>${tabel([{ h: 'Periode asal', f: s => esc(s.per) }, { h: 'Barang', f: s => esc(bNama(s.brg)) }, { h: 'Jumlah', r: 1, f: s => jml(s.qty) + ' ' + esc(bSat(s.brg)) }, { h: 'Keterangan', f: s => esc(s.ket) }, { h: 'Status', f: s => s.batal ? 'Diganti' : s.terpakai ? 'Terpakai' : '<span class="lencana ok">Tersedia</span>' }, { h: '', f: s => !s.batal && !s.terpakai ? `<button class="btn mini" data-a="stokPakai" data-id="${s.id}">Tandai terpakai</button>` : '' }], DB.stok.filter(s => !s.batal), { cari: false, kosong: 'Tidak ada sisa stok.' })}${stokAda.length ? `<p class="muted">Stok tersedia dari periode sebelumnya bisa dipakai saat belanja berikutnya.</p>` : ''}</div>`;
+  });
+
+  /* Pengiriman */
+  function sinkronDistribusi(per) {
+    const a = DB.alokasi[per], pg = DB.pengajuan[per]; const ids = new Set(a ? a.rows.filter(r => r.alok > 0).map(r => r.kln) : []);
+    let ubah = false; ids.forEach(k => { if (!DB.distribusi.some(d => d.per === per && d.kln === k)) { DB.distribusi.push({ id: nid('DST', 4), per, kln: k, status: 'BELUM DIKIRIM', tgl: '', metode: '', penerima: '', bukti: '', rute: (kById(k) || {}).wilayah || '', cat: '' }); ubah = true; } });
+    if (ubah) simpan();
+  }
+  PAGES.pengiriman = perlu(p => {
+    const per = p.id; sinkronDistribusi(per);
+    const dis = DB.distribusi.filter(d => d.per === per).sort((a, b) => sortNama(a.rute, b.rute) || sortNama(kNama(a.kln), kNama(b.kln)));
+    const rutes = [...new Set(dis.map(d => d.rute || '(tanpa rute)'))], fr = ui.sub.rute || '', terk = dis.filter(d => ['TERKIRIM', 'DITERIMA'].includes(d.status)).length;
+    const tampil = dis.filter(d => !fr || (d.rute || '(tanpa rute)') === fr);
+    return `${kepala('Pengiriman')}
+      <div class="card"><p><b>${terk}</b> dari <b>${dis.length}</b> klien sudah terkirim.</p><div class="prog"><i style="width:${dis.length ? 100 * terk / dis.length : 0}%"></i></div></div>
+      ${rutes.length > 1 ? `<div class="subtabs"><button class="chip ${fr ? '' : 'on'}" data-sub="rute:">Semua rute</button>${rutes.map(r => `<button class="chip ${fr === r ? 'on' : ''}" data-sub="rute:${esc(r)}">${esc(r)}</button>`).join('')}</div>` : ''}
+      <div class="card">${tabel([{ h: 'Rute', f: d => esc(d.rute || '—'), v: d => d.rute }, { h: 'Klien', f: d => esc(kNama(d.kln)), v: d => kNama(d.kln) }, { h: 'Status', f: d => lenKirim(d.status) }, { h: 'Tgl kirim', f: d => tglf(d.tgl), v: d => d.tgl }, { h: 'Metode', f: d => esc(d.metode) || '—' }, { h: 'Penerima', f: d => esc(d.penerima) || '—' }, { h: 'Bukti', f: d => d.bukti ? (/^https?:/.test(d.bukti) ? `<a href="${esc(d.bukti)}" target="_blank" rel="noopener">Buka</a>` : esc(d.bukti)) : '—' }, { h: '', f: d => `<button class="btn mini" data-a="ubahKirim" data-id="${d.id}">Ubah</button> <button class="btn mini" data-a="suratJalan" data-id="${d.id}">Surat jalan</button>` }], tampil, { kosong: 'Belum ada klien untuk dikirim. Buat alokasi di halaman Pemisahan.', ekspor: 'pengiriman-' + per })}</div>`;
+  });
+
+  /* Biaya operasional */
+  PAGES.biaya = perlu(p => {
+    const per = p.id, bs = DB.biaya.filter(b => b.per === per).sort((a, b) => a.tgl < b.tgl ? 1 : -1), h = hitungBiaya(per), kunci = DB.biayaKunci[per], edit = p.status !== 'TUTUP';
+    const sumBiaya = k => (h.um.get(k) || 0) + (h.langsung.get(k) || 0);
+    const metodeOpt = [['proporsional', 'Proporsional nilai barang (disarankan)'], ['rata', 'Rata per klien'], ['manual', 'Manual']];
+    return `${kepala('Biaya Operasional', `<button class="cta" data-a="tambahBiaya" ${edit ? '' : 'disabled'}>+ Catat biaya</button>`)}
+      ${si(p) < 4 ? '<div class="peringatan">Biaya dicatat selama belanja dan pengiriman, yaitu setelah pengajuan disetujui.</div>' : ''}
+      <div class="kpi"><div><small>Total biaya operasional</small><b>${rp(totOps(per))}</b></div><div><small>Biaya umum (dibagi)</small><b>${rp(h.umum)}</b></div><div><small>Langsung ke klien</small><b>${rp(jum([...h.langsung.values()], x => x))}</b></div></div>
+      <div class="card"><h3>Catatan biaya</h3>${tabel([{ h: 'Tanggal', f: b => tglf(b.tgl), v: b => b.tgl }, { h: 'Kategori', f: b => esc(b.kat) }, { h: 'Keterangan', f: b => esc(b.ket) }, { h: 'Keterkaitan', f: b => b.tipe === 'klien' ? esc(kNama(b.kln)) : 'Umum' }, { h: 'Nominal', r: 1, f: b => rp(b.nom), v: b => b.nom }, { h: 'Nota', f: b => b.nota ? (/^https?:/.test(b.nota) ? `<a href="${esc(b.nota)}" target="_blank" rel="noopener">Buka</a>` : esc(b.nota)) : '' }, { h: '', f: b => !b.batal && edit ? `<button class="btn mini bahaya" data-a="batalBiaya" data-id="${b.id}">Batalkan</button>` : '' }], bs, { cls: b => b.batal ? 'batal' : '', ekspor: 'biaya-' + per, foot: ['Total', '', '', '', rp(totOps(per)), '', ''] })}</div>
+      <div class="card"><h3>Alokasi ke klien</h3><p class="muted">Biaya umum dibagi ke klien yang menerima barang. Biaya yang jelas milik satu klien dicatat "langsung ke klien". Sisa pembulatan dibebankan ke klien dengan nilai barang terbesar.</p>
+        <select id="metodeBiaya" style="max-width:340px;display:inline-block" ${kunci ? 'disabled' : ''}>${metodeOpt.map(([v, t]) => `<option value="${v}" ${h.met === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
+        <button class="btn" data-a="kunciBiaya">${kunci ? 'Buka kunci alokasi' : 'Kunci alokasi'}</button> ${kunci ? '<span class="lencana ok">Terkunci</span>' : ''}
+        ${h.met === 'manual' && h.selisih ? `<div class="peringatan bad">Jumlah manual belum sama dengan total biaya umum (selisih ${rp(h.selisih)}).</div>` : ''}
+        ${h.list.length ? tabel([{ h: 'Klien', f: k => esc(kNama(k)) }, { h: 'Nilai barang', r: 1, f: k => rp(h.nk.get(k) || 0) }, { h: 'Biaya umum', r: 1, f: k => h.met === 'manual' && !kunci && edit ? `<input type="number" step="1" min="0" value="${h.um.get(k) || 0}" data-chg="manual" data-id="${k}">` : rp(h.um.get(k) || 0) }, { h: 'Langsung', r: 1, f: k => rp(h.langsung.get(k) || 0) }, { h: 'Total biaya', r: 1, f: k => rp(sumBiaya(k)) }], h.list, { cari: false, foot: ['Total', rp(jum(h.list, k => h.nk.get(k) || 0)), rp(jum(h.list, k => h.um.get(k) || 0)), rp(jum(h.list, k => h.langsung.get(k) || 0)), rp(jum(h.list, sumBiaya))] }) : '<p class="muted">Belum ada klien penerima. Buat alokasi barang di halaman Pemisahan.</p>'}</div>`;
+  });
+
+  /* Laporan */
+  function dataLaporan(p) {
+    const per = p.id, pg = DB.pengajuan[per] || { items: [], klien: [] }, tr = transferP(per), real = totReal(per), ops = totOps(per), h = hitungBiaya(per);
+    const toko = new Map(); realP(per).forEach(r => { const k = r.brg ? r.toko : '__lain'; (toko.get(k) || toko.set(k, []).get(k)).push(r); });
+    const klien = h.list.map(k => { const nilai = h.nk.get(k) || 0, bi = (h.um.get(k) || 0) + (h.langsung.get(k) || 0), ang = (kById(k) || {}).anggaran || 0; return { k, nilai, bi, total: nilai + bi, ang, sel: ang - nilai - bi }; }).sort((a, b) => sortNama(kNama(a.k), kNama(b.k)));
+    const prevId = urutPeriode().map(x => x.id).filter(x => x < per).pop(); const prev = prevId ? { id: prevId, real: totReal(prevId), ops: totOps(prevId), aju: totDiajukan(DB.pengajuan[prevId]) } : null;
+    return { per, pg, tr, real, ops, sisa: tr - real - ops, toko, klien, prev, h };
+  }
+  PAGES.laporan = perlu(p => {
+    const d = dataLaporan(p), per = p.id, ba = DB.ba[per] || {}, dis = DB.distribusi.filter(x => x.per === per);
+    const rencana = daftarBelanja(per).map(i => ({ i, q: beli(per, i.brg), h: hargaRata(per, i.brg) }));
+    const tokoKeys = [...d.toko.keys()].sort((a, b) => a === '__lain' ? 1 : b === '__lain' ? -1 : sortNama(tNama(a), tNama(b)));
+    return `${kepala(`Laporan — ${lab(p)}`, `<button class="cta" data-a="cetakLaporan">Cetak / PDF laporan</button><button class="btn" data-a="csvLaporan">Ekspor Excel (CSV)</button>`)}
+      ${d.tr && d.sisa < 0 ? `<div class="peringatan bad">Realisasi + operasional melebihi dana ditransfer sebesar ${rp(-d.sisa)} (kekurangan dana, perlu diganti). ${DB.talangan[per] ? `Alasan: ${esc(DB.talangan[per])}` : 'Alasan wajib diisi sebelum periode ditandai dilaporkan.'} <button class="btn mini" data-a="alasanTalangan">Isi alasan</button></div>` : ''}
+      <div class="card"><h3>1. Ringkasan dana</h3><table class="tbl"><tbody><tr><td>Dana ditransfer</td><td class="r num">${rp(d.tr)}</td></tr><tr><td>Total realisasi belanja</td><td class="r num">${rp(d.real)}</td></tr><tr><td>Total biaya operasional</td><td class="r num">${rp(d.ops)}</td></tr></tbody><tfoot><tr><td>${d.sisa < 0 ? 'Kekurangan dana (perlu diganti)' : 'Sisa dana yang harus dikembalikan'}</td><td class="r num ${d.sisa < 0 ? 'neg' : ''}">${rp(Math.abs(d.sisa))}</td></tr></tfoot></table></div>
+      <div class="card"><h3>2. Rincian belanja per toko</h3>${tokoKeys.map(k => `<div class="toko"><h4>${k === '__lain' ? 'LAIN-LAIN' : esc(tNama(k))} — ${rp(jum(d.toko.get(k), r => r.sub))}</h4>${tabel([{ h: 'Barang / keterangan', f: r => r.brg ? esc(bNama(r.brg)) : esc(r.ket) }, { h: 'Jumlah', r: 1, f: r => r.brg ? jml(r.qty) + ' ' + esc(bSat(r.brg)) : '—' }, { h: 'Harga', r: 1, f: r => rp(r.harga) }, { h: 'Subtotal', r: 1, f: r => rp(r.sub) }], d.toko.get(k), { cari: false })}</div>`).join('') || '<p class="muted">Belum ada realisasi.</p>'}</div>
+      <div class="card"><h3>3. Rekap per klien</h3>${tabel([{ h: 'Klien', f: x => esc(kNama(x.k)) }, { h: 'Nilai barang', r: 1, f: x => rp(x.nilai) }, { h: 'Alokasi biaya', r: 1, f: x => rp(x.bi) }, { h: 'Total biaya klien', r: 1, f: x => rp(x.total) }, { h: 'Anggaran', r: 1, f: x => rp(x.ang) }, { h: 'Sisa / lebih', r: 1, f: x => `<span class="${x.sel < 0 ? 'neg' : 'pos'}">${x.sel < 0 ? 'Lebih ' + rp(-x.sel) : 'Sisa ' + rp(x.sel)}</span>` }], d.klien, { cari: false, ekspor: 'rekap-klien-' + per, foot: ['Total', rp(jum(d.klien, x => x.nilai)), rp(jum(d.klien, x => x.bi)), rp(jum(d.klien, x => x.total)), rp(jum(d.klien, x => x.ang)), ''] })}</div>
+      <div class="card"><h3>4. Status pengiriman</h3>${tabel([{ h: 'Klien', f: x => esc(kNama(x.kln)) }, { h: 'Status', f: x => lenKirim(x.status) }, { h: 'Tgl kirim', f: x => tglf(x.tgl) }, { h: 'Penerima', f: x => esc(x.penerima) || '—' }], dis, { cari: false })}</div>
+      <div class="card"><h3>5. Rencana vs realisasi dan perbandingan bulan lalu</h3>${tabel([{ h: 'Barang', f: x => esc(bNama(x.i.brg)) }, { h: 'Qty rencana', r: 1, f: x => jml(x.i.qtyS) }, { h: 'Qty beli', r: 1, f: x => jml(x.q) }, { h: 'Harga estimasi', r: 1, f: x => rp(x.i.harga) }, { h: 'Harga aktual', r: 1, f: x => x.q ? rp(x.h) : '—' }, { h: 'Selisih nilai', r: 1, f: x => { const s = x.q * x.h - x.i.qtyS * x.i.harga; return `<span class="${s > 0 ? 'neg' : 'pos'}">${rp(s)}</span>`; } }], rencana, { cari: false })}
+        <h3 style="margin-top:16px">Dibanding ${d.prev ? lab(DB.periode.find(x => x.id === d.prev.id)) : 'bulan lalu'}</h3>${d.prev ? tabel([{ h: 'Pos', f: x => x[0] }, { h: 'Bulan ini', r: 1, f: x => rp(x[1]) }, { h: 'Bulan lalu', r: 1, f: x => rp(x[2]) }, { h: 'Selisih', r: 1, f: x => `<span class="${x[1] - x[2] > 0 ? 'neg' : 'pos'}">${rp(x[1] - x[2])}</span>` }], [['Total diajukan', totDiajukan(d.pg), d.prev.aju], ['Realisasi belanja', d.real, d.prev.real], ['Biaya operasional', d.ops, d.prev.ops]], { cari: false }) : '<p class="muted">Belum ada periode sebelumnya.</p>'}</div>
+      <div class="card"><h3>Berita Acara Pengembalian Dana</h3><p class="muted">Dibuat otomatis dari data periode. Nama penandatangan diatur di Pengaturan.</p>
+        <p>Nomor: <b>${esc(ba.nomor || 'belum dibuat')}</b> · Status: <b>${ba.status || 'BELUM DIKEMBALIKAN'}</b>${ba.tgl ? ' · ' + tglf(ba.tgl) : ''}</p>
+        <button class="cta" data-a="cetakBA">Buat / cetak berita acara</button> <button class="btn" data-a="catatKembali">Catat tanggal dana dikembalikan</button></div>`;
+  });
+
+  /* Master data */
+  PAGES.master = () => {
+    const s = ui.sub.master || 'klien';
+    const subs = `<div class="subtabs">${[['klien', 'Klien / Lokasi'], ['barang', 'Barang'], ['toko', 'Toko / Pemasok'], ['kategori', 'Kategori biaya']].map(([k, t]) => `<button class="chip ${s === k ? 'on' : ''}" data-sub="master:${k}">${t}</button>`).join('')}</div>`;
+    const aksi = (j, x) => `<button class="btn mini" data-a="ubahMaster" data-j="${j}" data-id="${x.id}">Ubah</button> <button class="btn mini ${x.aktif === false ? '' : 'bahaya'}" data-a="aktifMaster" data-j="${j}" data-id="${x.id}">${x.aktif === false ? 'Aktifkan' : 'Nonaktifkan'}</button>`;
+    const stat = x => x.aktif === false ? '<span class="lencana">Nonaktif</span>' : '<span class="lencana ok">Aktif</span>';
+    let isi;
+    if (s === 'klien') isi = tabel([{ h: 'ID', f: x => x.id }, { h: 'Klien', f: x => esc(x.nama) , v: x => x.nama }, { h: 'Lokasi', f: x => esc(x.lokasi) }, { h: 'PIC / kontak', f: x => esc([x.pic, x.kontak].filter(Boolean).join(' · ')) }, { h: 'Anggaran / bulan', r: 1, f: x => rp(x.anggaran), v: x => x.anggaran }, { h: 'Wilayah', f: x => esc(x.wilayah) }, { h: 'Prior.', r: 1, f: x => x.prioritas || '' }, { h: 'Status', f: stat }, { h: '', f: x => aksi('klien', x) }], DB.klien, { ekspor: 'master-klien' });
+    else if (s === 'barang') isi = tabel([{ h: 'ID', f: x => x.id }, { h: 'Barang', f: x => esc(x.nama), v: x => x.nama }, { h: 'Satuan', f: x => esc(x.satuan) }, { h: 'Kategori', f: x => esc(x.kategori) }, { h: 'Harga referensi', r: 1, f: x => rp(x.harga_ref), v: x => x.harga_ref }, { h: 'Toko langganan', f: x => esc(tNama(x.toko_utama)) }, { h: 'Status', f: stat }, { h: '', f: x => aksi('barang', x) }], DB.barang, { ekspor: 'master-barang' });
+    else if (s === 'toko') isi = tabel([{ h: 'ID', f: x => x.id }, { h: 'Toko', f: x => esc(x.nama), v: x => x.nama }, { h: 'Catatan', f: x => esc(x.catatan) }, { h: 'Status', f: stat }, { h: '', f: x => aksi('toko', x) }], DB.toko, { ekspor: 'master-toko' });
+    else isi = `<p class="muted">Kategori biaya operasional bersifat tetap.</p><p>${KAT_BIAYA.map(k => `<span class="chip">${k}</span>`).join(' ')}</p>`;
+    return `${kepala('Master Data', s === 'kategori' ? '' : `<button class="cta" data-a="ubahMaster" data-j="${s}">+ Tambah</button><button class="btn" data-a="imporMaster" data-j="${s}">Impor dari Sheets / CSV</button>`)}${subs}<div class="card">${isi}</div>`;
+  };
+
+  /* Pengaturan */
+  PAGES.pengaturan = () => {
+    const a = DB.aturan;
+    return `${kepala('Pengaturan')}
+      <div class="grid2"><div class="card"><h3>Aturan</h3><p>Ambang HAMPIR HABIS anggaran: <b>${a.ambangAnggaran}%</b><br>Ambang selisih harga: <b>${a.ambangHarga}%</b><br>Penandatangan: <b>${esc(a.pihak1.nama)}</b> (${esc(a.pihak1.jabatan)}) dan <b>${esc(a.pihak2.nama)}</b> (${esc(a.pihak2.jabatan)})<br>Nomor surat terakhir: <b>${a.nomorSurat}</b></p><button class="cta" data-a="aturan">Ubah pengaturan</button></div>
+      <div class="card"><h3>Data dan cadangan</h3><p class="muted">Data tersimpan di peramban ini saja (belum tersambung ke server). Unduh cadangan secara berkala dan sebelum berganti perangkat.</p>
+        <p><button class="btn" data-a="cadangan">Unduh cadangan (JSON)</button> <button class="btn" data-a="pulihkan">Pulihkan dari cadangan…</button></p><input type="file" id="berkas" accept=".json,application/json" hidden>
+        <p><button class="btn" data-a="contoh">Muat data contoh Oktober 2026</button> <button class="btn bahaya" data-a="hapusSemua">Hapus semua data</button></p></div></div>
+      <div class="card"><h3>Log perubahan <small>(200 terakhir)</small></h3>${tabel([{ h: 'Waktu', f: l => new Date(l.w).toLocaleString('id-ID'), v: l => l.w }, { h: 'Pengguna', f: l => esc(l.u) }, { h: 'Aksi', f: l => esc(l.aksi) }, { h: 'Tabel', f: l => esc(l.tabel) }, { h: 'ID', f: l => esc(l.id) }, { h: 'Ringkasan', f: l => esc(l.r) }], DB.log.slice(-200).reverse(), { ekspor: 'log-chemical' })}</div>`;
+  };
+
+  /* ---------- dokumen cetak ---------- */
+  function cetak(html) { $('cetak').innerHTML = html; setTimeout(() => window.print(), 50); }
+  function dokPengajuan(p) {
+    const pg = DB.pengajuan[p.id], a = DB.aturan;
+    return `${kopHTML()}<h2>PENGAJUAN DANA BELANJA CHEMICAL</h2><div class="no">Nomor: ${esc(pg.nomor)}</div>
+      <table class="kv"><tr><td>Hari / tanggal</td><td>: ${tglf(pg.tgl)}</td></tr><tr><td>Perihal</td><td>: Pengajuan belanja chemical periode ${lab(p)}</td></tr><tr><td>Kepada</td><td>: ${esc(a.pihak2.jabatan)}</td></tr></table>
+      <p>Bersama ini kami mengajukan kebutuhan belanja chemical untuk ${pg.klien.length} klien / lokasi dengan rincian berikut:</p>
+      <table><thead><tr><th>No</th><th>Barang</th><th>Satuan</th><th class="r">Jumlah</th><th class="r">Harga estimasi</th><th class="r">Subtotal</th><th>Toko rencana</th></tr></thead><tbody>${pg.items.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(bNama(i.brg))}</td><td>${esc(bSat(i.brg))}</td><td class="r">${jml(i.qty)}</td><td class="r">${rp(i.harga)}</td><td class="r">${rp(i.qty * i.harga)}</td><td>${esc(tNama(i.toko))}</td></tr>`).join('')}</tbody><tfoot><tr><th colspan="5" class="r">TOTAL DANA DIAJUKAN</th><th class="r">${rp(totDiajukan(pg))}</th><th></th></tr></tfoot></table>
+      <p>Demikian pengajuan ini kami sampaikan. Atas perhatian dan persetujuan Bapak/Ibu, kami ucapkan terima kasih.</p>${ttdHTML(a.pihak1, a.pihak2)}`;
+  }
+  function dokChecklist(p) {
+    const per = p.id, db = daftarBelanja(per), grup = new Map(); db.forEach(i => { const k = i.toko || ''; (grup.get(k) || grup.set(k, []).get(k)).push(i); });
+    return [...grup.keys()].sort((a, b) => sortNama(tNama(a), tNama(b))).map(tk => `<div class="hal"><h2>CHECKLIST BELANJA — ${esc(tNama(tk))}</h2><div class="no">Periode ${lab(p)}</div><table><thead><tr><th style="width:30px">✓</th><th>Barang</th><th>Satuan</th><th class="r">Jumlah rencana</th><th class="r">Harga estimasi</th><th>Jumlah beli</th><th>Harga aktual</th></tr></thead><tbody>${grup.get(tk).map(i => `<tr><td>☐</td><td>${esc(bNama(i.brg))}</td><td>${esc(bSat(i.brg))}</td><td class="r">${jml(i.qtyS)}</td><td class="r">${rp(i.harga)}</td><td></td><td></td></tr>`).join('')}</tbody></table></div>`).join('') || '<p>Belum ada barang yang disetujui.</p>';
+  }
+  function dokPacking(p) {
+    const a = DB.alokasi[p.id]; if (!a) return '<p>Belum ada alokasi.</p>';
+    return [...new Set(a.rows.map(r => r.kln))].sort((x, y) => sortNama(kNama(x), kNama(y))).map(k => { const l = a.rows.filter(r => r.kln === k && r.alok > 0); return `<div class="hal"><h2>CHECKLIST PACKING</h2><div class="no">${esc(kNama(k))} · Periode ${lab(p)}</div><table><thead><tr><th style="width:30px">✓</th><th>Barang</th><th>Satuan</th><th class="r">Jumlah</th></tr></thead><tbody>${l.map(r => `<tr><td>☐</td><td>${esc(bNama(r.brg))}</td><td>${esc(bSat(r.brg))}</td><td class="r">${jml(r.alok)}</td></tr>`).join('')}</tbody></table></div>`; }).join('');
+  }
+  function dokSuratJalan(p, d) {
+    const a = DB.alokasi[p.id], l = a ? a.rows.filter(r => r.kln === d.kln && r.alok > 0) : [], k = kById(d.kln) || {}, ap = DB.aturan.pihak1;
+    return `${kopHTML()}<h2>SURAT JALAN / TANDA TERIMA BARANG</h2><div class="no">No: SJ/${p.id.replace('PRD-', '')}/${d.kln}</div>
+      <table class="kv"><tr><td>Tujuan</td><td>: ${esc(kNama(d.kln))}</td></tr><tr><td>Alamat</td><td>: ${esc(k.alamat || '—')}</td></tr><tr><td>PIC</td><td>: ${esc([k.pic, k.kontak].filter(Boolean).join(' / ') || '—')}</td></tr><tr><td>Tanggal kirim</td><td>: ${tglf(d.tgl)}</td></tr><tr><td>Metode</td><td>: ${esc(d.metode || '—')}</td></tr></table>
+      <table><thead><tr><th>No</th><th>Barang</th><th>Satuan</th><th class="r">Jumlah</th><th>Keterangan</th></tr></thead><tbody>${l.map((r, n) => `<tr><td>${n + 1}</td><td>${esc(bNama(r.brg))}</td><td>${esc(bSat(r.brg))}</td><td class="r">${jml(r.alok)}</td><td></td></tr>`).join('')}</tbody></table>
+      <div class="ttd"><div>Pengirim<div class="sp"></div><b><u>${esc(ap.nama)}</u></b></div><div>Penerima<div class="sp"></div><b><u>${esc(d.penerima || '................')}</u></b></div></div>`;
+  }
+  function dokLaporan(p) {
+    const d = dataLaporan(p), a = DB.aturan, tk = [...d.toko.keys()].sort((x, y) => x === '__lain' ? 1 : y === '__lain' ? -1 : sortNama(tNama(x), tNama(y)));
+    return `${kopHTML()}<h2>LAPORAN BELANJA CHEMICAL</h2><div class="no">Periode ${lab(p)}</div>
+      <h4>1. Ringkasan dana</h4><table><tbody><tr><td>Dana ditransfer</td><td class="r">${rp(d.tr)}</td></tr><tr><td>Total realisasi belanja</td><td class="r">${rp(d.real)}</td></tr><tr><td>Total biaya operasional</td><td class="r">${rp(d.ops)}</td></tr><tr><th>${d.sisa < 0 ? 'Kekurangan dana (perlu diganti)' : 'Sisa dana yang harus dikembalikan'}</th><th class="r">${rp(Math.abs(d.sisa))}</th></tr></tbody></table>
+      <h4>2. Rincian belanja per toko</h4>${tk.map(k => `<table><thead><tr><th colspan="4">${k === '__lain' ? 'LAIN-LAIN' : esc(tNama(k))}</th></tr></thead><tbody>${d.toko.get(k).map(r => `<tr><td>${r.brg ? esc(bNama(r.brg)) : esc(r.ket)}</td><td class="r">${r.brg ? jml(r.qty) + ' ' + esc(bSat(r.brg)) : ''}</td><td class="r">${rp(r.harga)}</td><td class="r">${rp(r.sub)}</td></tr>`).join('')}<tr><th colspan="3" class="r">Subtotal</th><th class="r">${rp(jum(d.toko.get(k), r => r.sub))}</th></tr></tbody></table>`).join('')}
+      <h4>3. Rekap per klien</h4><table><thead><tr><th>Klien</th><th class="r">Nilai barang</th><th class="r">Alokasi biaya</th><th class="r">Total</th><th class="r">Anggaran</th><th class="r">Sisa / lebih</th></tr></thead><tbody>${d.klien.map(x => `<tr><td>${esc(kNama(x.k))}</td><td class="r">${rp(x.nilai)}</td><td class="r">${rp(x.bi)}</td><td class="r">${rp(x.total)}</td><td class="r">${rp(x.ang)}</td><td class="r">${x.sel < 0 ? 'Lebih ' + rp(-x.sel) : 'Sisa ' + rp(x.sel)}</td></tr>`).join('')}</tbody></table>
+      <h4>4. Status pengiriman</h4><table><tbody>${DB.distribusi.filter(x => x.per === p.id).map(x => `<tr><td>${esc(kNama(x.kln))}</td><td>${x.status}</td><td>${tglf(x.tgl)}</td></tr>`).join('')}</tbody></table>${ttdHTML(a.pihak1, a.pihak2)}`;
+  }
+  function dokBA(p) {
+    const d = dataLaporan(p), a = DB.aturan, ba = DB.ba[p.id], neg = d.sisa < 0;
+    return `${kopHTML()}<h2>BERITA ACARA ${neg ? 'KEKURANGAN DANA' : 'PENGEMBALIAN DANA'}</h2><div class="no">Nomor: ${esc(ba.nomor)}</div>
+      <p>Pada hari ini, ${tglf(ba.tgl)}, yang bertanda tangan di bawah ini:</p>
+      <table class="kv"><tr><td>Nama</td><td>: ${esc(a.pihak1.nama)}</td></tr><tr><td>Jabatan</td><td>: ${esc(a.pihak1.jabatan)} PT. Ray Mitra Perkasa (selanjutnya disebut <b>Pihak Pertama</b>)</td></tr><tr><td>Nama</td><td>: ${esc(a.pihak2.nama)}</td></tr><tr><td>Jabatan</td><td>: ${esc(a.pihak2.jabatan)} PT. Ray Mitra Perkasa (selanjutnya disebut <b>Pihak Kedua</b>)</td></tr></table>
+      <p>${neg ? `Pihak Pertama menyatakan bahwa belanja chemical periode ${lab(p)} melebihi dana yang ditransfer sebesar <b>${rp(-d.sisa)}</b>, dan Pihak Kedua akan mengganti kekurangan tersebut.` : `Pihak Pertama telah menyerahkan sisa dana belanja chemical periode ${lab(p)} sebesar <b>${rp(d.sisa)}</b> kepada Pihak Kedua, dengan rincian:`}</p>
+      <table><tbody><tr><td>Dana ditransfer${DB.pengajuan[p.id] && DB.pengajuan[p.id].transfer ? ' (' + tglf(DB.pengajuan[p.id].transfer.tgl) + ')' : ''}</td><td class="r">${rp(d.tr)}</td></tr><tr><td>Total realisasi belanja</td><td class="r">${rp(d.real)}</td></tr><tr><td>Total biaya operasional</td><td class="r">${rp(d.ops)}</td></tr><tr><th>${neg ? 'Kekurangan dana' : 'Sisa dana dikembalikan'}</th><th class="r">${rp(Math.abs(d.sisa))}</th></tr></tbody></table>
+      <p>Demikian berita acara ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>${ttdHTML(a.pihak1, a.pihak2).replace(a.pihak1.jabatan + '<div', 'Pihak Pertama<div').replace(a.pihak2.jabatan + '<div', 'Pihak Kedua<div')}`;
+  }
+
+  /* ---------- impor CSV ---------- */
+  function parseCSV(t) {
+    const baris = t.replace(/^﻿/, '').split(/\r?\n/).filter(x => x.trim()); if (!baris.length) return [];
+    const d = ['\t', ';', ','].map(c => [c, (baris[0].match(new RegExp(c === '\t' ? '\t' : '\\' + c, 'g')) || []).length]).sort((a, b) => b[1] - a[1])[0][0];
+    return baris.map(l => { const o = []; let cur = '', q = false; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; } else if (c === '"') q = true; else if (c === d) { o.push(cur.trim()); cur = ''; } else cur += c; } o.push(cur.trim()); return o; });
+  }
+  const norm = s => String(s).toLowerCase().replace(/[^a-z]/g, '');
+  const ALIAS = { nama: ['nama', 'namaklien', 'namabarang', 'namatoko', 'klien', 'barang', 'toko'], lokasi: ['lokasi', 'namalokasi'], alamat: ['alamat'], pic: ['pic'], kontak: ['kontak', 'telepon', 'hp'], anggaran: ['anggaran', 'anggaranbulanan', 'anggaranperbulan'], wilayah: ['wilayah', 'rute'], satuan: ['satuan'], kategori: ['kategori'], harga: ['harga', 'hargareferensi', 'hargaref'], toko: ['toko', 'tokoutama', 'tokolangganan'], catatan: ['catatan', 'keterangan'], klien: ['klien', 'namaklien', 'lokasi'], barang: ['barang', 'namabarang', 'nama'], qty: ['qty', 'jumlah', 'jml'] };
+  const KOLOM = { klien: ['nama', 'lokasi', 'alamat', 'pic', 'kontak', 'anggaran', 'wilayah'], barang: ['nama', 'satuan', 'kategori', 'harga', 'toko'], toko: ['nama', 'catatan'], permintaan: ['klien', 'barang', 'qty', 'satuan', 'catatan'] };
+  const angka = (s, uang) => { s = String(s || '').trim(); if (!s) return 0; if (uang) return parseInt(s.replace(/[^\d-]/g, ''), 10) || 0; return parseFloat(s.replace(/\./g, m => /^\d{1,3}(\.\d{3})+$/.test(s) ? '' : m).replace(',', '.')) || 0; };
+  function petaKolom(baris, jenis) {
+    const kol = KOLOM[jenis], h = baris[0].map(norm), cocok = kol.filter(k => h.some(x => ALIAS[k].includes(x)));
+    if (cocok.length >= Math.min(2, kol.length)) { const idx = {}; kol.forEach(k => { const i = h.findIndex(x => ALIAS[k].includes(x)); if (i >= 0) idx[k] = i; }); return { idx, mulai: 1 }; }
+    const idx = {}; kol.forEach((k, i) => idx[k] = i); return { idx, mulai: 0 };
+  }
+  function imporTeks(jenis, teks) {
+    const baris = parseCSV(teks); if (!baris.length) return 'Tidak ada data. Tempel isi dari Google Sheets (termasuk baris judul kolom) atau pilih berkas CSV.';
+    const { idx, mulai } = petaKolom(baris, jenis), ambil = (r, k) => idx[k] === undefined ? '' : (r[idx[k]] || '').trim();
+    const data = baris.slice(mulai); let masuk = 0, lewat = [];
+    if (jenis === 'permintaan') {
+      const p = P(); if (!p) return 'Buat periode dulu.';
+      const kl = new Map(DB.klien.map(k => [norm(k.nama + k.lokasi), k.id]).concat(DB.klien.map(k => [norm(k.nama), k.id]), DB.klien.map(k => [norm(k.lokasi), k.id]))), br = new Map(DB.barang.map(b => [norm(b.nama), b.id]));
+      const barK = new Set(), barB = new Set(); data.forEach(r => { if (ambil(r, 'klien') && !kl.has(norm(ambil(r, 'klien')))) barK.add(ambil(r, 'klien')); if (ambil(r, 'barang') && !br.has(norm(ambil(r, 'barang')))) barB.add(ambil(r, 'barang')); });
+      if (barK.size || barB.size) { const m = [...barK].map(x => `klien "${x}"`).concat([...barB].map(x => `barang "${x}"`)); if (!confirm(`Belum ada di master: ${m.slice(0, 8).join(', ')}${m.length > 8 ? ', …' : ''}.\n\nTambahkan sekarang? (Klien baru berangaran Rp0 dan barang baru berharga Rp0; lengkapi di Master Data.)`)) return 'Impor dibatalkan. Tambahkan dulu data yang belum ada di Master Data.'; }
+      return T('impor', 'PERMINTAAN', p.id, `${data.length} baris`, () => {
+        barK.forEach(n => { const id = nid('KLN'); DB.klien.push({ id, nama: n, lokasi: '', alamat: '', pic: '', kontak: '', anggaran: 0, wilayah: '', prioritas: 99, aktif: true }); kl.set(norm(n), id); });
+        barB.forEach(n => { const s = data.find(r => norm(ambil(r, 'barang')) === norm(n)); const id = nid('BRG'); DB.barang.push({ id, nama: n, satuan: ambil(s, 'satuan') || 'pcs', kategori: '', harga_ref: 0, toko_utama: '', aktif: true }); br.set(norm(n), id); });
+        data.forEach((r, n) => {
+          const k = kl.get(norm(ambil(r, 'klien'))), b = br.get(norm(ambil(r, 'barang'))), q = angka(ambil(r, 'qty'));
+          if (!k || !b) return lewat.push(`baris ${n + 1 + mulai}: klien atau barang kosong`); if (!(q > 0)) return lewat.push(`baris ${n + 1 + mulai}: jumlah harus lebih dari 0`);
+          const ada = DB.permintaan.find(x => x.per === p.id && !x.batal && x.kln === k && x.brg === b && x.jenis === 'reguler');
+          if (ada) ada.qty += q; else DB.permintaan.push({ id: nid('PMT', 4), per: p.id, kln: k, brg: b, qty: q, satuan: ambil(r, 'satuan') || bSat(b), jenis: 'reguler', cat: ambil(r, 'catatan'), tgl: hariIni() });
+          masuk++;
+        });
+        if (p.status === 'DRAFT' && masuk) p.status = 'REKAP_PERMINTAAN';
+        setTimeout(() => info(`${masuk} baris masuk${lewat.length ? `, ${lewat.length} dilewati (${lewat.slice(0, 3).join('; ')})` : ''}. Klien + barang yang sama digabung.`), 100);
+      });
+    }
+    return T('impor', jenis.toUpperCase(), '', `${data.length} baris`, () => {
+      data.forEach((r, n) => {
+        const nama = ambil(r, 'nama'); if (!nama) return lewat.push(`baris ${n + 1 + mulai}: nama kosong`);
+        if (jenis === 'klien') { if (DB.klien.some(k => norm(k.nama + k.lokasi) === norm(nama + ambil(r, 'lokasi')))) return lewat.push(`${nama}: sudah ada`); DB.klien.push({ id: nid('KLN'), nama, lokasi: ambil(r, 'lokasi'), alamat: ambil(r, 'alamat'), pic: ambil(r, 'pic'), kontak: ambil(r, 'kontak'), anggaran: angka(ambil(r, 'anggaran'), true), wilayah: ambil(r, 'wilayah'), prioritas: 99, aktif: true }); }
+        else if (jenis === 'barang') { if (DB.barang.some(b => norm(b.nama) === norm(nama))) return lewat.push(`${nama}: sudah ada`); const tk = DB.toko.find(t => norm(t.nama) === norm(ambil(r, 'toko'))); DB.barang.push({ id: nid('BRG'), nama, satuan: ambil(r, 'satuan') || 'pcs', kategori: ambil(r, 'kategori'), harga_ref: angka(ambil(r, 'harga'), true), toko_utama: tk ? tk.id : '', aktif: true }); }
+        else { if (DB.toko.some(t => norm(t.nama) === norm(nama))) return lewat.push(`${nama}: sudah ada`); DB.toko.push({ id: nid('TKO'), nama, catatan: ambil(r, 'catatan'), aktif: true }); }
+        masuk++;
+      });
+      setTimeout(() => info(`${masuk} baris masuk${lewat.length ? `, ${lewat.length} dilewati (${lewat.slice(0, 3).join('; ')})` : ''}.`), 100);
+    }, true);
+  }
+  function dialogImpor(jenis) {
+    const kol = KOLOM[jenis].join(', ');
+    form('Impor ' + jenis, [{ k: 'teks', l: 'Tempel data dari Google Sheets / Excel', t: 'textarea', w: 1, h: 'Urutan kolom bila tanpa judul: ' + kol }, { k: 'berkas', l: 'atau pilih berkas CSV', t: 'file', w: 1 }], {}, v => {
+      const f = $('f_berkas').files[0];
+      if (f) { f.text().then(t => { const g = imporTeks(jenis, t); if (g) galat(g); }); return; }
+      return imporTeks(jenis, v.teks);
+    }, { tombol: 'Impor', info: `<p class="muted">Kolom: <b>${kol}</b>. Baris judul boleh ada atau tidak.</p>` });
+  }
+
+  /* ---------- form-form ---------- */
+  const optKlien = () => DB.klien.filter(k => k.aktif !== false).map(k => [k.id, kNama(k.id)]);
+  const optBarang = () => DB.barang.filter(b => b.aktif !== false).map(b => [b.id, `${b.nama} (${b.satuan})`]);
+  const optToko = () => [['', '— belum ditentukan —']].concat(DB.toko.filter(t => t.aktif !== false).map(t => [t.id, t.nama]));
+
+  function formReq(r) {
+    const p = P(); if (!p) return galat('Buat periode dulu.');
+    if (!DB.klien.length || !DB.barang.length) return galat('Isi Master Data klien dan barang dulu (atau impor).');
+    form(r ? 'Ubah permintaan' : 'Tambah permintaan', [
+      { k: 'kln', l: 'Klien / lokasi', t: 'select', opt: optKlien(), req: 1, w: 1 }, { k: 'brg', l: 'Barang', t: 'select', opt: optBarang(), req: 1, w: 1 },
+      { k: 'qty', l: 'Jumlah', t: 'number', req: 1 }, { k: 'jenis', l: 'Jenis', t: 'select', opt: [['reguler', 'Reguler'], ['tambahan', 'Tambahan (di tengah bulan)']] }, { k: 'cat', l: 'Catatan', w: 1 }
+    ], r || {}, v => {
+      if (!(v.qty > 0)) return 'Jumlah harus lebih dari 0.';
+      if (si(p) >= 3 && v.jenis === 'reguler') return 'Permintaan reguler sudah dikunci karena pengajuan sudah dibuat. Pilih jenis "Tambahan".';
+      const dup = DB.permintaan.find(x => x.per === p.id && !x.batal && x.kln === v.kln && x.brg === v.brg && x.jenis === v.jenis && (!r || x.id !== r.id));
+      if (dup) { if (!confirm(`${bNama(v.brg)} untuk ${kNama(v.kln)} sudah ada (${jml(dup.qty)}). Gabungkan jumlahnya?`)) return 'Tidak digabung. Ubah baris yang sudah ada atau pilih jenis lain.'; return T('gabung', 'PERMINTAAN', dup.id, `+${v.qty}`, () => { dup.qty += v.qty; if (r) r.batal = true; }); }
+      return T(r ? 'ubah' : 'tambah', 'PERMINTAAN', r ? r.id : '', `${kNama(v.kln)} ${bNama(v.brg)} ${v.qty}`, () => {
+        if (r) Object.assign(r, v, { satuan: bSat(v.brg) }); else { DB.permintaan.push({ id: nid('PMT', 4), per: p.id, ...v, satuan: bSat(v.brg), tgl: hariIni() }); if (p.status === 'DRAFT') p.status = 'REKAP_PERMINTAAN'; }
+      });
+    });
+  }
+  function formMaster(j, id) {
+    const x = id ? DB[j].find(y => y.id === id) : null;
+    const F = { klien: [{ k: 'nama', l: 'Nama klien', req: 1, w: 1 }, { k: 'lokasi', l: 'Nama lokasi', w: 1 }, { k: 'alamat', l: 'Alamat', w: 1 }, { k: 'pic', l: 'PIC' }, { k: 'kontak', l: 'Kontak' }, { k: 'anggaran', l: 'Anggaran chemical per bulan (Rp)', t: 'number', req: 1 }, { k: 'wilayah', l: 'Wilayah / rute', h: 'mis. Magelang, Salatiga' }, { k: 'prioritas', l: 'Nomor prioritas', t: 'number', h: 'kecil = didahulukan saat barang kurang' }],
+      barang: [{ k: 'nama', l: 'Nama barang', req: 1, w: 1 }, { k: 'satuan', l: 'Satuan', t: 'select', opt: SATUAN.map(s => [s, s]) }, { k: 'kategori', l: 'Kategori' }, { k: 'harga_ref', l: 'Harga referensi (Rp)', t: 'number', req: 1 }, { k: 'toko_utama', l: 'Toko langganan', t: 'select', opt: optToko() }],
+      toko: [{ k: 'nama', l: 'Nama toko', req: 1, w: 1 }, { k: 'catatan', l: 'Catatan', w: 1 }] }[j];
+    form((x ? 'Ubah ' : 'Tambah ') + j, F, x || { satuan: 'liter', prioritas: 99 }, v => {
+      if (v.anggaran !== undefined && v.anggaran < 0) return 'Anggaran tidak boleh negatif.'; if (v.harga_ref !== undefined && v.harga_ref < 0) return 'Harga tidak boleh negatif.';
+      const dup = DB[j].find(y => (!x || y.id !== x.id) && norm(y.nama + (y.lokasi || '')) === norm(v.nama + (v.lokasi || ''))); if (dup) return `"${v.nama}" sudah ada di master (${dup.id}).`;
+      const pref = { klien: 'KLN', barang: 'BRG', toko: 'TKO' }[j];
+      return T(x ? 'ubah' : 'tambah', 'MASTER_' + j.toUpperCase(), x ? x.id : '', v.nama, () => { if (x) Object.assign(x, v); else DB[j].push({ id: nid(pref), aktif: true, ...v }); }, true);
+    });
+  }
+  function formBeli(brg) {
+    const p = P(), it = brg ? daftarBelanja(p.id).find(i => i.brg === brg) : null; const sisa = it ? Math.max(0, it.qtyS - beli(p.id, brg)) : 0;
+    const f = brg ? [{ k: 'toko', l: 'Toko', t: 'select', opt: optToko().slice(1), req: 1, w: 1 }, { k: 'qty', l: 'Jumlah dibeli', t: 'number', req: 1 }, { k: 'harga', l: `Harga aktual per ${bSat(brg)} (Rp)`, t: 'number', req: 1 }, { k: 'tgl', l: 'Tanggal', t: 'date', req: 1 }, { k: 'status', l: 'Status', t: 'select', opt: ST_BELI.map(s => [s, s]) }, { k: 'ket', l: 'Catatan (mis. merek pengganti)', w: 1 }, { k: 'nota', l: 'Link / nomor nota (opsional)', w: 1 }, { k: 'upd', l: 'Perbarui harga referensi barang dengan harga ini', t: 'check' }]
+      : [{ k: 'ket', l: 'Keterangan', req: 1, w: 1, ph: 'mis. Ngelas Kursi Wasit' }, { k: 'harga', l: 'Nominal (Rp)', t: 'number', req: 1 }, { k: 'tgl', l: 'Tanggal', t: 'date', req: 1 }, { k: 'toko', l: 'Toko / tempat', t: 'select', opt: optToko() }, { k: 'nota', l: 'Link / nomor nota (opsional)', w: 1 }];
+    form(brg ? `Catat belanja — ${esc(bNama(brg))}` : 'Pembelian LAIN-LAIN', f, brg ? { toko: it.toko || (bById(brg) || {}).toko_utama || '', qty: sisa || '', harga: hRef(brg), tgl: hariIni(), upd: true } : { tgl: hariIni() }, v => {
+      if (!(v.harga > 0)) return 'Harga harus lebih dari 0.';
+      if (brg && v.status !== 'TIDAK TERSEDIA' && !(v.qty > 0)) return 'Jumlah dibeli harus lebih dari 0.';
+      if (!brg && si(p) < 0) return '';
+      return T('catat', 'REALISASI', '', brg ? `${bNama(brg)} ${v.qty} x ${v.harga}` : `LAIN-LAIN ${v.ket} ${v.harga}`, () => {
+        const q = brg ? (v.status === 'TIDAK TERSEDIA' ? 0 : v.qty) : 1;
+        DB.realisasi.push({ id: nid('RLS', 4), per: p.id, toko: v.toko || '', brg: brg || '', ket: v.ket || '', qty: q, harga: v.harga, sub: Math.round(q * v.harga), tgl: v.tgl, nota: v.nota || '', status: brg ? v.status : 'LAIN-LAIN' });
+        if (brg && v.upd && q > 0) { const b = bById(brg); if (b) b.harga_ref = v.harga; }
+        if (p.status === 'DISETUJUI') p.status = 'BELANJA';
+      });
+    }, brg ? { info: it ? `<p class="muted">Rencana ${jml(it.qtyS)} ${esc(bSat(brg))} · estimasi ${rp(it.harga)}</p>` : '' } : {});
+  }
+  function formBiaya() {
+    form('Catat biaya operasional', [{ k: 'kat', l: 'Kategori', t: 'select', opt: KAT_BIAYA.map(k => [k, k]) }, { k: 'tgl', l: 'Tanggal', t: 'date', req: 1 }, { k: 'ket', l: 'Keterangan', w: 1 }, { k: 'nom', l: 'Nominal (Rp)', t: 'number', req: 1 }, { k: 'tipe', l: 'Keterkaitan', t: 'select', opt: [['umum', 'Umum (dibagi ke klien)'], ['klien', 'Langsung ke satu klien']] }, { k: 'kln', l: 'Klien (bila langsung)', t: 'select', opt: [['', '—']].concat(optKlien()), w: 1 }, { k: 'nota', l: 'Link / nomor nota (opsional)', w: 1 }], { tgl: hariIni() }, v => {
+      const p = P(); if (!(v.nom > 0)) return 'Nominal harus lebih dari 0.';
+      if (si(p) < 4) return 'Biaya operasional dicatat setelah pengajuan disetujui.';
+      if (v.tipe === 'klien' && !v.kln) return 'Pilih klien untuk biaya langsung.';
+      if (DB.biayaKunci[p.id]) return 'Alokasi biaya sudah dikunci. Buka kunci dulu di bagian Alokasi ke klien.';
+      return T('catat', 'BIAYA_OPERASIONAL', '', `${v.kat} ${v.nom}`, () => DB.biaya.push({ id: nid('BYA', 4), per: p.id, ...v, kln: v.tipe === 'klien' ? v.kln : '' }));
+    });
+  }
+  function formKirim(id) {
+    const d = DB.distribusi.find(x => x.id === id);
+    form('Pengiriman — ' + esc(kNama(d.kln)), [{ k: 'status', l: 'Status', t: 'select', opt: ST_KIRIM.map(s => [s, s]) }, { k: 'tgl', l: 'Tanggal kirim', t: 'date' }, { k: 'metode', l: 'Metode', t: 'select', opt: [['', '—'], ['Mobil sendiri', 'Mobil sendiri'], ['Ekspedisi / paket', 'Ekspedisi / paket']] }, { k: 'rute', l: 'Rute / hari' }, { k: 'penerima', l: 'Nama penerima', w: 1 }, { k: 'bukti', l: 'Link bukti serah terima (foto)', w: 1 }, { k: 'cat', l: 'Catatan', w: 1 }], d, v => {
+      if (['TERKIRIM', 'DITERIMA'].includes(v.status) && !v.tgl) v.tgl = hariIni();
+      if (v.status === 'DITERIMA' && !v.penerima) return 'Isi nama penerima untuk status DITERIMA.';
+      return T('ubah', 'DISTRIBUSI', id, `${kNama(d.kln)} → ${v.status}`, () => Object.assign(d, v));
+    });
+  }
+  function formPeriode() {
+    const n = new Date(), ada = new Set(DB.periode.map(x => x.id));
+    form('Periode baru', [{ k: 'bulan', l: 'Bulan', t: 'select', opt: BULAN.map((b, i) => [i + 1, b]) }, { k: 'tahun', l: 'Tahun', t: 'number', req: 1 }], { bulan: n.getMonth() + 1, tahun: n.getFullYear() }, v => {
+      const id = `PRD-${v.tahun}-${String(v.bulan).padStart(2, '0')}`; if (ada.has(id)) return `Periode ${BULAN[v.bulan - 1]} ${v.tahun} sudah ada.`;
+      if (v.tahun < 2000 || v.tahun > 2100) return 'Tahun tidak masuk akal.';
+      return T('buat', 'PERIODE', id, id, () => { DB.periode.push({ id, bulan: +v.bulan, tahun: +v.tahun, status: 'DRAFT', tglBuka: hariIni(), tglTutup: '' }); DB.pilih = id; }, true);
+    });
+  }
+
+  /* ---------- tahap periode ---------- */
+  function lanjut() {
+    const p = P(), per = p.id, s = p.status, pg = DB.pengajuan[per]; let err = '';
+    if (s === 'DRAFT' || s === 'REKAP_PERMINTAAN') { if (!reqP(per).length) err = 'Belum ada permintaan. Masukkan atau impor permintaan dulu.'; }
+    else if (s === 'CEK_ANGGARAN') { if (!pg || !pg.items.length) err = 'Buat pengajuan dulu di halaman Pengajuan.'; }
+    else if (s === 'DIAJUKAN') { if (!pg || !pg.items.some(i => i.status === 'DISETUJUI')) err = 'Catat keputusan pimpinan: minimal satu barang berstatus DISETUJUI.'; else if (!(transferP(per) > 0)) err = 'Catat dana yang ditransfer dulu di halaman Pengajuan.'; }
+    else if (s === 'DISETUJUI' || s === 'BELANJA') {
+      if (!realP(per).some(r => r.brg)) err = 'Belum ada belanja yang dicatat.';
+      else { const k = daftarBelanja(per).filter(i => statusItem(per, i) !== 'TERBELI'); if (k.length && !confirm(`${k.length} barang belum terbeli sesuai rencana (${k.slice(0, 4).map(i => bNama(i.brg)).join(', ')}${k.length > 4 ? ', …' : ''}). Lanjut ke distribusi?`)) return; }
+    }
+    else if (s === 'DISTRIBUSI') {
+      sinkronDistribusi(per); const d = DB.distribusi.filter(x => x.per === per);
+      if (!d.length) err = 'Belum ada klien untuk dikirim. Buat alokasi di halaman Pemisahan.';
+      else { const b = d.filter(x => !['TERKIRIM', 'DITERIMA'].includes(x.status)); if (b.length && !confirm(`${b.length} klien belum terkirim. Tandai selesai kirim dengan pengecualian?`)) return; }
+    }
+    else if (s === 'SELESAI_KIRIM') { if (transferP(per) && sisaDana(per) < 0 && !DB.talangan[per]) err = 'Pengeluaran melebihi dana ditransfer. Isi alasan (dana talangan) di halaman Laporan dulu.'; }
+    else if (s === 'DILAPORKAN') {
+      if (!confirm('Tutup periode? Setelah TUTUP data tidak bisa diubah. Cadangan data akan diunduh otomatis.')) return;
+      const g = T('tutup', 'PERIODE', per, 'TUTUP', () => { p.status = 'TUTUP'; p.tglTutup = hariIni(); }); if (g) galat(g); else cadangan('chemical-cadangan-' + per + '.json'); return;
+    }
+    if (err) return galat(err);
+    Y('tahap', 'PERIODE', per, `${s} → ${STATUS[si(p) + 1]}`, () => { p.status = STATUS[si(p) + 1]; });
+  }
+
+  /* ---------- aksi (klik) ---------- */
+  function cadangan(nama) { unduh(nama || 'chemical-cadangan-' + hariIni() + '.json', JSON.stringify(DB, null, 1), 'application/json'); }
+  const A = {
+    tutupdlg: () => $('dlg').close(),
+    periodeBaru: formPeriode, lanjut,
+    pilihPer: b => { DB.pilih = b.dataset.id; simpan(); render(); },
+    mundur: () => { const p = P(); if (confirm(`Kembali ke tahap "${NAMA_ST[STATUS[si(p) - 1]]}"?`)) Y('mundur', 'PERIODE', p.id, `${p.status} → ${STATUS[si(p) - 1]}`, () => { p.status = STATUS[si(p) - 1]; }); },
+    bukaKembali: () => { const p = P(); form('Buka kembali periode ' + lab(p), [{ k: 'alasan', l: 'Alasan membuka kembali', req: 1, w: 1 }], {}, v => { const id = p.id; DB.log.push({ w: new Date().toISOString(), u: 'Admin', aksi: 'buka-kembali', tabel: 'PERIODE', id, r: v.alasan }); p.status = 'DILAPORKAN'; p.tglTutup = ''; simpan(); render(); }); },
+    tambahReq: () => formReq(), ubahReq: b => formReq(DB.permintaan.find(r => r.id === b.dataset.id)),
+    batalReq: b => { if (confirm('Batalkan baris permintaan ini? (Tidak dihapus permanen, tetap tercatat di log.)')) Y('batal', 'PERMINTAAN', b.dataset.id, '', () => { DB.permintaan.find(r => r.id === b.dataset.id).batal = true; }); },
+    imporReq: () => dialogImpor('permintaan'), imporMaster: b => dialogImpor(b.dataset.j),
+    tindakan: b => {
+      const k = b.dataset.id, key = P().id + '|' + k, c = cekAnggaran(P().id).find(x => x.kln === k), t = DB.cek[key] || {};
+      form('Tindakan anggaran kurang', [{ k: 'tindakan', l: 'Tindakan', t: 'select', opt: [['kurangi', 'Kurangi jumlah barang (ubah di Permintaan)'], ['tambah', 'Minta tambahan anggaran'], ['tunda', 'Tunda sebagian permintaan (tidak diajukan bulan ini)'], ['lanjut', 'Lanjut dengan persetujuan pimpinan']], w: 1 }, { k: 'alasan', l: 'Alasan / catatan', t: 'textarea', w: 1, h: 'Wajib untuk "tambahan anggaran" dan "lanjut".' }], t, v => {
+        if (['tambah', 'lanjut'].includes(v.tindakan) && !v.alasan) return 'Alasan wajib diisi untuk tindakan ini.';
+        return T('tindakan', 'CEK_ANGGARAN', key, v.tindakan, () => { DB.cek[key] = v; if (si(P()) < 2) P().status = 'CEK_ANGGARAN'; });
+      }, { info: `<p>${esc(kNama(k))}: estimasi ${rp(c.est)}, anggaran ${rp(c.ang)}, lebih ${rp(-c.sel)}.</p>` });
+    },
+    buatPengajuan: () => {
+      const p = P(), per = p.id, old = DB.pengajuan[per], c = cekAnggaran(per).filter(x => x.ok), ids = new Set(c.map(x => x.kln)), m = new Map();
+      reqP(per).filter(r => ids.has(r.kln)).forEach(r => m.set(r.brg, (m.get(r.brg) || 0) + r.qty));
+      if (!m.size) return galat('Tidak ada permintaan yang lolos cek anggaran.');
+      if (old && old.keputusan && !confirm('Pengajuan sudah punya keputusan. Daftar dibuat ulang dan keputusan direset. Lanjut?')) return;
+      const nomor = old ? old.nomor : (() => { const n = ++DB.aturan.nomorSurat; return `${String(n).padStart(3, '0')}/ADM/RAYMP/${ROMAWI[new Date().getMonth()]}/${new Date().getFullYear()}`; })();
+      Y('buat', 'PENGAJUAN', per, nomor, () => {
+        const items = [...m.entries()].map(([brg, qty]) => { const o = old && old.items.find(i => i.brg === brg); return { brg, qty, harga: hRef(brg), toko: o ? o.toko : (bById(brg) || {}).toko_utama || '', status: 'MENUNGGU', qtyS: qty }; }).sort((a, b) => sortNama(bNama(a.brg), bNama(b.brg)));
+        DB.pengajuan[per] = { nomor, tgl: old ? old.tgl : hariIni(), keputusan: '', catatan: '', tglSetuju: '', transfer: old ? old.transfer : null, items, klien: [...ids] };
+        if (si(p) < 2) p.status = 'CEK_ANGGARAN';
+        if (DB.alokasi[per] && !DB.alokasi[per].dikunci) delete DB.alokasi[per];
+      });
+    },
+    cetakPengajuan: () => { const p = P(); if (!DB.pengajuan[p.id]) return; cetak(dokPengajuan(p)); },
+    setujuSemua: () => Y('setujui', 'PENGAJUAN_ITEM', P().id, 'semua', () => DB.pengajuan[P().id].items.forEach(i => { i.status = 'DISETUJUI'; i.qtyS = i.qty; })),
+    catatSetuju: () => { const pg = DB.pengajuan[P().id]; form('Keputusan pimpinan', [{ k: 'keputusan', l: 'Keputusan atas pengajuan', t: 'select', opt: [['DISETUJUI', 'DISETUJUI'], ['REVISI', 'REVISI'], ['DITOLAK', 'DITOLAK']] }, { k: 'tglSetuju', l: 'Tanggal', t: 'date', req: 1 }, { k: 'catatan', l: 'Catatan pimpinan', t: 'textarea', w: 1 }], { tglSetuju: hariIni(), ...pg }, v => T('keputusan', 'PENGAJUAN', P().id, v.keputusan, () => { Object.assign(pg, v); if (si(P()) < 3) P().status = 'DIAJUKAN'; })); },
+    catatTransfer: () => { const pg = DB.pengajuan[P().id]; form('Dana ditransfer', [{ k: 'tgl', l: 'Tanggal transfer', t: 'date', req: 1 }, { k: 'nominal', l: 'Nominal (Rp)', t: 'number', req: 1 }, { k: 'rek', l: 'Rekening tujuan', w: 1 }], pg.transfer || { tgl: hariIni() }, v => v.nominal > 0 ? T('transfer', 'PENGAJUAN', P().id, rp(v.nominal), () => { pg.transfer = v; }) : 'Nominal harus lebih dari 0.'); },
+    catatBeli: b => formBeli(b.dataset.id), catatLain: () => formBeli(''),
+    batalReal: b => { if (confirm('Batalkan catatan belanja ini? (Tidak dihapus permanen.)')) Y('batal', 'REALISASI', b.dataset.id, '', () => { DB.realisasi.find(r => r.id === b.dataset.id).batal = true; }); },
+    cetakChecklist: () => cetak(dokChecklist(P())),
+    buatAlokasi: () => {
+      const p = P(), per = p.id, aturan = $('aturanAlok').value;
+      if (si(p) < 4) return galat('Belanja belum dimulai. Pemisahan dibuat setelah barang dibeli.');
+      Y('buat', 'ALOKASI_BARANG', per, aturan, () => { DB.alokasi[per] = { aturan, dikunci: false, rows: buatAlokasi(per, aturan) }; });
+    },
+    kunciAlok: () => Y('kunci', 'ALOKASI_BARANG', P().id, '', () => { const a = DB.alokasi[P().id]; a.dikunci = !a.dikunci; }),
+    cetakPacking: () => cetak(dokPacking(P())),
+    catatStok: () => {
+      const p = P(), a = DB.alokasi[p.id], per = p.id; const sisa = [...new Set(a.rows.map(r => r.brg))].map(b => ({ b, q: Math.round((beli(per, b) - jum(a.rows.filter(r => r.brg === b), r => r.alok)) * 100) / 100 })).filter(x => x.q > 0);
+      if (!sisa.length) return galat('Tidak ada sisa barang untuk dicatat.');
+      Y('catat', 'STOK_SISA', per, `${sisa.length} barang`, () => { DB.stok.forEach(s => { if (s.per === per) s.batal = true; }); sisa.forEach(x => DB.stok.push({ id: nid('STK', 4), per, brg: x.b, qty: x.q, ket: 'Sisa belanja ' + lab(p), terpakai: false })); });
+    },
+    stokPakai: b => Y('pakai', 'STOK_SISA', b.dataset.id, '', () => { DB.stok.find(s => s.id === b.dataset.id).terpakai = true; }),
+    ubahKirim: b => formKirim(b.dataset.id),
+    suratJalan: b => { const d = DB.distribusi.find(x => x.id === b.dataset.id); cetak(dokSuratJalan(P(), d)); },
+    tambahBiaya: formBiaya,
+    batalBiaya: b => { if (DB.biayaKunci[P().id]) return galat('Alokasi biaya sudah dikunci. Buka kunci dulu.'); if (confirm('Batalkan catatan biaya ini? (Tidak dihapus permanen.)')) Y('batal', 'BIAYA_OPERASIONAL', b.dataset.id, '', () => { DB.biaya.find(x => x.id === b.dataset.id).batal = true; }); },
+    kunciBiaya: () => { const per = P().id, h = hitungBiaya(per); if (!DB.biayaKunci[per] && h.met === 'manual' && h.selisih) return galat(`Jumlah manual belum sama dengan total biaya umum (selisih ${rp(h.selisih)}).`); Y('kunci', 'ALOKASI_BIAYA', per, '', () => { DB.biayaKunci[per] = !DB.biayaKunci[per]; }); },
+    cetakLaporan: () => cetak(dokLaporan(P())),
+    csvLaporan: () => { const d = dataLaporan(P()), q = x => '"' + String(x).replace(/"/g, '""') + '"'; const b = [['LAPORAN CHEMICAL', lab(P())], [], ['Dana ditransfer', d.tr], ['Realisasi belanja', d.real], ['Biaya operasional', d.ops], ['Sisa dana', d.sisa], [], ['Klien', 'Nilai barang', 'Alokasi biaya', 'Total', 'Anggaran', 'Sisa/lebih']].concat(d.klien.map(x => [kNama(x.k), Math.round(x.nilai), x.bi, Math.round(x.total), x.ang, Math.round(x.sel)]), [[], ['Toko', 'Barang/keterangan', 'Jumlah', 'Harga', 'Subtotal']], [...d.toko.entries()].flatMap(([k, l]) => l.map(r => [k === '__lain' ? 'LAIN-LAIN' : tNama(k), r.brg ? bNama(r.brg) : r.ket, r.qty, r.harga, r.sub]))); unduh('laporan-chemical-' + P().id + '.csv', '﻿' + b.map(r => r.map(q).join(';')).join('\r\n'), 'text/csv;charset=utf-8'); },
+    alasanTalangan: () => form('Alasan pengeluaran melebihi dana', [{ k: 'a', l: 'Alasan (mis. dana talangan pribadi)', t: 'textarea', req: 1, w: 1 }], { a: DB.talangan[P().id] || '' }, v => T('alasan', 'LAPORAN', P().id, v.a, () => { DB.talangan[P().id] = v.a; })),
+    cetakBA: () => {
+      const p = P(), per = p.id, ba = DB.ba[per];
+      const jalan = () => cetak(dokBA(P()));
+      if (ba && ba.nomor) return jalan();
+      const n = DB.aturan.nomorSurat + 1, saran = `${String(n).padStart(3, '0')}/ADM/RAYMP/${ROMAWI[new Date().getMonth()]}/${new Date().getFullYear()}`;
+      form('Berita acara', [{ k: 'nomor', l: 'Nomor berita acara', req: 1, w: 1 }, { k: 'tgl', l: 'Tanggal', t: 'date', req: 1 }], { nomor: saran, tgl: hariIni() }, v => { const g = T('buat', 'BERITA_ACARA', per, v.nomor, () => { if (v.nomor === saran) DB.aturan.nomorSurat = n; DB.ba[per] = { nomor: v.nomor, tgl: v.tgl, status: 'BELUM DIKEMBALIKAN' }; }); if (!g) setTimeout(jalan, 150); return g; }, { tombol: 'Buat & cetak' });
+    },
+    catatKembali: () => { const per = P().id; if (!DB.ba[per]) return galat('Buat berita acara dulu.'); form('Dana dikembalikan', [{ k: 'tgl', l: 'Tanggal dana dikembalikan', t: 'date', req: 1 }], { tgl: hariIni() }, v => T('kembali', 'PENGEMBALIAN_DANA', per, v.tgl, () => { Object.assign(DB.ba[per], { tgl: v.tgl, status: 'DIKEMBALIKAN' }); })); },
+    ubahMaster: b => formMaster(b.dataset.j, b.dataset.id),
+    aktifMaster: b => { const x = DB[b.dataset.j].find(y => y.id === b.dataset.id); Y(x.aktif === false ? 'aktifkan' : 'nonaktifkan', 'MASTER_' + b.dataset.j.toUpperCase(), x.id, x.nama, () => { x.aktif = x.aktif === false; }, true); },
+    aturan: () => { const a = DB.aturan; form('Pengaturan', [{ k: 'ambangAnggaran', l: 'Ambang HAMPIR HABIS (% anggaran)', t: 'number', req: 1 }, { k: 'ambangHarga', l: 'Ambang selisih harga (%)', t: 'number', req: 1 }, { k: 'n1', l: 'Pihak pertama: nama', req: 1 }, { k: 'j1', l: 'Pihak pertama: jabatan', req: 1 }, { k: 'n2', l: 'Pihak kedua: nama', req: 1 }, { k: 'j2', l: 'Pihak kedua: jabatan', req: 1 }, { k: 'nomorSurat', l: 'Nomor surat terakhir terpakai', t: 'number', req: 1 }], { ...a, n1: a.pihak1.nama, j1: a.pihak1.jabatan, n2: a.pihak2.nama, j2: a.pihak2.jabatan }, v => { if (v.ambangAnggaran <= 0 || v.ambangAnggaran > 100) return 'Ambang anggaran harus 1–100.'; return T('ubah', 'PENGATURAN', '', '', () => { Object.assign(a, { ambangAnggaran: v.ambangAnggaran, ambangHarga: v.ambangHarga, nomorSurat: Math.max(0, Math.round(v.nomorSurat)), pihak1: { nama: v.n1, jabatan: v.j1 }, pihak2: { nama: v.n2, jabatan: v.j2 } }); }, true); }); },
+    cadangan: () => cadangan(),
+    pulihkan: () => $('berkas').click(),
+    contoh: () => { if ((DB.periode.length || DB.klien.length) && !confirm('Data yang ada sekarang akan DIGANTI dengan data contoh. Lanjut?')) return; DB = seedContoh(); simpan(); ui.page = 'dashboard'; render(); info('Data contoh Oktober 2026 dimuat.'); },
+    hapusSemua: () => { if (confirm('Hapus SEMUA data chemical di peramban ini? Unduh cadangan dulu bila perlu.') && confirm('Yakin? Tindakan ini tidak bisa dibatalkan.')) { DB = kosong(); simpan(); ui.page = 'dashboard'; render(); } },
+    csv: b => csvTabel($(b.dataset.t).querySelector('table'), b.dataset.n)
+  };
+  const C = { // perubahan isian langsung di tabel
+    toko: e => Y('ubah', 'PENGAJUAN_ITEM', e.dataset.id, 'toko', () => { DB.pengajuan[P().id].items.find(i => i.brg === e.dataset.id).toko = e.value; }),
+    itemst: e => Y('keputusan', 'PENGAJUAN_ITEM', e.dataset.id, e.value, () => { const i = DB.pengajuan[P().id].items.find(i => i.brg === e.dataset.id); i.status = e.value; if (e.value === 'DISETUJUI' && !i.qtyS) i.qtyS = i.qty; if (e.value === 'DITOLAK') i.qtyS = 0; }),
+    itemq: e => { const v = +e.value; if (!(v >= 0)) return galat('Jumlah tidak boleh negatif.'); Y('ubah', 'PENGAJUAN_ITEM', e.dataset.id, 'qty disetujui ' + v, () => { DB.pengajuan[P().id].items.find(i => i.brg === e.dataset.id).qtyS = v; }); },
+    ceklis: e => { DB.ceklis[P().id + '|' + e.dataset.id] = e.checked; simpan(); },
+    alok: e => {
+      const per = P().id, a = DB.alokasi[per], v = Math.round(+e.value * 100) / 100; if (!(v >= 0)) { galat('Jumlah tidak boleh negatif.'); return render(); }
+      const row = a.rows.find(r => r.kln === e.dataset.k && r.brg === e.dataset.b), total = jum(a.rows.filter(r => r.brg === row.brg && r !== row), r => r.alok) + v;
+      if (total > beli(per, row.brg) + 1e-9) { galat(`Total alokasi ${bNama(row.brg)} (${jml(total)}) melebihi yang terbeli (${jml(beli(per, row.brg))}).`); return render(); }
+      Y('ubah', 'ALOKASI_BARANG', per, `${kNama(row.kln)} ${bNama(row.brg)} ${v}`, () => { row.alok = v; });
+    },
+    manual: e => Y('ubah', 'ALOKASI_BIAYA', e.dataset.id, e.value, () => { const per = P().id; (DB.biayaManual[per] = DB.biayaManual[per] || {})[e.dataset.id] = Math.round(+e.value || 0); })
+  };
+
+  /* ---------- gambar ulang dan peristiwa ---------- */
+  function render() {
+    const y = window.scrollY; tabelN = 0; renderBar();
+    const hal = PAGES[ui.page] || PAGES.dashboard; $('main').innerHTML = hal();
+    window.scrollTo(0, y);
+  }
+  function pindah(pg) {
+    ui.page = PAGES[pg] ? pg : 'dashboard'; render();
+    try { history.replaceState(null, '', '#' + ui.page); } catch (e) { /* abaikan */ }
+    if (window.parent !== window) window.parent.postMessage({ tipe: 'halaman', modul: 'chemical', pg: ui.page }, location.origin);
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-a],[data-pg],[data-sub],th[data-i]'); if (!t) return;
+    if (t.dataset.pg) return pindah(t.dataset.pg);
+    if (t.dataset.sub) { const [k, v] = t.dataset.sub.split(':'); ui.sub[k] = v; return render(); }
+    if (t.dataset.a) { if (A[t.dataset.a]) A[t.dataset.a](t); return; }
+    if (t.matches('th[data-i]')) urutTabel(t);
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'pilihPer') { DB.pilih = t.value; simpan(); return render(); }
+    if (t.id === 'metodeBiaya') return Y('ubah', 'ALOKASI_BIAYA', P().id, t.value, () => { DB.metodeBiaya[P().id] = t.value; });
+    if (t.id === 'berkas') { const f = t.files[0]; if (!f) return; f.text().then(s => { try { const d = JSON.parse(s); if (!d || !Array.isArray(d.periode) || !Array.isArray(d.klien)) throw 0; if (!confirm('Data sekarang akan diganti dengan isi cadangan. Lanjut?')) return; DB = Object.assign(kosong(), d); simpan(); render(); info('Cadangan dipulihkan.'); } catch (x) { galat('Berkas bukan cadangan chemical yang sah.'); } }); t.value = ''; return; }
+    if (t.dataset.chg && C[t.dataset.chg]) C[t.dataset.chg](t);
+  });
+  document.addEventListener('input', e => {
+    const t = e.target; if (!t.dataset.cari) return; const q = t.value.toLowerCase();
+    document.querySelectorAll('#' + t.dataset.cari + ' tbody tr').forEach(tr => { tr.hidden = q && !tr.textContent.toLowerCase().includes(q); });
+  });
+  window.addEventListener('afterprint', () => { $('cetak').innerHTML = ''; });
+  window.addEventListener('hashchange', () => pindah(location.hash.slice(1)));
+  if (window.top !== window.self) document.body.classList.add('dalam');
+
+  /* ---------- data contoh (fiktif, mengikuti contoh Oktober 2026 di PRD) ---------- */
+  function seedContoh() {
+    const d = kosong(); DB = d; // nid memakai DB
+    const toko = ['Toko Ramai', 'Toko Wahyu Maya', 'Toko Dani', 'Media Elok'].map(n => { const id = nid('TKO'); d.toko.push({ id, nama: n, catatan: '', aktif: true }); return id; });
+    const B = [['Karbol', 'liter', 18000, 0], ['Pewangi lantai', 'liter', 22000, 0], ['Sabun cuci tangan', 'liter', 25000, 1], ['Pembersih kaca', 'botol', 15000, 1], ['Pembersih toilet', 'botol', 20000, 2], ['Detergen', 'kg', 28000, 2], ['Cairan pel', 'liter', 24000, 0], ['Pembersih keramik', 'liter', 30000, 3], ['Kantong sampah', 'dus', 85000, 3]];
+    const brg = B.map(([nama, satuan, h, t]) => { const id = nid('BRG'); d.barang.push({ id, nama, satuan, kategori: 'Chemical', harga_ref: h, toko_utama: toko[t], aktif: true }); return id; });
+    const K = [['Klien Contoh A', 'Kantor Magelang', 'Magelang'], ['Klien Contoh B', 'Pabrik Magelang', 'Magelang'], ['Klien Contoh C', 'Gedung Salatiga', 'Salatiga'], ['Klien Contoh D', 'Sekolah Salatiga', 'Salatiga'], ['Klien Contoh E', 'Rumah Sakit Magelang', 'Magelang'], ['Klien Contoh F', 'Kantor Ambarawa', 'Ambarawa']];
+    const Q = [[14, 12, 8, 10, 6, 12, 10, 6, 2], [10, 8, 6, 8, 5, 10, 8, 4, 2], [8, 8, 5, 6, 4, 8, 6, 4, 1], [18, 15, 10, 12, 8, 14, 12, 8, 3], [20, 18, 12, 14, 10, 18, 15, 10, 4], [6, 6, 4, 5, 3, 6, 5, 3, 1]].map(r => r.map(x => Math.round(x * 2.19)));
+    const F = [1.4, 1.08, 1.2, 0.93, 1.15, 1.05];
+    const kl = K.map(([nama, lokasi, wil], i) => { const est = Q[i].reduce((s, q, j) => s + q * B[j][2], 0); const id = nid('KLN'); d.klien.push({ id, nama, lokasi, alamat: lokasi + ' (alamat contoh)', pic: 'PIC Contoh', kontak: '08xx-xxxx-xxxx', anggaran: Math.round(est * F[i] / 50000) * 50000, wilayah: wil, prioritas: i + 1, aktif: true }); return id; });
+    const per = 'PRD-2026-10'; d.periode.push({ id: per, bulan: 10, tahun: 2026, status: 'DILAPORKAN', tglBuka: '2026-10-01', tglTutup: '' }); d.periode.push({ id: 'PRD-2026-11', bulan: 11, tahun: 2026, status: 'DRAFT', tglBuka: '2026-11-12', tglTutup: '' }); d.pilih = per;
+    kl.forEach((k, i) => Q[i].forEach((q, j) => d.permintaan.push({ id: nid('PMT', 4), per, kln: k, brg: brg[j], qty: q, satuan: B[j][1], jenis: 'reguler', cat: '', tgl: '2026-10-02' })));
+    d.cek[per + '|' + kl[3]] = { tindakan: 'lanjut', alasan: 'Disetujui pimpinan, kebutuhan sekolah naik bulan ini.' };
+    const m = new Map(); d.permintaan.forEach(r => m.set(r.brg, (m.get(r.brg) || 0) + r.qty));
+    d.aturan.nomorSurat = 41;
+    const items = [...m.entries()].map(([b, qty]) => ({ brg: b, qty, harga: B[brg.indexOf(b)][2], toko: toko[B[brg.indexOf(b)][3]], status: 'DISETUJUI', qtyS: qty }));
+    d.pengajuan[per] = { nomor: '041/ADM/RAYMP/X/2026', tgl: '2026-10-28', keputusan: 'DISETUJUI', catatan: 'Setuju via chat.', tglSetuju: '2026-10-29', transfer: { tgl: '2026-10-30', nominal: 25950500, rek: 'Rekening operasional (contoh)' }, items, klien: kl.slice() };
+    /* realisasi: harga aktual sedikit berbeda; pewangi lantai terbeli 90% (supaya contoh alokasi proporsional); baris terakhir disesuaikan agar total tepat Rp24.388.950 */
+    const naik = [1.02, 1.05, 0.98, 1.0, 1.04, 1.0, 1.06, 1.0];
+    let tot = 0; const lines = [];
+    items.forEach((it, i) => {
+      if (i === items.length - 1) return; const bi = brg.indexOf(it.brg); const q = it.brg === brg[1] ? Math.floor(it.qty * 0.9) : it.qty, h = Math.round(B[bi][2] * naik[i % naik.length] / 500) * 500;
+      lines.push({ toko: toko[B[bi][3]], brg: it.brg, qty: q, harga: h }); tot += q * h;
+    });
+    const akhir = items[items.length - 1], ba = brg.indexOf(akhir.brg), sisa = 24388950 - 300000 - tot;
+    lines.push({ toko: toko[B[ba][3]], brg: akhir.brg, qty: akhir.qty - 1, harga: B[ba][2] }, { toko: toko[B[ba][3]], brg: akhir.brg, qty: 1, harga: sisa - (akhir.qty - 1) * B[ba][2] });
+    lines.forEach(l => d.realisasi.push({ id: nid('RLS', 4), per, toko: l.toko, brg: l.brg, ket: '', qty: l.qty, harga: l.harga, sub: l.qty * l.harga, tgl: '2026-10-31', nota: '', status: l.brg === brg[1] ? 'KURANG DARI RENCANA' : 'TERBELI' }));
+    d.realisasi.push({ id: nid('RLS', 4), per, toko: '', brg: '', ket: 'Ngelas Kursi Wasit', qty: 1, harga: 300000, sub: 300000, tgl: '2026-10-31', nota: '', status: 'LAIN-LAIN' });
+    d.alokasi[per] = { aturan: 'proporsional', dikunci: true, rows: buatAlokasi(per, 'proporsional') };
+    kl.forEach((k, i) => d.distribusi.push({ id: nid('DST', 4), per, kln: k, status: i === 5 ? 'TERKIRIM' : 'DITERIMA', tgl: '2026-11-0' + (1 + (i % 3)), metode: 'Mobil sendiri', penerima: 'Penerima Contoh', bukti: '', rute: K[i][2], cat: '' }));
+    d.log.push({ w: new Date().toISOString(), u: 'Admin', aksi: 'contoh', tabel: 'SEMUA', id: '', r: 'Data contoh dimuat' });
+    return d;
+  }
+
+  DB = muatDB();
+  if (!DB.pilih && DB.periode.length) DB.pilih = urutPeriode().pop().id;
+  window.__chemical = { T, DB: () => DB, hitung: { cekAnggaran, hitungBiaya, dataLaporan, sisaDana, totReal, totOps, transferP }, seedContoh, rp };
+  pindah(location.hash.slice(1) || 'dashboard');
+})();
+</script>
+</body>
+</html>

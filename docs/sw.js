@@ -5,8 +5,8 @@
    Nama cache memuat nomor versi (dari ?v= pada alamat sw.js, diisi portal dari aset/versi.js); versi baru membuang cache lama. */
 const VERSI = new URL(self.location).searchParams.get('v') || '0';
 const CACHE = 'pengadaan-' + VERSI;
-const CANGKANG = ['./', 'offline.html', 'manifest.webmanifest', 'aset/tema.css', 'aset/tema-ringan.css', 'aset/auth.js', 'aset/nama-bagian.js', 'aset/filter.js', 'aset/versi.js',
-  'aset/logo-ray.png', 'aset/ikon-192.png', 'seragam/', 'peralatan/', 'administrator/'];
+const CANGKANG = ['./', 'offline.html', 'manifest.webmanifest', 'aset/tema.css', 'aset/tema-ringan.css', 'aset/auth.js', 'aset/nama-bagian.js', 'aset/filter.js', 'aset/versi.js', 'aset/hp-portal.css', 'aset/hp.css', 'aset/hp.js',
+  'aset/logo-ray.png', 'aset/ikon-192.png', 'seragam/', 'peralatan/', 'chemical/', 'administrator/'];
 
 self.addEventListener('install', e => {
   // satu berkas gagal tidak boleh menggagalkan pemasangan
