@@ -1,5 +1,5 @@
 // Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.331', tanggal: '2026-11-13', catatan: 'Form chemical: pilih barang lewat cari dan dropdown' };
+window.VERSI = { no: '1.332', tanggal: '2026-11-13', catatan: 'Chemical tahap A: periode, rekap, pengajuan' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');

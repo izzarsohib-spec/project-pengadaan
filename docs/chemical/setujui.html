@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<title>Persetujuan Anggaran Chemical</title>
+<style>
+  :root { --bg:#e9e9ec; --kartu:#fff; --teks:#1b1b1f; --redup:#6b6b73; --garis:#c9c9d0; --bahaya:#c0392b; --ok:#1e8e4e; --aksen:#0070c0; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121214; --kartu:#1c1c20; --teks:#ececf0; --redup:#9a9aa4; --garis:#3a3a42; --bahaya:#ef6b5b; --ok:#4cc27f; --aksen:#59a9ee; } }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--teks); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:16px 16px 40px; }
+  .kartu { background:var(--kartu); border:1px solid var(--garis); border-radius:16px; padding:16px; margin-bottom:14px; }
+  h1 { font-size:1.2rem; margin:0 0 2px; } h2 { font-size:1rem; margin:0 0 10px; } .sub { color:var(--redup); font-size:.88rem; margin:0 0 6px; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; } td, th { padding:6px 0; border-bottom:1px solid var(--garis); text-align:left; vertical-align:top; } td:last-child, th:last-child { text-align:right; white-space:nowrap; padding-left:10px; }
+  .total td { font-weight:700; border-bottom:0; font-size:1.05rem; } .sub2 td { font-weight:700; }
+  .bg { display:inline-block; padding:1px 9px; border-radius:99px; font-size:.78rem; font-weight:700; } .ok { background:#dff3e7; color:#17703c; } .warn { background:#fff0cc; color:#8a5a00; } .bad { background:#fbe0dc; color:#a3281a; }
+  textarea { width:100%; min-height:84px; padding:11px 12px; border:1px solid var(--garis); border-radius:12px; background:transparent; color:inherit; font:inherit; resize:vertical; }
+  .aksi { display:flex; gap:10px; margin-top:12px; } .aksi button { flex:1; padding:14px; border-radius:14px; border:0; font:inherit; font-weight:700; font-size:1.02rem; cursor:pointer; color:#fff; } .setuju { background:var(--ok); } .tolak { background:var(--bahaya); } .aksi button:disabled { opacity:.5; }
+  #pesan { margin-top:10px; font-size:.95rem; } .gagal { color:var(--bahaya); } .tengah { text-align:center; padding:26px 14px; } .besar { font-size:2.4rem; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../aset/tema-ringan.css?v=1.291">
+</head>
+<body>
+<main>
+  <div class="kartu" id="kepala"><h1>Persetujuan Anggaran Belanja Chemical</h1><p class="sub" id="sub" style="margin:0">Memuat…</p></div>
+  <div id="isi"></div>
+</main>
+<script>
+  const URL_ = 'https://vqcusagijiavaoljfrib.supabase.co', ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxY3VzYWdpamlhdmFvbGpmcmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0OTIzOTksImV4cCI6MjEwODA2ODM5OX0.VeslVR4UHv26LCMbkO7KP0k96r8lg7-NNLjY30iMyFk';
+  const token = new URLSearchParams(location.search).get('t') || '';
+  const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ang = n => Math.round(Number(n) || 0).toLocaleString('id-ID'), rp = n => 'Rp' + ang(n);
+  const NAMA = { yasir: 'Pak Yasir (Direktur)', ferry: 'Pak Ferry (Direktur Utama)' };
+  let D = null;
+  async function rpc(fn, body) {
+    const r = await fetch(URL_ + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.message || 'Gagal (' + r.status + ')');
+    return j;
+  }
+  const lencana = s => s === 'SETUJU' ? '<span class="bg ok">Disetujui</span>' : s === 'TOLAK' ? '<span class="bg bad">Ditolak</span>' : '<span class="bg warn">Menunggu</span>';
+  const statusLok = l => l.mode === 'tanpa_batas' ? 'Tanpa batas' : l.jual > l.rab ? (l.lewat_rab ? 'Lewat RAB (pengecualian)' : 'Lewat RAB') : l.jual / l.rab >= .9 ? 'Hampir habis' : 'Cukup';
+
+  function gambar() {
+    const R = D.rincian, selesai = D.status !== 'MENUNGGU' || D.status_saya !== 'MENUNGGU';
+    $('sub').textContent = 'Periode ' + BULAN[D.bulan - 1] + ' ' + D.tahun + ' · pengajuan ke-' + D.ke + ' · untuk ' + NAMA[D.pimpinan];
+    $('isi').innerHTML = `
+      <div class="kartu"><h2>Total dana diajukan</h2><div style="font-size:1.7rem;font-weight:700">${rp(D.total)}</div>${D.catatan ? `<p class="sub" style="margin:8px 0 0">Catatan: <i>${esc(D.catatan)}</i></p>` : ''}</div>
+      <div class="kartu"><h2>Rincian dana</h2><table>${R.toko.map(t => `<tr><td>Belanja Toko ${esc(t.toko)}</td><td>${ang(t.total)}</td></tr>`).join('')}<tr class="sub2"><td>Subtotal belanja</td><td>${ang(R.beli)}</td></tr>${R.ops.map(o => `<tr><td>${esc(o.kategori)}</td><td>${ang(o.estimasi)}</td></tr>`).join('')}<tr class="sub2"><td>Subtotal operasional (estimasi)</td><td>${ang(R.ops_total)}</td></tr><tr class="total"><td>TOTAL</td><td>${ang(R.total)}</td></tr></table></div>
+      <div class="kartu"><h2>Permintaan per lokasi</h2><table><tr><th>Lokasi</th><th>Permintaan / RAB</th></tr>${R.lokasi.map(l => `<tr><td>${esc(l.lokasi)}<br><span class="sub">${statusLok(l)}</span></td><td>${ang(l.jual)}<br><span class="sub">${l.mode === 'tanpa_batas' ? 'tanpa batas' : ang(l.rab)}</span></td></tr>`).join('')}</table></div>
+      <div class="kartu"><h2>Status persetujuan</h2><table><tr><td>${NAMA[D.pimpinan]} (Anda)</td><td>${lencana(D.status_saya)}</td></tr><tr><td>${NAMA[D.pimpinan === 'yasir' ? 'ferry' : 'yasir']}</td><td>${lencana(D.status_lain)}</td></tr></table>${D.alasan_saya ? `<p class="sub">Alasan Anda: ${esc(D.alasan_saya)}</p>` : ''}
+        ${D.status === 'DITARIK' ? '<p class="sub">Pengajuan ini ditarik oleh admin.</p>' : ''}${D.status === 'DITOLAK' && D.status_saya !== 'TOLAK' ? '<p class="sub">Pengajuan ini ditolak oleh pimpinan lain.</p>' : ''}${D.status === 'DISETUJUI' ? '<p class="sub">Pengajuan ini sudah disetujui kedua pimpinan.</p>' : ''}</div>
+      ${selesai ? '' : `<div class="kartu"><h2>Keputusan Anda</h2><label class="sub" for="alasan">Alasan (wajib bila menolak)</label><textarea id="alasan" maxlength="500" placeholder="Misalnya: kurangi jumlah di lokasi X"></textarea>
+        <div class="aksi"><button class="tolak" id="btnTolak">Tolak / Revisi</button><button class="setuju" id="btnSetuju">Setujui</button></div><div id="pesan" role="status"></div></div>`}`;
+    if (!selesai) { $('btnSetuju').onclick = () => putus('setuju'); $('btnTolak').onclick = () => putus('tolak'); }
+  }
+  async function putus(aksi) {
+    const alasan = $('alasan').value.trim();
+    if (aksi === 'tolak' && alasan.length < 3) { $('pesan').className = 'gagal'; $('pesan').textContent = 'Isi alasan penolakan terlebih dulu.'; return; }
+    if (!confirm(aksi === 'setuju' ? 'Setujui pengajuan ini? Keputusan tidak dapat diubah.' : 'Tolak pengajuan ini? Keputusan tidak dapat diubah.')) return;
+    $('btnSetuju').disabled = $('btnTolak').disabled = true; $('pesan').textContent = 'Menyimpan…'; $('pesan').className = '';
+    try { await rpc('chemical_putuskan', { p_token: token, p_aksi: aksi, p_alasan: alasan || null }); D = await rpc('chemical_pengajuan_publik', { p_token: token }); gambar();
+      $('isi').insertAdjacentHTML('afterbegin', `<div class="kartu tengah"><div class="besar">${aksi === 'setuju' ? '✅' : '↩️'}</div><h1>${aksi === 'setuju' ? 'Terima kasih, pengajuan disetujui' : 'Penolakan tercatat'}</h1><p class="sub">Keputusan Anda sudah tersimpan dan admin dapat melihatnya.</p></div>`); window.scrollTo(0, 0);
+    } catch (e) { $('btnSetuju').disabled = $('btnTolak').disabled = false; $('pesan').className = 'gagal'; $('pesan').textContent = e.message; }
+  }
+  (async () => {
+    if (!token) { $('sub').textContent = 'Buka halaman ini lewat tautan yang dikirim admin.'; return; }
+    try { D = await rpc('chemical_pengajuan_publik', { p_token: token }); gambar(); } catch (e) { $('sub').textContent = 'Tautan tidak valid atau sudah tidak berlaku. Hubungi admin.'; }
+  })();
+</script>
+</body>
+</html>
