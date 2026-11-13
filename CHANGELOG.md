@@ -6,6 +6,8 @@ Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permin
 
 ## 13 Nov 2026
 
+- **v1.334** Chemical, halaman Rekap: tabel per lokasi disamakan dengan sheet PO (No, Alat & bahan, Perkiraan harga toko, Nama toko, Jumlah, Satuan, Total, Keterangan) plus kolom Nilai RAB, dan ditambah tabel Rekap belanja per area (No, Area, Pre order, Belanja, Total).
+
 - **v1.333** Modul Chemical: bar tahapan (1. Form dibuka ... 8. Dilaporkan) di atas halaman Beranda, Periode, Rekap, dan Pengajuan dihapus. Status periode tetap tampil sebagai lencana.
 
 - **v1.332** **Modul Chemical dirombak, tahap A (Periode, Rekap, Pengajuan).** Halaman Chemical kini tersimpan di Supabase (bukan lagi di peramban) dan memakai login admin. Tab: Beranda, Periode, Rekap, Pengajuan, serta Belanja, Ploting, Pengiriman, Pengeluaran, Laporan (tahap berikutnya). **Periode:** tautan form korlap, tutup/buka form, status pengisian per lokasi, buka kembali lokasi. **Rekap:** pencocokan tiap lokasi dengan RAB menurut mode anggaran (ketat / boleh lewat dengan persetujuan / tanpa batas), ubah jumlah, petakan atau buat barang katalog dari barang lain, rekap per barang dan estimasi belanja per toko. **Pengajuan:** biaya operasional estimasi, rincian dana, memo dan lampiran daftar belanja untuk dicetak, persetujuan Pak Yasir dan Pak Ferry lewat tautan bertoken (`docs/chemical/setujui.html`), tarik pengajuan. Data dikunci setelah diajukan. Database: `supabase/migrasi-chemical-alur.sql`. Notifikasi otomatis ke pimpinan belum dipasang; tautan dikirim admin lewat WhatsApp. Halaman Chemical versi lama (data di peramban) diganti.
