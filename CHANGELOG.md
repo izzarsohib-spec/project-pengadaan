@@ -6,6 +6,8 @@ Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permin
 
 ## 13 Nov 2026
 
+- **v1.331** Form chemical korlap: **pilih barang lewat kolom cari + dropdown**, bukan daftar penuh. Tiap baris punya kolom cari, jumlah (− / +), dan tombol hapus; tombol **+ Tambah barang** menambah baris berikutnya, dan barang yang sudah dipilih tidak muncul lagi di baris lain. Bagian **Barang lain** (ditulis manual) memakai pola tambah/hapus yang sama.
+
 - **v1.330** **Form pemesanan chemical untuk korlap** (`docs/chemical/form.html`). Satu tautan bertoken per periode; korlap memilih lokasi, mengisi nama dan email, memilih barang dari katalog (tanpa harga dan tanpa nama toko), boleh menambah barang di luar daftar (tanpa harga sampai admin menetapkan) dan catatan, memeriksa ringkasan, lalu mengirim. Satu lokasi dan satu email hanya bisa mengirim sekali per periode (dijaga di database); lokasi yang sudah mengisi tampil abu-abu. Database: `supabase/migrasi-chemical-form.sql` dan `migrasi-chemical-form-2.sql` (tabel lokasi, periode, kiriman, permintaan; fungsi form publik dan fungsi admin). Data lokasi dan anggaran dimuat lewat skrip di luar repo. Halaman Administrator dan penyambungan halaman Permintaan ke database menyusul setelah alur Chemical dipastikan.
 
 - **Chemical (database, tanpa perubahan tampilan)** Skema `supabase/migrasi-chemical.sql` ditambahkan dan sudah diterapkan: tabel `chemical_toko` dan `chemical_item` (barang per toko, harga beli dan jual, penanda `perlu_ditinjau`), RLS tertutup. Data awal 62 barang dari 4 toko (Maya, Ramai, Tardi, Sartono) dimuat lewat skrip di luar repo karena memuat harga perusahaan. Toko Dani, Online, dan Teknik menyusul.
