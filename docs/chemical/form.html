@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<title>Form Pemesanan Chemical</title>
+<style>
+  :root { --bg:#e9e9ec; --kartu:#fff; --teks:#1b1b1f; --redup:#6b6b73; --garis:#c9c9d0; --bahaya:#c0392b; --ok:#1e8e4e; --aksen:#0070c0; --soft:#eef5fb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121214; --kartu:#1c1c20; --teks:#ececf0; --redup:#9a9aa4; --garis:#3a3a42; --bahaya:#ef6b5b; --ok:#4cc27f; --aksen:#59a9ee; --soft:#1b2733; } }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--teks); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:16px 16px 110px; }
+  .kartu { background:var(--kartu); border:1px solid var(--garis); border-radius:16px; padding:16px; margin-bottom:14px; }
+  h1 { font-size:1.2rem; margin:0 0 2px; } h2 { font-size:1rem; margin:0 0 10px; }
+  .sub { color:var(--redup); font-size:.88rem; margin:0 0 12px; }
+  label { display:block; font-weight:600; font-size:.88rem; margin:12px 0 5px; }
+  input[type=text], input[type=email], input[type=search], select, textarea { width:100%; padding:11px 12px; border:1px solid var(--garis); border-radius:12px; background:transparent; color:inherit; font:inherit; }
+  .brg { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--garis); } .brg:last-child { border-bottom:0; }
+  .brg .nm { flex:1; min-width:0; } .brg .nm b { display:block; font-weight:600; overflow-wrap:anywhere; } .brg .nm span { color:var(--redup); font-size:.82rem; }
+  .brg.isi { background:var(--soft); margin:0 -16px; padding-left:16px; padding-right:16px; }
+  .qty { display:flex; align-items:center; gap:6px; } .qty button { width:40px; height:40px; border-radius:12px; border:1px solid var(--garis); background:transparent; color:inherit; font-size:1.2rem; cursor:pointer; }
+  .qty input { width:62px; text-align:center; padding:9px 4px; border:1px solid var(--garis); border-radius:12px; background:transparent; color:inherit; font:inherit; }
+  .bar { position:fixed; left:0; right:0; bottom:0; background:var(--kartu); border-top:1px solid var(--garis); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .bar div { max-width:560px; margin:0 auto; display:flex; align-items:center; gap:12px; } .bar .ringkas { flex:1; font-size:.92rem; color:var(--redup); } .bar .ringkas b { color:var(--teks); }
+  .kirim, .lain { padding:13px 18px; border-radius:14px; font:inherit; font-weight:700; cursor:pointer; border:0; }
+  .kirim { background:var(--aksen); color:#fff; } .kirim:disabled { opacity:.5; cursor:default; } .lain { background:transparent; border:1px solid var(--garis); color:inherit; }
+  #pesan { margin:0 0 12px; font-size:.92rem; } .gagal { color:var(--bahaya); } .ok { color:var(--ok); font-weight:600; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; } td { padding:7px 0; border-bottom:1px solid var(--garis); } td:last-child { text-align:right; font-weight:600; white-space:nowrap; padding-left:10px; }
+  textarea { resize:vertical; min-height:74px; }
+  .ln { display:grid; grid-template-columns:1fr 84px 40px; gap:6px; padding:10px 0; border-bottom:1px solid var(--garis); } .ln .nm2 { grid-column:1 / -1; }
+  .ln input { width:100%; padding:10px 8px; border:1px solid var(--garis); border-radius:12px; background:transparent; color:inherit; font:inherit; min-width:0; }
+  .ln button { height:100%; border-radius:12px; border:1px solid var(--garis); background:transparent; color:var(--bahaya); font-size:1.1rem; cursor:pointer; }
+  .tambah { width:100%; margin-top:8px; padding:11px; border-radius:12px; border:1px dashed var(--garis); background:transparent; color:var(--aksen); font:inherit; font-weight:600; cursor:pointer; }
+  .tengah { text-align:center; padding:28px 16px; } .centang { font-size:2.4rem; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../aset/tema-ringan.css?v=1.291">
+</head>
+<body>
+<main>
+  <div class="kartu" id="kepala"><h1>Form Pemesanan Chemical</h1><p class="sub" id="sub" style="margin:0">Memuat…</p></div>
+  <div id="isi"></div>
+</main>
+<script>
+  const URL_ = 'https://vqcusagijiavaoljfrib.supabase.co';
+  const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxY3VzYWdpamlhdmFvbGpmcmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0OTIzOTksImV4cCI6MjEwODA2ODM5OX0.VeslVR4UHv26LCMbkO7KP0k96r8lg7-NNLjY30iMyFk';
+  const token = new URLSearchParams(location.search).get('t') || '';
+  const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const jml = n => (+n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  const simpanKey = 'chemical-form-' + token.slice(0, 12);
+  let D = null, qty = {}, lokasi = '', nama = '', email = '', cari = '', catatan = '', lain = [];
+  const SATUAN = ['Pcs', 'Galon', 'Botol', 'Pack', 'Kg', 'Dus', 'Set', 'Liter', 'Roll'];
+
+  async function rpc(fn, body) {
+    const r = await fetch(URL_ + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.message || 'Gagal (' + r.status + ')');
+    return j;
+  }
+  // isian setengah jadi disimpan di peramban (kemudahan saja; aman bila diblokir)
+  const simpanDraf = () => { try { localStorage.setItem(simpanKey, JSON.stringify({ qty, lokasi, nama, email, catatan, lain })); } catch (e) {} };
+  const muatDraf = () => { try { const d = JSON.parse(localStorage.getItem(simpanKey) || 'null'); if (d) ({ qty, lokasi, nama, email, catatan, lain } = Object.assign({ qty: {}, lokasi: '', nama: '', email: '', catatan: '', lain: [] }, d)); } catch (e) {} };
+  const hapusDraf = () => { try { localStorage.removeItem(simpanKey); } catch (e) {} };
+
+  const terpilih = () => D.barang.filter(b => qty[b.id] > 0);
+  const lengkap = x => x.n.trim() && x.s.trim() && +x.q > 0;
+  const lainOk = () => lain.filter(lengkap);                                                   // baris barang lain yang lengkap
+  const lainSetengah = () => lain.filter(x => (x.n.trim() || x.s.trim() || +x.q > 0) && !lengkap(x)).length;
+  const jumlahPilih = () => terpilih().length + lainOk().length;
+  const emailOk = () => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+  const barisLain = () => lain.map((x, i) => `<div class="ln"><input class="nm2" type="text" maxlength="120" placeholder="Nama barang" data-l="${i}" data-f="n" value="${esc(x.n)}" aria-label="Nama barang lain">
+    <input type="text" maxlength="30" list="satuan" placeholder="Satuan" data-l="${i}" data-f="s" value="${esc(x.s)}" aria-label="Satuan"><input type="number" inputmode="decimal" min="0" step="any" placeholder="Jumlah" data-l="${i}" data-f="q" value="${x.q || ''}" aria-label="Jumlah"><button type="button" data-hl="${i}" aria-label="Hapus baris">×</button></div>`).join('');
+  const PERINGATAN = 'Baris yang belum lengkap (nama, satuan, jumlah) tidak ikut dipesan.';
+  const ramah = m => /sudah mengisi/.test(m) ? 'Lokasi ini sudah mengisi form periode ini. Hubungi admin bila perlu mengubah isiannya.'
+    : /email ini sudah/.test(m) ? 'Email ini sudah dipakai mengisi form periode ini.' : /ditutup/.test(m) ? 'Form periode ini sudah ditutup.' : m;
+
+  function gambar() {
+    const per = BULAN[D.bulan - 1] + ' ' + D.tahun;
+    $('sub').textContent = 'Periode ' + per;
+    const q = cari.trim().toLowerCase(), daftar = D.barang.filter(b => !q || b.nama.toLowerCase().includes(q));
+    const n = jumlahPilih(), bisa = lokasi && nama.trim() && emailOk() && n > 0;
+    $('isi').innerHTML = `
+      <div id="pesan" role="status"></div>
+      <div class="kartu"><h2>Identitas pengisi</h2>
+        <label for="lok">Lokasi</label>
+        <select id="lok"><option value="">— Pilih lokasi —</option>${D.lokasi.map(l => `<option value="${l.id}" ${l.sudah ? 'disabled' : ''} ${String(l.id) === String(lokasi) ? 'selected' : ''}>${esc(l.nama)}${l.sudah ? ' (sudah mengisi)' : ''}</option>`).join('')}</select>
+        <label for="nm">Nama</label><input type="text" id="nm" maxlength="120" autocomplete="name" value="${esc(nama)}">
+        <label for="em">Email</label><input type="email" id="em" maxlength="160" autocomplete="email" inputmode="email" value="${esc(email)}">
+        <p class="sub" style="margin:8px 0 0">Form hanya bisa dikirim <b>satu kali</b> per lokasi untuk periode ini. Periksa isian sebelum mengirim.</p></div>
+      <div class="kartu"><h2>Pilih barang</h2><p class="sub">Isi jumlah pada barang yang dibutuhkan. Yang dibiarkan 0 tidak ikut dipesan.</p>
+        <input type="search" id="cr" placeholder="Cari barang…" value="${esc(cari)}" autocomplete="off">
+        <div id="daftar" style="margin-top:6px">${daftar.map(b => `<div class="brg ${qty[b.id] > 0 ? 'isi' : ''}" data-b="${b.id}"><div class="nm"><b>${esc(b.nama)}</b><span>${esc(b.satuan)}</span></div>
+          <div class="qty"><button type="button" data-k="${b.id}" data-d="-1" aria-label="Kurangi">−</button><input type="number" inputmode="decimal" min="0" step="any" data-q="${b.id}" value="${qty[b.id] || ''}" placeholder="0" aria-label="Jumlah ${esc(b.nama)}"><button type="button" data-k="${b.id}" data-d="1" aria-label="Tambah">+</button></div></div>`).join('') || '<p class="sub">Tidak ada barang yang cocok.</p>'}</div></div>
+      <div class="kartu"><h2>Barang lain (tidak ada di daftar)</h2><p class="sub">Isi bila ada kebutuhan yang tidak tersedia di daftar di atas. Admin yang akan menentukan harganya.</p>
+        <datalist id="satuan">${SATUAN.map(s => `<option value="${s}">`).join('')}</datalist>
+        <div id="lain">${barisLain()}</div><p class="sub" id="lainInfo" style="margin:8px 0 0;color:var(--bahaya)">${lainSetengah() ? PERINGATAN : ''}</p>
+        <button type="button" class="tambah" id="tambahLain" ${lain.length >= 20 ? 'disabled' : ''}>+ Tambah barang lain</button></div>
+      <div class="kartu"><h2>Catatan (opsional)</h2><textarea id="cat" maxlength="500" placeholder="Misalnya: mohon dikirim sebelum tanggal 5">${esc(catatan)}</textarea></div>
+      <div class="bar"><div><span class="ringkas"><b>${n}</b> barang dipilih</span><button class="kirim" id="lanjut" ${bisa ? '' : 'disabled'}>Periksa &amp; kirim</button></div></div>`;
+  }
+  // ubah satu barang tanpa menggambar ulang seluruh daftar (supaya kolom isian tidak kehilangan fokus)
+  function setQty(id, v) {
+    v = Math.max(0, Math.min(100000, +v || 0)); if (v) qty[id] = v; else delete qty[id];
+    const baris = document.querySelector(`.brg[data-b="${id}"]`); if (baris) { baris.classList.toggle('isi', v > 0); const i = baris.querySelector('input'); if (document.activeElement !== i) i.value = v || ''; }
+    perbarui(); simpanDraf();
+  }
+  function perbarui() {
+    const n = jumlahPilih(), bisa = lokasi && nama.trim() && emailOk() && n > 0;
+    const r = document.querySelector('.ringkas b'); if (r) r.textContent = n; const t = $('lanjut'); if (t) t.disabled = !bisa;
+    const i = $('lainInfo'); if (i) i.textContent = lainSetengah() ? PERINGATAN : '';
+  }
+  function periksa() {
+    const lk = D.lokasi.find(l => String(l.id) === String(lokasi)), it = terpilih(), lo = lainOk();
+    $('isi').innerHTML = `<div class="kartu"><h2>Periksa kembali</h2><p class="sub">Setelah dikirim, isian <b>tidak bisa diubah</b> oleh Anda. Pastikan lokasi dan jumlahnya sudah benar.</p>
+      <table><tr><td>Lokasi</td><td>${esc(lk.nama)}</td></tr><tr><td>Nama</td><td>${esc(nama.trim())}</td></tr><tr><td>Email</td><td>${esc(email.trim())}</td></tr>${catatan.trim() ? `<tr><td>Catatan</td><td style="white-space:normal">${esc(catatan.trim())}</td></tr>` : ''}</table></div>
+      <div class="kartu"><h2>${it.length + lo.length} barang dipesan</h2><table>${it.map(b => `<tr><td>${esc(b.nama)}</td><td>${jml(qty[b.id])} ${esc(b.satuan)}</td></tr>`).join('')}${lo.map(x => `<tr><td>${esc(x.n.trim())} <span class="sub">(barang lain)</span></td><td>${jml(x.q)} ${esc(x.s.trim())}</td></tr>`).join('')}</table></div>
+      <div id="pesan" role="status"></div>
+      <div class="bar"><div><button class="lain" id="kembali">Kembali</button><span class="ringkas"></span><button class="kirim" id="kirim">Kirim sekarang</button></div></div>`;
+    window.scrollTo(0, 0);
+  }
+  async function kirim() {
+    const t = $('kirim'); t.disabled = true; t.textContent = 'Mengirim…'; $('pesan').textContent = '';
+    try {
+      await rpc('form_chemical_kirim', { p_token: token, p_lokasi: Number(lokasi), p_pengirim: nama.trim(), p_email: email.trim(), p_catatan: catatan.trim() || null,
+        p_baris: terpilih().map(b => ({ item_id: b.id, qty: qty[b.id] })).concat(lainOk().map(x => ({ nama: x.n.trim(), satuan: x.s.trim(), qty: +x.q }))) });
+      const lk = D.lokasi.find(l => String(l.id) === String(lokasi)).nama, n = jumlahPilih(); hapusDraf();
+      $('isi').innerHTML = `<div class="kartu tengah"><div class="centang">✅</div><h1>Pesanan terkirim</h1><p class="sub">${esc(lk)} · ${n} barang · periode ${BULAN[D.bulan - 1]} ${D.tahun}.<br>Terima kasih. Anda tidak perlu mengirim lagi.</p></div>`;
+      window.scrollTo(0, 0);
+    } catch (e) { t.disabled = false; t.textContent = 'Kirim sekarang'; $('pesan').className = 'gagal'; $('pesan').textContent = ramah(e.message); }
+  }
+  function pesanKepala(judul, teks) { $('kepala').innerHTML = `<h1>${judul}</h1><p class="sub" style="margin:0">${teks}</p>`; $('isi').innerHTML = ''; }
+
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (t.id === 'nm') { nama = t.value; perbarui(); simpanDraf(); } else if (t.id === 'em') { email = t.value; perbarui(); simpanDraf(); }
+    else if (t.id === 'cr') { cari = t.value; const p = t.selectionStart; gambar(); const c = $('cr'); c.focus(); c.setSelectionRange(p, p); }
+    else if (t.id === 'cat') { catatan = t.value; simpanDraf(); }
+    else if (t.dataset.l !== undefined) { const x = lain[+t.dataset.l]; if (x) { x[t.dataset.f] = t.dataset.f === 'q' ? Math.max(0, Math.min(100000, +t.value || 0)) : t.value; perbarui(); simpanDraf(); } }
+    else if (t.dataset.q) setQty(t.dataset.q, t.value);
+  });
+  document.addEventListener('change', e => { if (e.target.id === 'lok') { lokasi = e.target.value; perbarui(); simpanDraf(); } });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'tambahLain') { if (lain.length < 20) { lain.push({ n: '', s: '', q: 0 }); simpanDraf(); gambar(); const a = document.querySelectorAll('#lain .nm2'); if (a.length) a[a.length - 1].focus(); } return; }
+    if (b.dataset.hl !== undefined) { lain.splice(+b.dataset.hl, 1); simpanDraf(); gambar(); return; }
+    if (b.dataset.k) setQty(b.dataset.k, (+qty[b.dataset.k] || 0) + (+b.dataset.d));
+    else if (b.id === 'lanjut') periksa(); else if (b.id === 'kembali') gambar(); else if (b.id === 'kirim') kirim();
+  });
+
+  (async () => {
+    if (!token) return pesanKepala('Tautan tidak lengkap', 'Buka form lewat tautan yang dikirim admin.');
+    try { D = await rpc('form_chemical_ambil', { p_token: token }); } catch (e) { return pesanKepala('Tautan tidak valid', 'Minta tautan terbaru kepada admin.'); }
+    if (!D.dibuka) return pesanKepala('Form sudah ditutup', 'Pemesanan periode ' + BULAN[D.bulan - 1] + ' ' + D.tahun + ' sudah ditutup. Hubungi admin bila ada kebutuhan mendesak.');
+    muatDraf(); if (lokasi && (D.lokasi.find(l => String(l.id) === String(lokasi)) || {}).sudah) lokasi = '';
+    gambar();
+  })();
+</script>
+</body>
+</html>
