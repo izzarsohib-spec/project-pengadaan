@@ -169,7 +169,7 @@
     const p = periodeAktif(); const ps = S.master.periode.slice().reverse();
     const lok = S.rekap ? S.rekap.lokasi.filter(l => l.aktif || l.kiriman) : [], isi = lok.filter(l => l.kiriman).length, cocok = lok.filter(l => l.kiriman && l.cocok).length;
     const langkah = !p ? 'Buat periode baru untuk memulai.' : ({ FORM: 'Sebarkan tautan form ke korlap, lalu tutup form bila sudah cukup.', REKAP: 'Cocokkan permintaan tiap lokasi di halaman Rekap, lalu susun pengajuan.', DIAJUKAN: 'Pengajuan menunggu keputusan pimpinan.', DISETUJUI: 'Disetujui. Belanja, ploting, dan pengiriman dikerjakan pada tahap berikutnya.' }[p.status] || 'Tahap ini dikerjakan pada pembaruan berikutnya.');
-    return `<div class="ph"><h2>Beranda</h2></div>${p ? stepper(p.status) : ''}
+    return `<div class="ph"><h2>Beranda</h2></div>
       <div class="card"><h3>Langkah berikutnya</h3><p>${langkah}</p>${p ? `<button class="cta" data-pg="${p.status === 'FORM' ? 'periode' : p.status === 'REKAP' ? 'rekap' : 'pengajuan'}">${p.status === 'FORM' ? 'Ke Periode' : p.status === 'REKAP' ? 'Ke Rekap' : 'Ke Pengajuan'}</button>` : '<button class="cta" data-a="periodeBaru">+ Periode baru</button>'}</div>
       ${p ? `<div class="kpi"><div><small>Lokasi sudah mengisi</small><b>${isi} dari ${lok.length}</b></div><div><small>Lokasi cocok</small><b>${cocok} dari ${isi}</b></div><div><small>Baris barang</small><b>${S.rekap.baris.length}</b></div><div><small>Barang lain tanpa harga</small><b>${S.rekap.baris.filter(b => b.bebas).length}</b></div></div>` : ''}
       <div class="card"><h3>Semua periode</h3><div class="tw"><table class="tbl"><thead><tr><th>Periode</th><th>Status</th><th>Form</th><th></th></tr></thead><tbody>${ps.map(x => `<tr><td><b>${label(x)}</b></td><td><span class="lencana">${NAMA_ALUR[ALUR.indexOf(x.status)] || x.status}</span></td><td>${x.form_dibuka ? '<span class="lencana ok">dibuka</span>' : '<span class="lencana">ditutup</span>'}</td><td class="r"><button class="btn mini" data-pilih="${x.id}">Buka</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Belum ada periode.</td></tr>'}</tbody></table></div></div>`;
@@ -179,7 +179,7 @@
     const p = periodeAktif(); if (!p) return '<div class="card"><p>Belum ada periode.</p><button class="cta" data-a="periodeBaru">+ Periode baru</button></div>';
     const lok = S.rekap ? S.rekap.lokasi.filter(l => l.aktif || l.kiriman) : [], isi = lok.filter(l => l.kiriman).length, bisaUbah = ['FORM', 'REKAP'].includes(p.status);
     const link = tautForm(p), pes = `Mohon mengisi form pemesanan chemical periode ${label(p)} melalui tautan berikut (satu kali per lokasi):\n${link}`;
-    return `<div class="ph"><h2>Periode ${label(p)}</h2></div>${stepper(p.status)}
+    return `<div class="ph"><h2>Periode ${label(p)}</h2></div>
       <div class="card"><h3>Tautan form untuk korlap <span class="lencana ${p.form_dibuka ? 'ok' : ''}">${p.form_dibuka ? 'form dibuka' : 'form ditutup'}</span></h3>
         <p class="muted kecil">Satu tautan untuk semua korlap. Korlap memilih lokasinya sendiri dan hanya bisa mengirim satu kali.</p><div class="link">${esc(link)}</div>
         <div class="aksirow"><button class="cta" data-a="salinForm">Salin tautan</button><a class="btn" target="_blank" rel="noopener" href="${wa(pes)}">Kirim lewat WhatsApp</a>
@@ -194,7 +194,7 @@
   P.rekap = () => {
     const p = periodeAktif(); if (!p || !S.rekap) return '<div class="card"><p>Pilih atau buat periode dulu.</p></div>';
     const sub = `<div class="subtabs"><button class="chip ${S.sub === 'lokasi' ? 'on' : ''}" data-sub="lokasi">Per lokasi</button><button class="chip ${S.sub === 'barang' ? 'on' : ''}" data-sub="barang">Per barang dan toko</button></div>`;
-    return `<div class="ph"><h2>Rekap dan pencocokan</h2></div>${stepper(p.status)}${terkunci() ? '<div class="peringatan">Periode ini sudah diajukan, jadi data dikunci. Tarik pengajuan di halaman Pengajuan bila perlu mengubah.</div>' : ''}${sub}${S.sub === 'lokasi' ? rekapLokasi() : rekapBarang()}`;
+    return `<div class="ph"><h2>Rekap dan pencocokan</h2></div>${terkunci() ? '<div class="peringatan">Periode ini sudah diajukan, jadi data dikunci. Tarik pengajuan di halaman Pengajuan bila perlu mengubah.</div>' : ''}${sub}${S.sub === 'lokasi' ? rekapLokasi() : rekapBarang()}`;
   };
   function rekapLokasi() {
     const lok = S.rekap.lokasi.filter(l => l.kiriman); if (!lok.length) return '<div class="card"><p class="muted">Belum ada lokasi yang mengirim permintaan.</p></div>';
@@ -236,7 +236,7 @@
     const st = s => s === 'SETUJU' ? '<span class="lencana ok">Disetujui</span>' : s === 'TOLAK' ? '<span class="lencana bad">Ditolak</span>' : '<span class="lencana warn">Menunggu</span>';
     const pimp = g ? [['yasir', 'Pak Yasir (Direktur)'], ['ferry', 'Pak Ferry (Direktur Utama)']].map(([k, n]) => `<div style="border-bottom:1px solid #E5EAF1;padding:8px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>${n}</b>${st(g['status_' + k])}</div>${g['waktu_' + k] ? `<div class="kecil muted">${waktu(g['waktu_' + k])}</div>` : ''}${g['alasan_' + k] ? `<div class="kecil neg">Alasan: ${esc(g['alasan_' + k])}</div>` : ''}
       ${g.status === 'MENUNGGU' && g['status_' + k] === 'MENUNGGU' ? `<div class="aksirow" style="margin-top:6px"><button class="btn mini" data-salin="${esc(tautSetuju(g['token_' + k]))}">Salin tautan</button><a class="btn mini" target="_blank" rel="noopener" href="${wa('Mohon persetujuan pengajuan anggaran belanja chemical ' + label(p) + ' (' + rp(g.total) + '):\n' + tautSetuju(g['token_' + k]))}">Kirim lewat WhatsApp</a></div>` : ''}</div>`).join('') : '';
-    return `<div class="ph"><h2>Pengajuan anggaran belanja</h2><div class="aks">${R.total ? '<button class="btn" data-a="memo">Pratinjau memo / PDF</button>' : ''}</div></div>${stepper(p.status)}
+    return `<div class="ph"><h2>Pengajuan anggaran belanja</h2><div class="aks">${R.total ? '<button class="btn" data-a="memo">Pratinjau memo / PDF</button>' : ''}</div></div>
       <div class="grid2"><div>
         <div class="card"><h3>Biaya operasional (estimasi)</h3><div class="tw"><table class="tbl"><thead><tr><th>Kategori</th><th class="r">Estimasi (Rp)</th><th>Dibagi ke lokasi</th><th></th></tr></thead><tbody>${rowsBiaya || '<tr><td colspan="4" class="muted">Belum ada biaya operasional.</td></tr>'}</tbody></table></div>
           ${kunci ? '' : `<div class="aksirow"><input list="katBiaya" id="katBaru" placeholder="Kategori (mis. Bensin)" style="width:190px"><datalist id="katBiaya">${KAT.map(k => `<option value="${k}">`).join('')}</datalist><input type="number" min="0" id="estBaru" placeholder="Estimasi Rp" style="width:130px"><button class="btn" data-a="tambahBiaya">+ Tambah</button></div>`}</div>
