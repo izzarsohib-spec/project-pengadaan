@@ -4,6 +4,10 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 13 Nov 2026
+
+- **Chemical (database, tanpa perubahan tampilan)** Skema `supabase/migrasi-chemical.sql` ditambahkan dan sudah diterapkan: tabel `chemical_toko` dan `chemical_item` (barang per toko, harga beli dan jual, penanda `perlu_ditinjau`), RLS tertutup. Data awal 62 barang dari 4 toko (Maya, Ramai, Tardi, Sartono) dimuat lewat skrip di luar repo karena memuat harga perusahaan. Toko Dani, Online, dan Teknik menyusul.
+
 ## 12 Nov 2026
 
 - **v1.329** Modul **Chemical** aktif (`docs/chemical/index.html`), dibuat dari PRD Sistem Belanja & Distribusi Chemical Bulanan. Satu periode per bulan dengan status DRAFT sampai TUTUP; halaman Beranda, Periode, Permintaan (form, impor Sheets/CSV, rekap per barang dan per klien), Cek Anggaran (CUKUP / HAMPIR HABIS / KURANG dan tindakan), Pengajuan (dokumen berkop, keputusan per barang, transfer), Belanja (checklist per toko, harga aktual, LAIN-LAIN), Pemisahan (alokasi proporsional / prioritas, checklist packing, sisa stok), Pengiriman (status, rute, surat jalan), Biaya Operasional (alokasi proporsional / rata / manual / langsung), Laporan (ringkasan dana, sisa dana, rekap klien, perbandingan bulan lalu, berita acara, ekspor CSV), Master Data, dan Pengaturan (ambang, penandatangan, cadangan, log). Periode TUTUP tidak bisa diubah. **Data sementara tersimpan di peramban (localStorage)**, belum di Supabase; ada unduh dan pulihkan cadangan JSON. Portal: menu dan kartu Chemical diaktifkan, `sw.js` menyimpan halaman chemical.
