@@ -124,13 +124,13 @@
   async function tulis(fn, body) { await Masuk.wajib(); return rpc(fn, { kode: 'sesi', ...body }); }
 
   const GALAT_LOGIN = 'Sesi login berakhir atau akun tidak punya akses admin. Masuk lagi.';
-  const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi' };
+  const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', sku_toko: 'SKU toko',peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi' };
   const intOrNull = v => v === '' || v == null ? null : Math.round(Number(v));
   const numOrNull = v => v === '' || v == null ? null : Number(v);
 
   // ---------------- definisi tab ----------------
   // muat: ambil data; kolom: [judul, fungsi sel, 'r' bila rata kanan]; form(r): daftar isian (r kosong = tambah); simpan/hapus: panggil server
-  let ACUAN = [], CAB = [], PICS = [];
+  let ACUAN = [], CAB = [], PICS = [], HARGA_ADM = [];
   const opsiCab = (aktifSaja = true) => CAB.filter(c => !aktifSaja || c.aktif).map(c => [c.id, c.nama]);
   const opsiPic = cab => PICS.filter(p => p.aktif && String(p.cabang_id) === String(cab)).map(p => [p.id, p.nama]);
   const TABS = {
@@ -168,6 +168,25 @@
         { k: 'jual', l: 'Harga jual (Rp)', t: 'number', v: r?.harga_jual, req: true, min: 0 }],
       simpan: (v, r) => tulis('admin_simpan_harga_seragam', { p_no: r?.no ?? null, p_kategori: v.kategori, p_nama: v.nama, p_beli: intOrNull(v.beli), p_jual: intOrNull(v.jual), p_komponen: v.komponen }),
       hapus: r => tulis('admin_hapus_harga_seragam', { p_no: r.no }), namaBaris: r => r.nama
+    },
+    skutoko: {
+      grup: 'Seragam', nama: 'SKU toko', login: true,
+      ket: 'Pasangkan tiap seragam dengan kode SKU di toko Mas Wahyu. Kiriman barang datang dan tagihan ke toko memakai SKU ini, bukan nama barang. Satu baris "semua ukuran" sudah cukup; tambah baris khusus hanya bila stok toko dicatat per ukuran (mis. baju XL). Seragam yang belum dipetakan tidak ikut terkirim.',
+      pra: async () => { HARGA_ADM = await rpc('admin_daftar_harga_seragam'); },
+      muat: () => rpc('admin_daftar_sku_toko', { kode: 'sesi' }), cari: r => [r.kategori, r.nama, r.sku, r.ukuran].join(' '), id: r => r.id ?? 'n' + r.item_no,
+      statusOpsi: [['semua', 'Semua baris'], ['sudah', 'Sudah dipetakan', r => r.sku], ['belum', 'Belum dipetakan', r => !r.sku], ['khusus', 'Khusus ukuran', r => r.sku && r.jenis_ukuran !== '*']],
+      kolom: [['Seragam', r => `<b>${esc(r.nama)}</b><div class="sub">${esc(r.kategori)}</div>`],
+        ['Berlaku untuk', r => r.jenis_ukuran === '*' ? 'Semua ukuran' : ({ baju: 'Baju', celana: 'Celana', sepatu: 'Sepatu', '-': 'Tanpa ukuran' })[r.jenis_ukuran] + (r.ukuran === '*' ? ', semua ukuran' : ' ' + esc(r.ukuran))],
+        ['SKU toko', r => r.sku ? `<b>${esc(r.sku)}</b>` : '<span class="badge warn">belum dipetakan</span>']],
+      kpi: d => [['Seragam', num(uniq(d, r => r.item_no).length)], ['Sudah dipetakan', num(uniq(d.filter(r => r.sku), r => r.item_no).length)], ['Belum dipetakan', num(d.filter(r => !r.sku).length)], ['Baris khusus ukuran', num(d.filter(r => r.sku && r.jenis_ukuran !== '*').length)]],
+      labelUbah: r => r.sku ? 'Ubah' : 'Petakan', bisaHapus: r => !!r.id,
+      form: r => [
+        { k: 'seragam', l: 'Seragam', v: r?.item_no, req: true, sel: HARGA_ADM.map(h => [h.no, h.nama]) },
+        { k: 'jenis', l: 'Berlaku untuk jenis ukuran', v: r?.jenis_ukuran || '*', req: true, sel: [['*', 'Semua ukuran'], ['baju', 'Baju'], ['celana', 'Celana'], ['sepatu', 'Sepatu'], ['-', 'Tanpa ukuran']], hint: 'Pilih Semua ukuran untuk pemetaan umum' },
+        { k: 'ukuran', l: 'Ukuran (khusus)', v: !r || r.ukuran === '*' ? '' : r.ukuran, hint: 'Kosongkan bila berlaku untuk semua ukuran di jenis itu. Isi mis. XL atau 42 untuk SKU khusus satu ukuran' },
+        { k: 'sku', l: 'SKU di toko Mas Wahyu', v: r?.sku, req: true }],
+      simpan: (v, r) => tulis('admin_simpan_sku_toko', { p_id: r?.id ?? null, p_item: intOrNull(v.seragam), p_jenis: v.jenis, p_ukuran: v.ukuran, p_sku: v.sku }),
+      hapus: r => tulis('admin_hapus_sku_toko', { p_id: r.id }), namaBaris: r => r.nama + (r.jenis_ukuran === '*' ? '' : ' (' + r.jenis_ukuran + (r.ukuran === '*' ? '' : ' ' + r.ukuran) + ')')
     },
     lokasi: {
       grup: 'Peralatan', nama: 'Lokasi & RAB', ket: 'Lokasi untuk modul Peralatan: RAB, jumlah anggota, lama kontrak, dan pemetaan ke anggaran seragam. Lokasi yang sudah punya permintaan hanya bisa dinonaktifkan.',
@@ -311,7 +330,7 @@
       return [s.nama || s.client || '', ch.join('; ')].filter(Boolean).join(' · ') || '(tidak ada perubahan isi)';
     }
     const x = l.aksi === 'insert' ? s : b;
-    return [x.nama, x.client, x.lokasi_form || x.lokasi, x.bagian_kerja || x.bagian].filter(Boolean).join(' · ');
+    return [x.nama, x.client, x.lokasi_form || x.lokasi, x.bagian_kerja || x.bagian, x.sku && 'SKU ' + x.sku].filter(Boolean).join(' · ');
   }
 
   // ---------------- keadaan & tampilan ----------------
@@ -365,7 +384,7 @@
       ${t.massal ? `<div class="massal"><b>Penugasan massal</b><span class="sub">untuk ${num(b.length)} lokasi yang tampil sekarang</span><select id="bCab"><option value="">Pilih cabang</option>${opsiCab().map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select><select id="bPic"><option value="">(tanpa PIC)</option></select><button class="btn cta" id="btnMassal">Terapkan</button></div>` : ''}
       <div id="formArea">${edit !== undefined ? formHtml() : ''}</div><div class="pesan ${pesan ? pesan[0] : ''}" id="pesan">${pesan ? esc(pesan[1]) : ''}</div>
       <div class="wrap"><table class="${t.log ? 'log' : ''}"><thead><tr>${t.kolom.map(c => `<th class="${c[2] === 'r' ? 'r' : ''}">${esc(c[0])}</th>`).join('')}${t.simpan || t.hapus ? '<th></th>' : ''}</tr></thead>
-      <tbody>${tampil.map(r => `<tr class="${t.mati && t.mati(r) ? 'mati' : ''}">${t.kolom.map(c => `<td class="${c[2] || ''}">${c[2] === 'diff' ? esc(c[1](r)) : c[1](r)}</td>`).join('')}${t.simpan || t.hapus ? `<td class="aksi" data-i="${esc(t.id(r))}">${(t.aksiLain ? t.aksiLain(r) : []).map(([a, l]) => `<button class="btn" data-a="${a}">${l}</button>`).join('')}${t.simpan ? '<button class="btn" data-a="ubah">Ubah</button>' : ''}${t.hapus ? '<button class="btn bahaya" data-a="hapus">Hapus</button>' : ''}</td>` : ''}</tr>`).join('') || `<tr><td colspan="${t.kolom.length + 1}" class="kosong">Tidak ada data.</td></tr>`}</tbody></table></div>
+      <tbody>${tampil.map(r => `<tr class="${t.mati && t.mati(r) ? 'mati' : ''}">${t.kolom.map(c => `<td class="${c[2] || ''}">${c[2] === 'diff' ? esc(c[1](r)) : c[1](r)}</td>`).join('')}${t.simpan || t.hapus ? `<td class="aksi" data-i="${esc(t.id(r))}">${(t.aksiLain ? t.aksiLain(r) : []).map(([a, l]) => `<button class="btn" data-a="${a}">${l}</button>`).join('')}${t.simpan ? `<button class="btn" data-a="ubah">${t.labelUbah ? t.labelUbah(r) : 'Ubah'}</button>` : ''}${t.hapus && (!t.bisaHapus || t.bisaHapus(r)) ? '<button class="btn bahaya" data-a="hapus">Hapus</button>' : ''}</td>` : ''}</tr>`).join('') || `<tr><td colspan="${t.kolom.length + 1}" class="kosong">Tidak ada data.</td></tr>`}</tbody></table></div>
       ${b.length > batas ? `<div style="text-align:center;margin-top:12px"><button class="btn" id="btnLagi">Tampilkan 100 lagi (${num(b.length - batas)} tersisa)</button></div>` : ''}`;
     if (edit !== undefined) isiBagian();
   }

@@ -4,6 +4,10 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 14 Nov 2026
+
+- **v1.335** Administrator › Seragam, tab baru **SKU toko**: memasangkan tiap seragam di daftar harga dengan kode SKU di toko Mas Wahyu (persiapan mengirim barang datang dan tagihan ke toko). Satu baris "semua ukuran" cukup; baris khusus per jenis dan ukuran (mis. baju XL) hanya bila stok toko dicatat per ukuran, dan yang paling khusus dipakai lebih dulu. Seragam yang belum dipetakan ditandai "belum dipetakan" dengan tombol Petakan; filter Belum dipetakan / Sudah dipetakan / Khusus ukuran; perubahan masuk Log perubahan. Butuh login admin untuk membaca dan menyimpan. Server: `supabase/migrasi-sku-toko.sql` (tabel `sku_toko`, fungsi `admin_daftar_sku_toko`, `admin_simpan_sku_toko`, `admin_hapus_sku_toko`, dan `sku_toko_untuk` untuk pengirim ke toko), diterapkan dengan `alat/pasang-sku-toko.ps1`. **Migrasi belum diterapkan ke Supabase**; tab baru akan menampilkan galat sampai skrip dijalankan.
+
 ## 13 Nov 2026
 
 - **v1.334** Chemical, halaman Rekap: tabel per lokasi disamakan dengan sheet PO (No, Alat & bahan, Perkiraan harga toko, Nama toko, Jumlah, Satuan, Total, Keterangan) plus kolom Nilai RAB, dan ditambah tabel Rekap belanja per area (No, Area, Pre order, Belanja, Total).
