@@ -122,6 +122,15 @@
   }
   // menulis/membaca data tertutup: belum login -> tampilkan layar masuk dulu (server tetap memeriksa admin)
   async function tulis(fn, body) { await Masuk.wajib(); return rpc(fn, { kode: 'sesi', ...body }); }
+  // fungsi Edge pengirim ke toko Mas Wahyu (admin login; token sesi dipasang otomatis oleh auth.js)
+  async function kirimKeToko(body) {
+    await Masuk.wajib();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/kirim-ke-toko`, { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 404) throw new Error('Fungsi kirim-ke-toko belum dipasang. Jalankan alat/pasang-kirim-toko.ps1.');
+    if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+    return j;
+  }
 
   const GALAT_LOGIN = 'Sesi login berakhir atau akun tidak punya akses admin. Masuk lagi.';
   const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', sku_toko: 'SKU toko',peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi' };
@@ -187,6 +196,20 @@
         { k: 'sku', l: 'SKU di toko Mas Wahyu', v: r?.sku, req: true }],
       simpan: (v, r) => tulis('admin_simpan_sku_toko', { p_id: r?.id ?? null, p_item: intOrNull(v.seragam), p_jenis: v.jenis, p_ukuran: v.ukuran, p_sku: v.sku }),
       hapus: r => tulis('admin_hapus_sku_toko', { p_id: r.id }), namaBaris: r => r.nama + (r.jenis_ukuran === '*' ? '' : ' (' + r.jenis_ukuran + (r.ukuran === '*' ? '' : ' ' + r.ukuran) + ')')
+    },
+    kirimtoko: {
+      grup: 'Seragam', nama: 'Kiriman ke toko', login: true, tanpaTambah: true,
+      ket: 'Antrean kiriman ke toko Mas Wahyu: barang datang dari Mas Wahyu (menambah stok toko) dan tagihan (tampil di Administrator toko). Dikirim otomatis tiap menit. "Tertahan" biasanya karena seragam belum dipetakan di tab SKU toko, SKU belum ada di toko, atau toko belum diatur; perbaiki lalu tekan Kirim ulang.',
+      muat: () => rpc('admin_daftar_kirim_toko', { kode: 'sesi' }), cari: r => [r.kunci, r.ringkasan, r.galat].join(' '), id: r => r.id,
+      statusOpsi: [['semua', 'Semua kiriman'], ['belum', 'Belum terkirim', r => r.status !== 'terkirim'], ['terkirim', 'Terkirim', r => r.status === 'terkirim']],
+      kolom: [['Dibuat', r => `<span style="white-space:nowrap">${waktu(r.dibuat)}</span>`], ['Jenis', r => r.jenis === 'tagihan' ? 'Tagihan' : 'Barang datang'],
+        ['Kiriman', r => `<b>${esc(r.kunci)}</b><div class="sub">${esc(r.ringkasan || '')}</div>`],
+        ['Status', r => `<span class="badge ${({ terkirim: 'ok', tertahan: 'warn', gagal: 'bad' })[r.status] || ''}">${({ menunggu: 'Menunggu', terkirim: 'Terkirim', tertahan: 'Tertahan', gagal: 'Gagal' })[r.status] || esc(r.status)}</span>`],
+        ['Keterangan', r => r.galat ? esc(r.galat) : r.terkirim_pada ? `<span class="sub">Terkirim ${waktu(r.terkirim_pada)}</span>` : '<span class="sub">Menunggu giliran kirim</span>'],
+        ['Percobaan', r => num(r.percobaan), 'r']],
+      kpi: d => [['Kiriman', num(d.length)], ['Terkirim', num(d.filter(r => r.status === 'terkirim').length)], ['Tertahan', num(d.filter(r => r.status === 'tertahan').length)], ['Gagal', num(d.filter(r => r.status === 'gagal').length)]],
+      aksiLain: r => r.status === 'terkirim' ? [] : [['kirim', 'Kirim ulang']],
+      tombolBar: ['Kirim semua yang belum terkirim', () => kirimKeToko({ aksi: 'ulang' }), 'Semua kiriman yang belum terkirim diproses; lihat statusnya di tabel.']
     },
     lokasi: {
       grup: 'Peralatan', nama: 'Lokasi & RAB', ket: 'Lokasi untuk modul Peralatan: RAB, jumlah anggota, lama kontrak, dan pemetaan ke anggaran seragam. Lokasi yang sudah punya permintaan hanya bisa dinonaktifkan.',
@@ -380,11 +403,11 @@
     const filter = (t.statusOpsi ? `<select data-s="st">${t.statusOpsi.map(([v, l, f]) => `<option value="${v}" ${(saring.st || t.statusOpsi[0][0]) === v ? 'selected' : ''}>${esc(l)}${f ? ' (' + num(d.filter(f).length) + ')' : ''}</option>`).join('')}</select>` : '')
       + (t.saring || []).map(([k, semua, f]) => `<select data-s="${k}"><option value="">${esc(semua)}</option>${uniq(d, f).map(x => `<option value="${esc(x)}" ${saring[k] === x ? 'selected' : ''}>${esc(TBL[x] || x)}</option>`).join('')}</select>`).join('');
     const b = baris(), tampil = b.slice(0, batas);
-    $('isi').innerHTML = `<div class="bar"><input type="search" id="cari" placeholder="Cari…" value="${esc(q)}">${filter}${t.simpan && !t.tanpaTambah ? '<button class="btn cta" id="btnTambah">+ Tambah</button>' : ''}<span class="sub" style="color:var(--muted);font-size:.8rem">${num(b.length)} baris</span></div>
+    $('isi').innerHTML = `<div class="bar"><input type="search" id="cari" placeholder="Cari…" value="${esc(q)}">${filter}${t.simpan && !t.tanpaTambah ? '<button class="btn cta" id="btnTambah">+ Tambah</button>' : ''}${t.tombolBar ? `<button class="btn cta" id="btnBar">${t.tombolBar[0]}</button>` : ''}<span class="sub" style="color:var(--muted);font-size:.8rem">${num(b.length)} baris</span></div>
       ${t.massal ? `<div class="massal"><b>Penugasan massal</b><span class="sub">untuk ${num(b.length)} lokasi yang tampil sekarang</span><select id="bCab"><option value="">Pilih cabang</option>${opsiCab().map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select><select id="bPic"><option value="">(tanpa PIC)</option></select><button class="btn cta" id="btnMassal">Terapkan</button></div>` : ''}
       <div id="formArea">${edit !== undefined ? formHtml() : ''}</div><div class="pesan ${pesan ? pesan[0] : ''}" id="pesan">${pesan ? esc(pesan[1]) : ''}</div>
-      <div class="wrap"><table class="${t.log ? 'log' : ''}"><thead><tr>${t.kolom.map(c => `<th class="${c[2] === 'r' ? 'r' : ''}">${esc(c[0])}</th>`).join('')}${t.simpan || t.hapus ? '<th></th>' : ''}</tr></thead>
-      <tbody>${tampil.map(r => `<tr class="${t.mati && t.mati(r) ? 'mati' : ''}">${t.kolom.map(c => `<td class="${c[2] || ''}">${c[2] === 'diff' ? esc(c[1](r)) : c[1](r)}</td>`).join('')}${t.simpan || t.hapus ? `<td class="aksi" data-i="${esc(t.id(r))}">${(t.aksiLain ? t.aksiLain(r) : []).map(([a, l]) => `<button class="btn" data-a="${a}">${l}</button>`).join('')}${t.simpan ? `<button class="btn" data-a="ubah">${t.labelUbah ? t.labelUbah(r) : 'Ubah'}</button>` : ''}${t.hapus && (!t.bisaHapus || t.bisaHapus(r)) ? '<button class="btn bahaya" data-a="hapus">Hapus</button>' : ''}</td>` : ''}</tr>`).join('') || `<tr><td colspan="${t.kolom.length + 1}" class="kosong">Tidak ada data.</td></tr>`}</tbody></table></div>
+      <div class="wrap"><table class="${t.log ? 'log' : ''}"><thead><tr>${t.kolom.map(c => `<th class="${c[2] === 'r' ? 'r' : ''}">${esc(c[0])}</th>`).join('')}${t.simpan || t.hapus || t.aksiLain ? '<th></th>' : ''}</tr></thead>
+      <tbody>${tampil.map(r => `<tr class="${t.mati && t.mati(r) ? 'mati' : ''}">${t.kolom.map(c => `<td class="${c[2] || ''}">${c[2] === 'diff' ? esc(c[1](r)) : c[1](r)}</td>`).join('')}${t.simpan || t.hapus || t.aksiLain ? `<td class="aksi" data-i="${esc(t.id(r))}">${(t.aksiLain ? t.aksiLain(r) : []).map(([a, l]) => `<button class="btn" data-a="${a}">${l}</button>`).join('')}${t.simpan ? `<button class="btn" data-a="ubah">${t.labelUbah ? t.labelUbah(r) : 'Ubah'}</button>` : ''}${t.hapus && (!t.bisaHapus || t.bisaHapus(r)) ? '<button class="btn bahaya" data-a="hapus">Hapus</button>' : ''}</td>` : ''}</tr>`).join('') || `<tr><td colspan="${t.kolom.length + 1}" class="kosong">Tidak ada data.</td></tr>`}</tbody></table></div>
       ${b.length > batas ? `<div style="text-align:center;margin-top:12px"><button class="btn" id="btnLagi">Tampilkan 100 lagi (${num(b.length - batas)} tersisa)</button></div>` : ''}`;
     if (edit !== undefined) isiBagian();
   }
@@ -433,6 +456,7 @@
     if (el.dataset.t) { bagianPilih = null; tab = el.dataset.t; q = ''; saring = {}; batas = 100; edit = undefined; pesan = null; gambarTab(); return muatTab(false); }
     if (el.id === 'btnMasuk') return Masuk.wajib().catch(() => {});
     if (el.id === 'btnTambah') return bukaForm(null);
+    if (el.id === 'btnBar') return jalankan(() => t.tombolBar[1](), t.tombolBar[2], el);
     if (el.id === 'btnMassal') {
       const lok = baris().map(r => r.lokasi), cab = intOrNull($('bCab').value), pic = intOrNull($('bPic').value);
       if (!lok.length) { pesan = ['bad', 'Tidak ada lokasi yang tampil.']; return gambar(); }
@@ -447,6 +471,7 @@
     const a = el.dataset.a; if (!a) return;
     const r = (DATA[tab] || []).find(x => String(t.id(x)) === el.closest('td').dataset.i); if (!r) return;
     if (a === 'ubah') return bukaForm(r);
+    if (a === 'kirim') return jalankan(() => kirimKeToko({ aksi: 'ulang', id: r.id }), `Kiriman ${r.kunci} diproses; lihat statusnya di tabel.`, el);
     if (a === 'hapus') { if (!confirm(`Hapus permanen "${t.namaBaris(r)}"?\n\nData yang sudah punya riwayat akan ditolak otomatis. Penghapusan tercatat di log.`)) return; return jalankan(() => t.hapus(r), `"${t.namaBaris(r)}" dihapus.`, el); }
     if (a === 'keluar' || a === 'aktif') { const keluar = a === 'keluar'; if (!confirm(keluar ? `Tandai "${r.nama}" sudah keluar per hari ini?\nRiwayatnya tetap tersimpan dan bisa diaktifkan lagi.` : `Aktifkan kembali "${r.nama}"?`)) return; return jalankan(() => tulis('admin_status_karyawan', { p_id: r.id, p_aktif: !keluar, p_tanggal: null }), keluar ? `${r.nama} ditandai keluar.` : `${r.nama} aktif kembali.`, el); }
     if (a === 'riwayat') {

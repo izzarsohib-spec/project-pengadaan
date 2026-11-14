@@ -44,3 +44,15 @@ Menerapkan `supabase/migrasi-riwayat-ploting.sql` (tabel `ploting_riwayat`, trig
 ```
 powershell -ExecutionPolicy Bypass -File alat/pasang-riwayat-ploting.ps1
 ```
+
+## pasang-sku-toko.ps1 dan pasang-kirim-toko.ps1
+
+Integrasi ke toko Mas Wahyu. `pasang-sku-toko.ps1` hanya menerapkan `supabase/migrasi-sku-toko.sql` (tab Administrator SKU toko). `pasang-kirim-toko.ps1` memasang semuanya: kedua migrasi, fungsi Edge `kirim-ke-toko`, rahasia, dan jadwal pg_cron tiap menit. Dijalankan **oleh pemilik proyek** (butuh kunci `supabase` di keystore). Aman dijalankan ulang.
+
+```
+powershell -ExecutionPolicy Bypass -File alat/pasang-kirim-toko.ps1 -BuatRahasia -TokoUrl https://alamat-toko/api/integrations/pengadaan
+```
+
+- Tanpa `-TokoUrl`, kiriman berstatus **Tertahan** sampai toko diatur (berguna untuk menguji pengisian data dulu).
+- `-BuatRahasia` membuat rahasia bersama dan menyimpannya di `Documents\toko-rahasia.txt` (bukan di repo); nilai yang sama harus diisi ke `PENGADAAN_WEBHOOK_SECRET` di server toko. Atau pakai `-Rahasia <teks>` bila toko sudah punya.
+- Uji inti pengirim: `node --test supabase/functions/kirim-ke-toko/inti.test.ts` (Node 22.18+).
