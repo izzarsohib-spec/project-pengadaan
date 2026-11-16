@@ -164,7 +164,7 @@
       tanyaHapus: async r => {
         const isi = await chem('chemical_isi_periode', { p_periode: r.id });
         const kode = String(r.bulan).padStart(2, '0') + '/' + r.tahun, lanjut = !['FORM', 'REKAP'].includes(r.status);
-        const daftar = [['kiriman form korlap', isi.kiriman], ['baris permintaan', isi.permintaan], ['pencocokan lokasi', isi.pencocokan], ['biaya operasional', isi.biaya], ['pengajuan ke pimpinan (beserta catatan persetujuan)', isi.pengajuan]]
+        const daftar = [['kiriman form korlap', isi.kiriman], ['baris permintaan', isi.permintaan], ['pencocokan lokasi', isi.pencocokan], ['biaya operasional', isi.biaya], ['nota pengeluaran (beserta foto)', isi.nota], ['laporan pengiriman', isi.pengiriman], ['pengajuan ke pimpinan (beserta catatan persetujuan)', isi.pengajuan]]
           .filter(a => a[1] > 0).map(a => `- ${a[1]} ${a[0]}`).join('\n') || '- tidak ada data isian';
         const kepala = `Hapus periode ${labelPeriode(r)} (${NAMA_TAHAP[r.status] || r.status})?\n\nYang ikut terhapus PERMANEN:\n${daftar}\n\nTidak bisa dibatalkan. Penghapusan tercatat di log.`;
         if (!lanjut) return confirm(kepala) ? '' : null;

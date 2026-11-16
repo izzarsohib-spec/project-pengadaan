@@ -78,6 +78,9 @@
   .dl { background:#fff; border:1px solid var(--stroke); border-radius:16px; overflow:hidden; } .dl button { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid #E5EAF1; background:#fff; padding:10px 14px; } .dl button.on { background:#E3EFEE; } .dl button b { display:block; }
   .meter { height:9px; border-radius:6px; background:#E1E7EF; overflow:hidden; margin:6px 0 2px; } .meter i { display:block; height:100%; background:var(--ok); } .meter i.warn { background:#D9A441; } .meter i.bad { background:var(--bad); }
   .link { font-family:Consolas, monospace; font-size:.8rem; background:#F4F7FB; border:1px dashed #B8C4D6; border-radius:10px; padding:8px 10px; word-break:break-all; }
+  .notaform { display:grid; grid-template-columns:minmax(0,260px) 1fr; gap:16px; } .notafoto img { width:100%; border-radius:10px; border:1px solid var(--stroke); display:block; } .notaisi label { display:block; margin:8px 0 3px; } .notaisi input, .notaisi select { width:100%; }
+  input.perlu { border-color:#E0A800; background:#FFF8DC; } .notathumb img { width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid var(--stroke); display:block; }
+  @media (max-width:700px) { .notaform { grid-template-columns:1fr; } }
   .galeri { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; } .galeri img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke); display:block; }
   .aksirow { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; } .kecil { font-size:.84rem; } .tebal { font-weight:700; }
   .lencana.info { background:#DDEBFA; color:#245A8F; }
@@ -105,7 +108,7 @@
   const jml = n => (+n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
   const waktu = d => d ? new Date(d).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
   const label = p => BULAN[p.bulan - 1] + ' ' + p.tahun;
-  const S = { page: 'beranda', pid: null, master: null, rekap: null, info: null, biaya: [], lok: null, sub: 'lokasi', pengecualian: {} };
+  const S = { jenisNota: 'belanja', draf: null, page: 'beranda', pid: null, master: null, rekap: null, info: null, biaya: [], lok: null, sub: 'lokasi', pengecualian: {} };
   const kunciPid = 'chemical.periode';
 
   // ---------- panggilan server ----------
@@ -124,9 +127,10 @@
   const terkunci = () => { const p = periodeAktif(); return !p || !['FORM', 'REKAP'].includes(p.status); };
   async function muatMaster() { S.master = await admin('chemical_master'); const ps = S.master.periode; if (!ps.find(p => p.id === S.pid)) { let s = null; try { s = +localStorage.getItem(kunciPid); } catch (e) {} S.pid = (ps.find(p => p.id === s) || ps[ps.length - 1] || {}).id || null; } }
   async function muatPeriode() {
-    S.rekap = S.info = S.kirim = null; S.biaya = [];
+    S.rekap = S.info = S.kirim = S.nota = null; S.biaya = [];
     if (!S.pid) return;
     S.rekap = await admin('chemical_rekap_data', { p_periode: S.pid });
+    if (S.page === 'laporan' && SUDAH_SETUJU.includes(periodeAktif().status)) { S.nota = await admin('chemical_nota_daftar', { p_periode: S.pid }); S.biaya = await admin('chemical_daftar_biaya', { p_periode: S.pid }); }
     if (S.page === 'pengiriman' && SUDAH_SETUJU.includes(periodeAktif().status)) S.kirim = await admin('chemical_pengiriman_daftar', { p_periode: S.pid });
     if (['pengajuan', 'beranda'].includes(S.page)) { S.info = await admin('chemical_pengajuan_info', { p_periode: S.pid }); S.biaya = await admin('chemical_daftar_biaya', { p_periode: S.pid }); }
   }
@@ -249,10 +253,6 @@
           ${g.status === 'MENUNGGU' ? '<div class="aksirow"><button class="btn bahaya" data-a="tarik">Tarik pengajuan</button></div>' : ''}</div>` : ''}
         <div class="peringatan" style="background:#EEF2F7;color:#334">Notifikasi otomatis ke pimpinan belum dipasang. Kirim tautan persetujuan di atas lewat WhatsApp; keputusan tercatat di sini.</div></div></div>`;
   };
-
-  // --- tahap berikutnya ---
-  const NANTI = { laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
-  Object.keys(NANTI).forEach(k => { P[k] = () => `<div class="ph"><h2>${NANTI[k][0]}</h2></div><div class="card"><h3>Dikerjakan pada tahap berikutnya</h3><p class="muted">${NANTI[k][1]}</p><p class="kecil muted">Rancangan tampilannya ada di dokumen Gambaran Modul Chemical.</p></div>`; });
 
   // ---------- render dan navigasi ----------
   function render() { renderBar(); $('main').innerHTML = (P[S.page] || P.beranda)(); }
@@ -442,6 +442,107 @@
         ${t.barang.map((o, i) => `<tr><td>${i + 1}</td><td>${esc(o.nama)}</td><td>${esc(o.satuan)}</td><td class="r">${jml(o.qty)}</td><td class="r">${o.harga == null ? '<span class="muted">belum ada</span>' : ang(o.harga)}</td><td class="r">${ang(o.sub)}</td><td class="kecil muted">${esc(o.untuk)}</td></tr>`).join('')}
         <tr><td colspan="5" class="r tebal">Jumlah ${t.nama === 'LAIN LAIN' ? 'lain-lain' : 'Toko ' + esc(t.nama)}</td><td class="r tebal">${ang(t.total)}</td><td></td></tr></tbody></table></div></div>`).join('')}`;
   };
+
+  // ---------- Laporan: nota pengeluaran. Foto nota dibaca Gemini (fungsi Edge baca-nota), lalu admin memeriksa/mengoreksi isiannya dan menyimpan ----------
+  const NOTA_JENIS = { belanja: 'Belanja', operasional: 'Operasional' };
+  const hariIni = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
+  const adaNilai = v => v !== null && v !== undefined && v !== '';
+  const subRinci = b => (adaNilai(b.qty) && adaNilai(b.harga)) ? (+b.qty) * (+b.harga) : (+b.subtotal || 0);
+  const jumlahRinci = d => (d.rincian || []).reduce((s, b) => s + subRinci(b), 0);
+  function infoSelisih() {
+    const d = S.draf; if (!d || !(d.rincian || []).length || !adaNilai(d.total)) return '';
+    const j = jumlahRinci(d), s = j - (+d.total);
+    return Math.abs(s) < 1 ? '<span class="lencana ok">Rincian cocok dengan total</span>' : `<span class="lencana bad">Jumlah rincian ${rp(j)} berbeda ${rp(Math.abs(s))} dari total. Periksa foto nota.</span>`;
+  }
+  // foto diperkecil dulu agar cepat terkirim, tetap cukup besar supaya tulisan nota terbaca
+  const kecilkanFoto = file => new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file); img.onload = () => { const m = 1800, s = Math.min(1, m / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', 0.85)); }; img.onerror = () => no(new Error('Foto tidak terbaca. Coba ambil ulang.')); img.src = u; });
+  const draBaru = (jenis, extra) => ({ id: null, jenis, foto_url: null, foto_tampil: null, membaca: false, galat: '', ai: null, toko: '', tanggal: hariIni(), no_nota: '', total: '', kategori: '', catatan: '', rincian: [], ...(extra || {}) });
+
+  function formNota() {
+    const d = S.draf, kk = v => (adaNilai(v) ? '' : 'perlu');
+    if (!d) return `<div class="card"><h3>Tambah nota pengeluaran</h3>
+      <p class="kecil muted" style="margin:0 0 8px">Foto nota, lalu isian dibaca otomatis. Anda tetap memeriksa dan mengoreksi sebelum menyimpan.</p>
+      <div class="aksirow" style="margin:0 0 10px">${Object.keys(NOTA_JENIS).map(k => `<button class="chip ${S.jenisNota === k ? 'on' : ''}" data-nota-a="jenis" data-j="${k}">${NOTA_JENIS[k]}</button>`).join('')}</div>
+      <div class="aksirow"><button class="cta" data-nota-a="kamera">📷 Foto nota</button><button class="btn" data-nota-a="galeri">🖼 Pilih dari galeri</button><button class="btn" data-nota-a="manual">Isi manual</button></div>
+      <input type="file" id="fotoNota" accept="image/*" capture="environment" hidden><input type="file" id="fotoGaleri" accept="image/*" hidden></div>`;
+    if (d.membaca) return `<div class="card"><h3>Membaca nota…</h3><p class="kecil muted">Foto sedang dibaca. Biasanya beberapa detik.</p>${d.foto_tampil ? `<img src="${d.foto_tampil}" alt="Foto nota" style="max-width:260px;border-radius:10px;border:1px solid var(--stroke)">` : ''}</div>`;
+    const ai = d.ai ? `<p class="kecil" style="margin:0 0 10px"><span class="lencana ${d.ai.keyakinan === 'tinggi' ? 'ok' : d.ai.keyakinan === 'sedang' ? 'warn' : 'bad'}">Keyakinan bacaan: ${esc(d.ai.keyakinan)}</span>${d.ai.catatan_baca ? ' ' + esc(d.ai.catatan_baca) : ''}<br><span class="muted">Kolom berbingkai kuning tidak terbaca atau kosong; isi atau periksa dengan foto.</span></p>` : '';
+    return `<div class="card"><h3>${d.id ? 'Ubah nota' : 'Periksa dan simpan nota'}</h3>
+      ${d.galat ? `<div class="peringatan">${esc(d.galat)}</div>` : ''}${ai}
+      <div class="notaform"><div class="notafoto">${d.foto_tampil ? `<a href="${esc(d.foto_tampil)}" target="_blank" rel="noopener"><img src="${esc(d.foto_tampil)}" alt="Foto nota"></a>` : '<p class="kecil muted">Tanpa foto.</p>'}</div>
+      <div class="notaisi">
+        <label class="kecil">Jenis</label><select data-nf="jenis">${Object.keys(NOTA_JENIS).map(k => `<option value="${k}" ${d.jenis === k ? 'selected' : ''}>${NOTA_JENIS[k]}</option>`).join('')}</select>
+        <label class="kecil">Toko / pihak</label><input type="text" maxlength="150" data-nf="toko" value="${esc(d.toko)}" class="${kk(d.toko)}">
+        <label class="kecil">Tanggal nota</label><input type="date" data-nf="tanggal" value="${esc(d.tanggal)}" class="${kk(d.tanggal)}">
+        <label class="kecil">No. nota (opsional)</label><input type="text" maxlength="60" data-nf="no_nota" value="${esc(d.no_nota)}">
+        <label class="kecil">Total (Rp)</label><input type="number" inputmode="decimal" min="0" step="any" data-nf="total" value="${esc(d.total)}" class="${kk(d.total)}">
+        <label class="kecil">Kategori biaya (untuk operasional, mis. Bensin, Tol)</label><input type="text" maxlength="60" data-nf="kategori" value="${esc(d.kategori)}">
+        <label class="kecil">Catatan (opsional)</label><input type="text" maxlength="300" data-nf="catatan" value="${esc(d.catatan)}">
+      </div></div>
+      <h4 style="margin:14px 0 6px">Rincian barang (opsional)</h4>
+      <div class="tw"><table class="tbl"><thead><tr><th>Barang</th><th style="width:80px">Jumlah</th><th style="width:90px">Satuan</th><th style="width:120px">Harga satuan</th><th class="r" style="width:110px">Subtotal</th><th style="width:40px"></th></tr></thead><tbody>
+      ${d.rincian.map((b, i) => `<tr><td><input type="text" maxlength="160" data-nr="${i}" data-f="nama" value="${esc(b.nama)}"></td><td><input type="number" min="0" step="any" data-nr="${i}" data-f="qty" value="${esc(b.qty)}"></td><td><input type="text" maxlength="30" data-nr="${i}" data-f="satuan" value="${esc(b.satuan)}"></td><td><input type="number" min="0" step="any" data-nr="${i}" data-f="harga" value="${esc(b.harga)}"></td><td class="r" id="sub-${i}">${ang(subRinci(b))}</td><td><button class="btn mini" data-nota-a="hapusbaris" data-i="${i}" aria-label="Hapus baris">×</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted kecil">Belum ada rincian.</td></tr>'}</tbody></table></div>
+      <div class="aksirow"><button class="btn mini" data-nota-a="tambahbaris">+ Tambah baris</button><span id="selisih">${infoSelisih()}</span></div>
+      <div class="aksirow" style="margin-top:14px"><button class="cta" data-nota-a="simpan">Simpan nota</button><button class="btn" data-nota-a="batal">Batal</button></div></div>`;
+  }
+  P.laporan = () => {
+    const p = periodeAktif(); if (!p) return '<div class="card"><p>Pilih atau buat periode dulu.</p></div>';
+    if (!SUDAH_SETUJU.includes(p.status)) return `<div class="ph"><h2>Laporan</h2></div><div class="card"><h3>Laporan belum tersedia</h3><p class="muted">Pencatatan nota pengeluaran dibuka setelah pengajuan anggaran disetujui.</p><p class="kecil muted">Tahap periode ${label(p)} sekarang: <b>${esc(NAMA_ALUR[ALUR.indexOf(p.status)] || p.status)}</b>.</p></div>`;
+    const nt = S.nota || [], tot = j => nt.filter(n => n.jenis === j).reduce((s, n) => s + Number(n.total), 0);
+    const rencBelanja = daftarBelanja().reduce((s, t) => s + t.total, 0), rencOps = (S.biaya || []).reduce((s, b) => s + Number(b.estimasi || 0), 0);
+    return `<div class="ph"><h2>Laporan pengeluaran</h2></div>
+      <div class="kpi"><div><small>Belanja (nota)</small><b>${rp(tot('belanja'))}</b><em>rencana ${rp(rencBelanja)}</em></div><div><small>Operasional (nota)</small><b>${rp(tot('operasional'))}</b><em>rencana ${rp(rencOps)}</em></div><div><small>Total pengeluaran</small><b>${rp(tot('belanja') + tot('operasional'))}</b><em>rencana ${rp(rencBelanja + rencOps)}</em></div><div><small>Jumlah nota</small><b>${nt.length}</b></div></div>
+      ${formNota()}
+      <div class="card"><h3>Nota tercatat</h3>${nt.length ? `<div class="tw"><table class="tbl"><thead><tr><th>Tanggal</th><th>Jenis</th><th>Toko / No. nota</th><th>Kategori</th><th class="r">Total</th><th>Foto</th><th></th></tr></thead><tbody>
+        ${nt.map(n => `<tr><td>${esc(n.tanggal)}</td><td><span class="lencana ${n.jenis === 'belanja' ? 'info' : 'warn'}">${NOTA_JENIS[n.jenis]}</span></td><td>${esc(n.toko)}${n.no_nota ? '<br><span class="kecil muted">' + esc(n.no_nota) + '</span>' : ''}</td><td>${esc(n.kategori || '—')}</td><td class="r">${ang(n.total)}</td><td>${n.foto_url ? `<a class="notathumb" href="${esc(n.foto_url)}" target="_blank" rel="noopener"><img src="${esc(n.foto_url)}" alt="Foto nota ${esc(n.toko)}" loading="lazy"></a>` : '—'}</td><td><button class="btn mini" data-nota-a="ubah" data-id="${n.id}">Ubah</button> <button class="btn mini bahaya" data-nota-a="hapus" data-id="${n.id}">Hapus</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Belum ada nota. Tambahkan lewat foto di atas.</p>'}</div>`;
+  };
+  async function bacaFotoNota(file) {
+    if (!file) return;
+    const jenis = S.jenisNota; S.draf = draBaru(jenis, { membaca: true }); render();
+    try {
+      const foto = await kecilkanFoto(file); S.draf.foto_tampil = foto; render();
+      await Masuk.wajib();
+      const r = await fetch(URL_ + '/functions/v1/baca-nota', { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ foto, jenis }) });
+      const j = await r.json().catch(() => ({}));
+      if (j.foto_url) { S.draf.foto_url = j.foto_url; S.draf.foto_tampil = j.foto_url; }
+      if (!r.ok) throw new Error(j.error || 'Gagal membaca nota (' + r.status + ')');
+      const h = j.hasil; Object.assign(S.draf, { ai: h, toko: h.toko || '', tanggal: h.tanggal || '', no_nota: h.no_nota || '', total: adaNilai(h.total) ? h.total : '', kategori: h.kategori || '', rincian: h.rincian || [] });
+    } catch (e) { if (S.draf) S.draf.galat = e.message + ' Anda bisa mengisi manual.'; }
+    if (S.draf) S.draf.membaca = false; render();
+  }
+  async function simpanNota() {
+    const d = S.draf; if (!d) return;
+    const salah = !d.toko.trim() ? 'Isi nama toko.' : !d.tanggal ? 'Isi tanggal nota.' : !adaNilai(d.total) ? 'Isi total nota.' : '';
+    if (salah) { pesan(salah, true); return; }
+    const rin = d.rincian.filter(b => (b.nama || '').trim()).map(b => ({ nama: b.nama.trim(), qty: adaNilai(b.qty) ? +b.qty : null, satuan: (b.satuan || '').trim() || null, harga: adaNilai(b.harga) ? +b.harga : null, subtotal: subRinci(b) }));
+    try {
+      await aksi('chemical_simpan_nota', { p_id: d.id, p_periode: S.pid, p_jenis: d.jenis, p_toko: d.toko, p_tanggal: d.tanggal, p_no_nota: d.no_nota || null, p_total: +d.total, p_kategori: d.kategori || null, p_catatan: d.catatan || null, p_rincian: rin, p_foto_url: d.id ? null : d.foto_url, p_baca: d.ai || null }, 'Nota disimpan.');
+      S.draf = null; await segarkan();
+    } catch (e) { /* pesan sudah tampil */ }
+  }
+  document.addEventListener('input', e => {
+    const t = e.target, d = S.draf; if (!d) return;
+    if (t.dataset.nf) { const f = t.dataset.nf; d[f] = t.value; t.classList.toggle('perlu', !adaNilai(t.value) && ['toko', 'tanggal', 'total'].includes(f)); if (f === 'total') $('selisih').innerHTML = infoSelisih(); }
+    else if (t.dataset.nr !== undefined) { const i = +t.dataset.nr, f = t.dataset.f; d.rincian[i][f] = ['qty', 'harga'].includes(f) ? (t.value === '' ? null : +t.value) : t.value; const c = $('sub-' + i); if (c) c.textContent = ang(subRinci(d.rincian[i])); $('selisih').innerHTML = infoSelisih(); }
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'fotoNota' || t.id === 'fotoGaleri') { const f = t.files && t.files[0]; t.value = ''; bacaFotoNota(f); }
+    else if (t.dataset && t.dataset.nf === 'jenis' && S.draf) S.draf.jenis = t.value;
+  });
+  document.addEventListener('click', async e => {
+    const t = e.target.closest('[data-nota-a]'); if (!t) return; const a = t.dataset.notaA, d = S.draf;
+    if (a === 'jenis') { S.jenisNota = t.dataset.j; render(); }
+    else if (a === 'kamera') $('fotoNota').click();
+    else if (a === 'galeri') $('fotoGaleri').click();
+    else if (a === 'manual') { S.draf = draBaru(S.jenisNota); render(); }
+    else if (a === 'tambahbaris') { d.rincian.push({ nama: '', qty: null, satuan: '', harga: null, subtotal: null }); render(); }
+    else if (a === 'hapusbaris') { d.rincian.splice(+t.dataset.i, 1); render(); }
+    else if (a === 'batal') { S.draf = null; render(); }
+    else if (a === 'simpan') simpanNota();
+    else if (a === 'ubah') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n) { S.draf = draBaru(n.jenis, { id: n.id, foto_tampil: n.foto_url, toko: n.toko, tanggal: n.tanggal, no_nota: n.no_nota || '', total: n.total, kategori: n.kategori || '', catatan: n.catatan || '', rincian: (n.rincian || []).map(b => ({ ...b })) }); render(); window.scrollTo(0, 0); } }
+    else if (a === 'hapus') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n && confirm('Hapus nota ' + n.toko + ' (' + rp(n.total) + ')?')) { await aksi('chemical_hapus_nota', { p_id: n.id }, 'Nota dihapus.'); segarkan(); } }
+  });
 
   // ---------- Pengiriman: pantau lokasi mana yang sudah/belum dikirim, lengkap dengan foto dari form kurir (kirim.html) ----------
   const NAMA_KONDISI = { sesuai: 'Semua sesuai', kurang: 'Ada yang kurang', rusak: 'Ada yang rusak' };
