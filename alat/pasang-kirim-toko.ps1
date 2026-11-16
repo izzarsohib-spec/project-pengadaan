@@ -40,7 +40,7 @@ Write-Host "$slug -> $($out -replace "`n", ' ')"
 
 # 3. rahasia
 $token = Acak 48
-$rahasia = @(@{ name = 'KIRIM_TOKO_TOKEN'; value = $token })
+$daftarRahasia = @(@{ name = 'KIRIM_TOKO_TOKEN'; value = $token })
 if ($BuatRahasia -and -not $Rahasia) {
   $Rahasia = Acak 48
   $catat = "$env:USERPROFILE\Documents\toko-rahasia.txt"
@@ -48,10 +48,10 @@ if ($BuatRahasia -and -not $Rahasia) {
   Write-Host "Rahasia bersama baru tersimpan di $catat (bukan di repo). Isi nilai yang sama ke PENGADAAN_WEBHOOK_SECRET di server toko."
 }
 if ($Rahasia -and $Rahasia.Length -lt 32) { throw 'Rahasia minimal 32 karakter.' }
-if ($Rahasia) { $rahasia += @{ name = 'TOKO_WEBHOOK_SECRET'; value = $Rahasia } }
-if ($TokoUrl) { $rahasia += @{ name = 'TOKO_WEBHOOK_URL'; value = $TokoUrl } }
-Invoke-RestMethod -Method Post -Uri "$api/secrets" -Headers $mgmt -ContentType 'application/json' -Body (ConvertTo-Json -Compress -InputObject $rahasia) | Out-Null
-Write-Host ('rahasia diatur: ' + (($rahasia | ForEach-Object { $_.name }) -join ', '))
+if ($Rahasia) { $daftarRahasia += @{ name = 'TOKO_WEBHOOK_SECRET'; value = $Rahasia } }
+if ($TokoUrl) { $daftarRahasia += @{ name = 'TOKO_WEBHOOK_URL'; value = $TokoUrl } }
+Invoke-RestMethod -Method Post -Uri "$api/secrets" -Headers $mgmt -ContentType 'application/json' -Body (ConvertTo-Json -Compress -InputObject $daftarRahasia) | Out-Null
+Write-Host ('rahasia diatur: ' + (($daftarRahasia | ForEach-Object { $_.name }) -join ', '))
 
 # 4. jadwal tiap menit
 $cron = @"

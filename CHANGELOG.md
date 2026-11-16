@@ -4,6 +4,10 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 16 Nov 2026
+
+- **Perbaikan `alat/pasang-kirim-toko.ps1`** (tanpa perubahan versi web): `-BuatRahasia` gagal "Rahasia minimal 32 karakter" karena variabel daftar rahasia `$rahasia` menimpa parameter `$Rahasia` (PowerShell tidak membedakan huruf besar-kecil); daftarnya diganti nama menjadi `$daftarRahasia`. Skrip sudah dijalankan ke Supabase produksi: migrasi, fungsi `kirim-ke-toko`, rahasia, dan jadwal pg_cron terpasang; tanpa `-TokoUrl` kiriman berstatus Tertahan sampai toko di-hosting.
+
 ## 14 Nov 2026
 
 - **v1.336** **Pengirim ke toko Mas Wahyu** (integrasi toko, tahap 2). Barang datang dari supplier Mas Wahyu (menambah stok toko) dan tagihan (tampil di Administrator toko) masuk antrean otomatis lewat trigger database, tanpa mengubah fungsi yang ada: `stok_gerak` jenis masuk bersumber kosong dengan supplier cocok pola vendor toko (pengaturan `toko_vendor`, default `%wahyu%`), serta tabel `tagihan` (baru dan dibatalkan). Fungsi Edge baru `kirim-ke-toko` menyusun kiriman, memetakan SKU toko, menandatangani (HMAC-SHA256), mengirim, dan mencatat hasilnya; dipanggil pg_cron tiap menit dengan jeda 5 menit antar percobaan (maks 60) dan bisa dipicu manual. Semua-atau-tidak: kiriman barang yang ada baris belum dipetakan ke SKU toko ditahan (status Tertahan) dan seluruhnya dikirim setelah dipetakan, supaya stok toko tidak bertambah sebagian. Administrator › Seragam, tab baru **Kiriman ke toko**: status Menunggu / Terkirim / Tertahan / Gagal beserta alasannya, tombol Kirim ulang per baris dan Kirim semua yang belum terkirim. Server: `supabase/migrasi-kirim-toko.sql`, `supabase/functions/kirim-ke-toko/` (inti dengan uji `inti.test.ts`), `alat/pasang-kirim-toko.ps1` (migrasi + deploy + rahasia + jadwal). **Belum dipasang ke Supabase**; tanpa `-TokoUrl` kiriman berstatus Tertahan sampai toko diatur.
