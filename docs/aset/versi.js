@@ -1,5 +1,5 @@
 // Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.338', tanggal: '2026-11-16', catatan: 'Status lunas tagihan ikut dikirim ke toko, data lama diisi ulang' };
+window.VERSI = { no: '1.339', tanggal: '2026-11-16', catatan: 'Chemical: hapus periode' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');
