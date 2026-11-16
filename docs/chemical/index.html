@@ -78,6 +78,7 @@
   .dl { background:#fff; border:1px solid var(--stroke); border-radius:16px; overflow:hidden; } .dl button { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid #E5EAF1; background:#fff; padding:10px 14px; } .dl button.on { background:#E3EFEE; } .dl button b { display:block; }
   .meter { height:9px; border-radius:6px; background:#E1E7EF; overflow:hidden; margin:6px 0 2px; } .meter i { display:block; height:100%; background:var(--ok); } .meter i.warn { background:#D9A441; } .meter i.bad { background:var(--bad); }
   .link { font-family:Consolas, monospace; font-size:.8rem; background:#F4F7FB; border:1px dashed #B8C4D6; border-radius:10px; padding:8px 10px; word-break:break-all; }
+  .galeri { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; } .galeri img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke); display:block; }
   .aksirow { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; } .kecil { font-size:.84rem; } .tebal { font-weight:700; }
   .lencana.info { background:#DDEBFA; color:#245A8F; }
 </style>
@@ -123,9 +124,10 @@
   const terkunci = () => { const p = periodeAktif(); return !p || !['FORM', 'REKAP'].includes(p.status); };
   async function muatMaster() { S.master = await admin('chemical_master'); const ps = S.master.periode; if (!ps.find(p => p.id === S.pid)) { let s = null; try { s = +localStorage.getItem(kunciPid); } catch (e) {} S.pid = (ps.find(p => p.id === s) || ps[ps.length - 1] || {}).id || null; } }
   async function muatPeriode() {
-    S.rekap = S.info = null; S.biaya = [];
+    S.rekap = S.info = S.kirim = null; S.biaya = [];
     if (!S.pid) return;
     S.rekap = await admin('chemical_rekap_data', { p_periode: S.pid });
+    if (S.page === 'pengiriman' && SUDAH_SETUJU.includes(periodeAktif().status)) S.kirim = await admin('chemical_pengiriman_daftar', { p_periode: S.pid });
     if (['pengajuan', 'beranda'].includes(S.page)) { S.info = await admin('chemical_pengajuan_info', { p_periode: S.pid }); S.biaya = await admin('chemical_daftar_biaya', { p_periode: S.pid }); }
   }
   async function segarkan(master) { try { if (master) await muatMaster(); await muatPeriode(); render(); } catch (e) { galatLayar(e); } }
@@ -145,6 +147,7 @@
   const MODE = { ketat: 'ketat (tidak boleh lewat)', persetujuan: 'boleh lewat dengan persetujuan', tanpa_batas: 'tanpa batas' };
   const stepper = st => { const i = ALUR.indexOf(st); return '<div class="alur">' + NAMA_ALUR.map((n, k) => `<div class="${k < i ? 'd' : k === i ? 'n' : ''}">${k + 1}. ${n}</div>`).join('') + '</div>'; };
   const tautForm = p => new URL('form.html?t=' + p.token, location.href).href;
+  const tautKirim = tk => new URL('kirim.html?t=' + tk, location.href).href;
   const tautSetuju = tk => new URL('setujui.html?t=' + tk, location.href).href;
   const wa = teks => 'https://wa.me/?text=' + encodeURIComponent(teks);
   async function salin(t) { try { await navigator.clipboard.writeText(t); pesan('Tautan disalin.'); } catch (e) { prompt('Salin tautan ini:', t); } }
@@ -248,7 +251,7 @@
   };
 
   // --- tahap berikutnya ---
-  const NANTI = { pengiriman: ['Pengiriman', 'Tautan form pengiriman per lokasi dengan foto bukti.'], laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
+  const NANTI = { laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
   Object.keys(NANTI).forEach(k => { P[k] = () => `<div class="ph"><h2>${NANTI[k][0]}</h2></div><div class="card"><h3>Dikerjakan pada tahap berikutnya</h3><p class="muted">${NANTI[k][1]}</p><p class="kecil muted">Rancangan tampilannya ada di dokumen Gambaran Modul Chemical.</p></div>`; });
 
   // ---------- render dan navigasi ----------
@@ -437,6 +440,29 @@
         <div class="tw"><table class="tbl"><thead><tr><th style="width:42px">No</th><th>Barang</th><th>Sat.</th><th class="r">Jumlah</th><th class="r">Harga beli</th><th class="r">Subtotal</th><th>Untuk lokasi</th></tr></thead><tbody>
         ${t.barang.map((o, i) => `<tr><td>${i + 1}</td><td>${esc(o.nama)}</td><td>${esc(o.satuan)}</td><td class="r">${jml(o.qty)}</td><td class="r">${o.harga == null ? '<span class="muted">belum ada</span>' : ang(o.harga)}</td><td class="r">${ang(o.sub)}</td><td class="kecil muted">${esc(o.untuk)}</td></tr>`).join('')}
         <tr><td colspan="5" class="r tebal">Jumlah ${t.nama === 'LAIN LAIN' ? 'lain-lain' : 'Toko ' + esc(t.nama)}</td><td class="r tebal">${ang(t.total)}</td><td></td></tr></tbody></table></div></div>`).join('')}`;
+  };
+
+  // ---------- Pengiriman: pantau lokasi mana yang sudah/belum dikirim, lengkap dengan foto dari form kurir (kirim.html) ----------
+  const NAMA_KONDISI = { sesuai: 'Semua sesuai', kurang: 'Ada yang kurang', rusak: 'Ada yang rusak' };
+  const bermasalah = g => g.terkirim && (g.kondisi !== 'sesuai' || (g.barang || []).some(b => !b.diantar));
+  P.pengiriman = () => {
+    const p = periodeAktif(); if (!p) return '<div class="card"><p>Pilih atau buat periode dulu.</p></div>';
+    if (!SUDAH_SETUJU.includes(p.status)) return `<div class="ph"><h2>Pengiriman</h2></div><div class="card"><h3>Pengiriman belum dimulai</h3><p class="muted">Pantauan pengiriman muncul di sini setelah pengajuan anggaran disetujui.</p><p class="kecil muted">Tahap periode ${label(p)} sekarang: <b>${esc(NAMA_ALUR[ALUR.indexOf(p.status)] || p.status)}</b>.</p></div>`;
+    const ls = S.kirim || [], sudah = ls.filter(g => g.terkirim), masalah = ls.filter(bermasalah), foto = sudah.reduce((n, g) => n + (g.foto || []).length, 0);
+    if (!ls.length) return '<div class="ph"><h2>Pengiriman</h2></div><div class="card"><p class="muted">Belum ada lokasi yang mengirim permintaan pada periode ini.</p></div>';
+    const kartu = g => {
+      const lc = !g.terkirim ? '<span class="lencana warn">Belum dikirim</span>' : bermasalah(g) ? '<span class="lencana bad">Terkirim · ada masalah</span>' : '<span class="lencana ok">Terkirim</span>';
+      const isi = !g.terkirim
+        ? `<p class="kecil muted" style="margin:6px 0 0">Kirim tautan ini ke kurir atau PIC lokasi. Status berubah otomatis setelah form diisi.</p>
+           <div class="aksirow"><button class="btn mini" data-salin="${esc(tautKirim(g.token))}">Salin tautan</button><a class="btn mini" target="_blank" rel="noopener" href="${wa('Form pengiriman chemical ' + g.lokasi + ' (' + label(p) + '):\n' + tautKirim(g.token))}">WhatsApp ke kurir</a></div>`
+        : `<p class="kecil" style="margin:6px 0 0">Diterima: <b>${esc(g.penerima)}</b>${g.jabatan ? ' (' + esc(g.jabatan) + ')' : ''} · ${waktu(g.terkirim)}<br>Kondisi: <b>${NAMA_KONDISI[g.kondisi] || esc(g.kondisi)}</b>${g.catatan ? '<br>Catatan: <i>' + esc(g.catatan) + '</i>' : ''}</p>
+           ${(g.barang || []).some(b => !b.diantar) ? `<p class="kecil" style="margin:6px 0 0;color:var(--bad)">Belum diantar: ${(g.barang || []).filter(b => !b.diantar).map(b => esc(b.nama) + ' (' + jml(b.qty) + ' ' + esc(b.satuan) + ')').join(', ')}</p>` : ''}
+           <div class="galeri">${(g.foto || []).map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Foto ${i + 1} ${esc(g.lokasi)}" loading="lazy"></a>`).join('')}</div>`;
+      return `<div class="card"><h3>${esc(g.lokasi)} ${lc}</h3><p class="kecil muted" style="margin:0">${g.jenis} jenis barang · ${jml(g.unit)} unit</p>${isi}</div>`;
+    };
+    return `<div class="ph"><h2>Pengiriman</h2><div class="aks"><button class="btn" data-a="muat">Muat ulang</button></div></div>
+      <div class="kpi"><div><small>Terkirim</small><b>${sudah.length} dari ${ls.length}</b><em>lokasi</em></div><div><small>Belum dikirim</small><b>${ls.length - sudah.length}</b></div><div><small>Ada masalah</small><b>${masalah.length}</b></div><div><small>Foto bukti</small><b>${foto}</b></div></div>
+      ${[...ls].sort((a, b) => !!a.terkirim - !!b.terkirim).map(kartu).join('')}`;
   };
 
   // Excel per toko: satu sheet per toko; di tiap sheet satu blok per lokasi berisi barang toko itu, subtotal (kuning), dan total toko (hijau)

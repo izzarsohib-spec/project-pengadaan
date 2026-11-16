@@ -5,6 +5,7 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
 ## 16 Nov 2026
+- **v1.346** Chemical > Pengiriman: halaman monitoring lokasi sudah/belum dikirim, lengkap dengan foto, penerima, dan kondisi. Tiap lokasi punya tautan form kurir (kirim.html: centang barang, foto, penerima, kondisi). Basis data: chemical_pengiriman; fungsi Edge kirim-chemical; pasang lewat alat/pasang-kirim-chemical.ps1.
 - **v1.345** Chemical: menu Ploting dan Pengeluaran dihapus dari navigasi.
 - **v1.344** Chemical > Belanja: setelah pengajuan disetujui, tampil daftar barang per toko (jumlah antar lokasi digabung, total per toko) dan tombol Download Excel per toko (satu sheet per toko, per lokasi, format contoh rekap per toko).
 

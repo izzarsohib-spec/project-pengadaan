@@ -1,5 +1,5 @@
 // Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.345', tanggal: '2026-11-16', catatan: 'Chemical: menu Ploting dan Pengeluaran dihapus' };
+window.VERSI = { no: '1.346', tanggal: '2026-11-16', catatan: 'Chemical: monitoring pengiriman dengan form kurir dan foto' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');
