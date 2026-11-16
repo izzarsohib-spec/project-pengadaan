@@ -299,6 +299,7 @@
     unduhExcel: () => unduhExcel(),
     unduhExcelToko: () => unduhExcelToko(),
     unduhExcelRekap: () => unduhExcelRekap(),
+    unduhPdfRekap: () => unduhPdfRekap(),
     tautanKirimBaru: async () => { if (!confirm('Buat ulang tautan pengiriman? Tautan lama langsung tidak bisa dipakai lagi.')) return; await aksi('chemical_pengiriman_tautan_baru', { p_periode: S.pid }, 'Tautan baru dibuat. Bagikan tautan yang baru.'); return segarkan(); },
     tutupDlg: () => $('dlg').close()
   };
@@ -497,7 +498,7 @@
     if (!SUDAH_SETUJU.includes(p.status)) return `<div class="ph"><h2>Laporan</h2></div><div class="card"><h3>Laporan belum tersedia</h3><p class="muted">Pencatatan nota pengeluaran dibuka setelah pengajuan anggaran disetujui.</p><p class="kecil muted">Tahap periode ${label(p)} sekarang: <b>${esc(NAMA_ALUR[ALUR.indexOf(p.status)] || p.status)}</b>.</p></div>`;
     const nt = S.nota || [], tot = j => nt.filter(n => n.jenis === j).reduce((s, n) => s + Number(n.total), 0);
     const rencBelanja = daftarBelanja().reduce((s, t) => s + t.total, 0), rencOps = (S.biaya || []).reduce((s, b) => s + Number(b.estimasi || 0), 0);
-    return `<div class="ph"><h2>Laporan pengeluaran</h2><div class="aks"><button class="btn" data-a="unduhExcelRekap">Download Excel rekap</button></div></div>
+    return `<div class="ph"><h2>Laporan pengeluaran</h2><div class="aks"><button class="btn" data-a="unduhExcelRekap">Download Excel rekap</button><button class="btn" data-a="unduhPdfRekap">Download PDF rekap + nota</button></div></div>
       <div class="kpi"><div><small>Belanja (nota)</small><b>${rp(tot('belanja'))}</b><em>rencana ${rp(rencBelanja)}</em></div><div><small>Operasional (nota)</small><b>${rp(tot('operasional'))}</b><em>rencana ${rp(rencOps)}</em></div><div><small>Total pengeluaran</small><b>${rp(tot('belanja') + tot('operasional'))}</b><em>rencana ${rp(rencBelanja + rencOps)}</em></div><div><small>Jumlah nota</small><b>${nt.length}</b></div><div><small>Belum ada bukti transfer</small><b>${nt.filter(n => !n.bukti_url).length}</b></div></div>
       ${tabelRekap()}
       ${formNota()}
@@ -514,16 +515,16 @@
     const plan = new Map(); baris.forEach(b => { if (b.toko_id) plan.set(b.toko_id, (plan.get(b.toko_id) || 0) + (b.harga_beli == null ? 0 : Number(b.harga_beli)) * Number(b.qty)); });
     const real = new Map(); nota.filter(n => n.jenis === 'belanja' && n.toko_id).forEach(n => real.set(n.toko_id, (real.get(n.toko_id) || 0) + Number(n.total)));
     [...toko].sort((a, b) => a.nama.localeCompare(b.nama, 'id')).forEach(t => {
-      if (plan.get(t.id) || real.get(t.id)) out.push({ tipe: 'baris', no: ++no, nama: t.nama.toUpperCase(), anggaran: plan.get(t.id) || 0, realisasi: real.get(t.id) || 0 });
+      if (plan.get(t.id) || real.get(t.id)) out.push({ tipe: 'baris', no: ++no, nama: t.nama.toUpperCase(), anggaran: plan.get(t.id) || 0, realisasi: real.get(t.id) || 0, nota: nota.filter(n => n.jenis === 'belanja' && n.toko_id === t.id).map(n => n.id) });
     });
     const lain = nota.filter(n => n.jenis === 'belanja' && !n.toko_id);
-    if (lain.length) { out.push({ tipe: 'judul', no: ++no, nama: 'LAIN-LAIN (BELANJA DI LUAR TOKO TERDAFTAR)' }); lain.forEach(n => out.push({ tipe: 'sub', nama: n.toko + (n.no_nota ? ' · ' + n.no_nota : ''), anggaran: 0, realisasi: Number(n.total) })); }
+    if (lain.length) { out.push({ tipe: 'judul', no: ++no, nama: 'LAIN-LAIN (BELANJA DI LUAR TOKO TERDAFTAR)' }); lain.forEach(n => out.push({ tipe: 'sub', nama: n.toko + (n.no_nota ? ' · ' + n.no_nota : ''), anggaran: 0, realisasi: Number(n.total), nota: [n.id] })); }
     const ops = nota.filter(n => n.jenis === 'operasional'), terpakai = new Set();
     (S.biaya || []).forEach(b => {
       const cocok = ops.filter(n => sama(n.kategori, b.kategori)); cocok.forEach(n => terpakai.add(n.id));
-      out.push({ tipe: 'baris', no: ++no, nama: String(b.kategori).toUpperCase(), anggaran: Number(b.estimasi || 0), realisasi: cocok.reduce((s, n) => s + Number(n.total), 0) });
+      out.push({ tipe: 'baris', no: ++no, nama: String(b.kategori).toUpperCase(), anggaran: Number(b.estimasi || 0), realisasi: cocok.reduce((s, n) => s + Number(n.total), 0), nota: cocok.map(n => n.id) });
     });
-    ops.filter(n => !terpakai.has(n.id)).forEach(n => out.push({ tipe: 'baris', no: ++no, nama: (n.kategori || 'OPERASIONAL').toUpperCase() + (n.catatan ? ' - ' + n.catatan : n.toko ? ' - ' + n.toko : ''), anggaran: 0, realisasi: Number(n.total) }));
+    ops.filter(n => !terpakai.has(n.id)).forEach(n => out.push({ tipe: 'baris', no: ++no, nama: (n.kategori || 'OPERASIONAL').toUpperCase() + (n.catatan ? ' - ' + n.catatan : n.toko ? ' - ' + n.toko : ''), anggaran: 0, realisasi: Number(n.total), nota: [n.id] }));
     const nilai = out.filter(r => r.tipe !== 'judul');
     return { baris: out, anggaran: nilai.reduce((s, r) => s + r.anggaran, 0), realisasi: nilai.reduce((s, r) => s + r.realisasi, 0) };
   }
@@ -536,6 +537,77 @@
         : `<tr><td>${r.no || ''}</td><td${r.tipe === 'sub' ? ' style="padding-left:22px;color:var(--bad)"' : ''}>${esc(r.nama)}</td><td class="r">${ang(r.anggaran)}</td><td class="r">${ang(r.realisasi)}</td><td class="r"${r.anggaran - r.realisasi < 0 ? ' style="color:var(--bad)"' : ''}>${ang(r.anggaran - r.realisasi)}</td><td class="r">${persen(r.anggaran, r.realisasi)}</td></tr>`).join('')}
       <tr><td></td><td class="r tebal">TOTAL KESELURUHAN</td><td class="r tebal">${ang(k.anggaran)}</td><td class="r tebal">${ang(k.realisasi)}</td><td class="r tebal"${k.anggaran - k.realisasi < 0 ? ' style="color:var(--bad)"' : ''}>${ang(k.anggaran - k.realisasi)}</td><td class="r tebal">${persen(k.anggaran, k.realisasi)}</td></tr></tbody></table></div></div>`;
   }
+  // PDF rekap belanja: halaman rekap (tabel seperti Excel + kolom Lampiran) lalu satu halaman lampiran per nota dengan foto nota dan bukti transfer berdampingan.
+  // Foto diambil dari Storage lalu diperkecil agar PDF tidak terlalu besar. Pustaka jsPDF + AutoTable dimuat saat dibutuhkan.
+  const muatSkrip = url => new Promise((ok, gagal) => { const s = document.createElement('script'); s.src = url; s.onload = ok; s.onerror = () => gagal(new Error('Pustaka PDF gagal dimuat. Periksa koneksi internet lalu coba lagi.')); document.head.appendChild(s); });
+  const muatJsPDF = async () => {
+    if (!(window.jspdf && window.jspdf.jsPDF)) await muatSkrip('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    if (!(window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable)) await muatSkrip('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  };
+  async function ambilGambar(url) {   // -> {data, w, h} (JPEG) atau null bila gagal
+    if (!url) return null;
+    try {
+      const r = await fetch(url); if (!r.ok) return null;
+      const u = URL.createObjectURL(await r.blob());
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = u; });
+      const m = 1400, s = Math.min(1, m / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+      return { data: c.toDataURL('image/jpeg', 0.8), w: c.width, h: c.height };
+    } catch (e) { return null; }
+  }
+  const rpPdf = n => (n < 0 ? '-' : '') + 'Rp ' + Math.round(Math.abs(n)).toLocaleString('id-ID');
+  async function unduhPdfRekap() {
+    const p = periodeAktif(), k = rekapBelanja(), nt = S.nota || [];
+    if (!p || (!k.baris.length && !nt.length)) { pesan('Belum ada data anggaran atau nota untuk direkap.', true); return; }
+    try { await muatJsPDF(); } catch (e) { pesan(e.message, true); return; }
+    pesan('Menyiapkan PDF, mengambil foto nota… mohon tunggu.');
+    const BLN = BULAN[p.bulan - 1].toUpperCase();
+    // urutan lampiran mengikuti urutan baris rekap; nota yang belum masuk baris mana pun ditaruh di akhir
+    const urut = []; k.baris.forEach(r => (r.nota || []).forEach(id => { if (!urut.includes(id)) urut.push(id); })); nt.forEach(n => { if (!urut.includes(n.id)) urut.push(n.id); });
+    const lampiran = urut.map(id => nt.find(n => n.id === id)).filter(Boolean), nomor = new Map(lampiran.map((n, i) => [n.id, i + 1]));
+    const { jsPDF } = window.jspdf, doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' }), W = 297, H = 210, M = 12, BIRU = [0, 32, 96], MERAH = [192, 0, 0];
+    // ----- halaman rekap -----
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...BIRU); doc.text(`REKAP PENGELUARAN BELANJA BULAN ${BLN} ${p.tahun}`, M, 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90); doc.text('PT Ray Mitra Perkasa · lampiran nota dan bukti transfer di halaman berikutnya', M, 21);
+    const merah = { textColor: MERAH }, ref = r => (r.nota || []).map(id => 'L' + nomor.get(id)).join(', ');
+    const badan = k.baris.map(r => r.tipe === 'judul' ? [{ content: r.no, styles: { halign: 'center' } }, { content: r.nama, colSpan: 6, styles: { fontStyle: 'bold' } }]
+      : [{ content: r.no || '', styles: { halign: 'center' } }, { content: r.nama, styles: r.tipe === 'sub' ? { ...merah, cellPadding: { left: 6, top: 1.6, bottom: 1.6, right: 1.6 } } : {} },
+         rpPdf(r.anggaran), rpPdf(r.realisasi), { content: rpPdf(r.anggaran - r.realisasi), styles: r.anggaran - r.realisasi < 0 ? merah : {} }, persen(r.anggaran, r.realisasi), { content: ref(r), styles: { halign: 'center', fontSize: 8 } }]);
+    const kn = { halign: 'right' }, tot = [{ content: '' }, { content: 'TOTAL KESELURUHAN', styles: kn }, { content: rpPdf(k.anggaran), styles: kn }, { content: rpPdf(k.realisasi), styles: kn }, { content: rpPdf(k.anggaran - k.realisasi), styles: k.anggaran - k.realisasi < 0 ? { ...kn, ...merah } : kn }, { content: persen(k.anggaran, k.realisasi), styles: kn }, ''];
+    doc.autoTable({
+      startY: 26, margin: { left: M, right: M, bottom: 14 }, theme: 'grid',
+      head: [['No', 'Kategori Pengeluaran', 'Anggaran (Rp)', 'Realisasi (Rp)', 'Sisa / Selisih (Rp)', '% Pakai', 'Lampiran']], body: badan, foot: [tot],
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.6, textColor: 20, lineColor: [40, 40, 40], lineWidth: 0.15, valign: 'middle' },
+      headStyles: { fillColor: BIRU, textColor: 255, fontStyle: 'bold', halign: 'right', minCellHeight: 9 },
+      bodyStyles: { fillColor: [242, 245, 249] }, footStyles: { fillColor: [242, 245, 249], textColor: 20, fontStyle: 'bold', minCellHeight: 9 },
+      columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 108 }, 2: { halign: 'right', cellWidth: 34 }, 3: { halign: 'right', cellWidth: 34 }, 4: { halign: 'right', cellWidth: 36 }, 5: { halign: 'right', cellWidth: 20 }, 6: { halign: 'center', cellWidth: 22 } },
+      didParseCell: d => { if (d.section === 'head' && [0, 1, 6].includes(d.column.index)) d.cell.styles.halign = d.column.index === 1 ? 'left' : 'center'; },
+    });
+    const tanpaBukti = lampiran.filter(n => !n.bukti_url).length;
+    if (tanpaBukti) { doc.setFontSize(9); doc.setTextColor(...MERAH); doc.text(`Catatan: ${tanpaBukti} nota belum dilampiri bukti transfer.`, M, Math.min(H - 12, doc.lastAutoTable.finalY + 6)); }
+    // ----- halaman lampiran: satu nota per halaman -----
+    const KOTAK = { y: 36, h: H - 36 - 14, w: (W - 2 * M - 6) / 2 };
+    for (const n of lampiran) {
+      const [foto, bukti] = await Promise.all([ambilGambar(n.foto_url), ambilGambar(n.bukti_url)]);
+      doc.addPage('a4', 'landscape');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...BIRU); doc.text(`Lampiran L${nomor.get(n.id)}  ·  ${n.toko}`, M, 15);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(40);
+      doc.text([`${NOTA_JENIS[n.jenis]}${n.kategori ? ' (' + n.kategori + ')' : ''}${n.no_nota ? '  ·  No. nota ' + n.no_nota : ''}  ·  Tanggal ${n.tanggal}  ·  Total ${rpPdf(Number(n.total))}`].concat(n.catatan ? ['Catatan: ' + n.catatan] : []), M, 21);
+      [['Foto nota', foto, n.foto_url, M], ['Bukti transfer', bukti, n.bukti_url, M + KOTAK.w + 6]].forEach(([judul, g, url, x]) => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(60); doc.text(judul, x, KOTAK.y - 2);
+        doc.setDrawColor(190); doc.setLineWidth(0.2); doc.rect(x, KOTAK.y, KOTAK.w, KOTAK.h);
+        if (g) { const s = Math.min((KOTAK.w - 4) / g.w, (KOTAK.h - 4) / g.h), pw = g.w * s, ph = g.h * s; doc.addImage(g.data, 'JPEG', x + (KOTAK.w - pw) / 2, KOTAK.y + (KOTAK.h - ph) / 2, pw, ph); }
+        else { doc.setFont('helvetica', 'italic'); doc.setFontSize(10); doc.setTextColor(url ? 192 : 130, url ? 0 : 130, url ? 0 : 130); doc.text(url ? 'Foto tidak dapat dimuat' : 'Belum ada ' + judul.toLowerCase(), x + KOTAK.w / 2, KOTAK.y + KOTAK.h / 2, { align: 'center' }); }
+      });
+    }
+    const n = doc.getNumberOfPages();
+    for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120); doc.text(`Halaman ${i} dari ${n}`, W - M, H - 6, { align: 'right' }); }
+    const url = URL.createObjectURL(doc.output('blob')), a = document.createElement('a');
+    a.href = url; a.download = `REKAP BELANJA ${BLN} ${p.tahun} + NOTA.pdf`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    pesan('PDF rekap ' + label(p) + ' diunduh (' + n + ' halaman).');
+  }
+
   // Excel rekap: satu sheet "REKAP" dengan tata letak dan format seperti contoh (judul, header biru, baris F2F5F9, total tebal). F dan G berumus.
   async function unduhExcelRekap() {
     const p = periodeAktif(), k = rekapBelanja();
