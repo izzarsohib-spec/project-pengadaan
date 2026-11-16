@@ -248,7 +248,7 @@
   };
 
   // --- tahap berikutnya ---
-  const NANTI = { belanja: ['Belanja', 'Checklist per toko dan form nota serta bukti transfer.'], ploting: ['Ploting', 'Membagi barang yang terbeli ke tiap lokasi dan membuat packing list.'], pengiriman: ['Pengiriman', 'Tautan form pengiriman per lokasi dengan foto bukti.'], pengeluaran: ['Pengeluaran', 'Rekap belanja dari nota ditambah biaya operasional.'], laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
+  const NANTI = { ploting: ['Ploting', 'Membagi barang yang terbeli ke tiap lokasi dan membuat packing list.'], pengiriman: ['Pengiriman', 'Tautan form pengiriman per lokasi dengan foto bukti.'], pengeluaran: ['Pengeluaran', 'Rekap belanja dari nota ditambah biaya operasional.'], laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
   Object.keys(NANTI).forEach(k => { P[k] = () => `<div class="ph"><h2>${NANTI[k][0]}</h2></div><div class="card"><h3>Dikerjakan pada tahap berikutnya</h3><p class="muted">${NANTI[k][1]}</p><p class="kecil muted">Rancangan tampilannya ada di dokumen Gambaran Modul Chemical.</p></div>`; });
 
   // ---------- render dan navigasi ----------
@@ -294,6 +294,7 @@
     ajukan: async () => { if (!confirm('Ajukan ke pimpinan? Setelah diajukan, data rekap dan biaya dikunci sampai ada keputusan.')) return; await aksi('chemical_ajukan', { p_periode: S.pid, p_catatan: ($('catAjuan') || {}).value || null }, 'Pengajuan dibuat. Kirim tautan persetujuan ke pimpinan.'); segarkan(true); },
     tarik: async () => { if (!confirm('Tarik pengajuan ini? Tautan pimpinan tidak berlaku lagi.')) return; await aksi('chemical_tarik', { p_pengajuan: S.info.pengajuan.id }, 'Pengajuan ditarik.'); segarkan(true); },
     unduhExcel: () => unduhExcel(),
+    unduhExcelToko: () => unduhExcelToko(),
     tutupDlg: () => $('dlg').close()
   };
 
@@ -404,6 +405,94 @@
     const buf = await wb.xlsx.writeBuffer(), url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })), a = document.createElement('a');
     a.href = url; a.download = `PO CHEMICAL ${BLN} ${p.tahun}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
     pesan('Excel PO ' + label(p) + ' diunduh.');
+  }
+
+  // ---------- Belanja: daftar belanja per toko (muncul setelah pengajuan disetujui) dan unduh Excel per toko ----------
+  const SUDAH_SETUJU = ['DISETUJUI', 'BELANJA', 'PLOTING', 'PENGIRIMAN', 'DILAPORKAN'];
+  const namaTokoPendek = t => t ? String(t).replace(/^toko\s+/i, '').toUpperCase() : 'LAIN LAIN';   // "Toko MAYA" -> "MAYA"; barang tanpa toko -> "LAIN LAIN"
+  const urutToko = (a, b) => (a === 'LAIN LAIN') - (b === 'LAIN LAIN') || a.localeCompare(b, 'id');
+  // Gabungan seluruh lokasi: per toko, barang yang sama dijumlahkan, lengkap dengan rincian jumlah per lokasi.
+  function daftarBelanja() {
+    const baris = (S.rekap && S.rekap.baris) || [], lokNama = new Map(((S.rekap && S.rekap.lokasi) || []).map(l => [l.id, l.nama])), toko = new Map();
+    baris.forEach(b => {
+      const nm = namaTokoPendek(b.toko), t = toko.get(nm) || toko.set(nm, { nama: nm, barang: new Map() }).get(nm);
+      const kb = b.item_id ? 'i' + b.item_id : 'b' + b.nama + '|' + (b.satuan || '');
+      const o = t.barang.get(kb) || t.barang.set(kb, { nama: b.nama, satuan: b.satuan || '', harga: b.harga_beli == null ? null : Number(b.harga_beli), qty: 0, lokasi: new Map() }).get(kb);
+      o.qty += Number(b.qty); o.lokasi.set(b.lokasi_id, (o.lokasi.get(b.lokasi_id) || 0) + Number(b.qty));
+    });
+    return [...toko.values()].sort((a, b) => urutToko(a.nama, b.nama)).map(t => {
+      const barang = [...t.barang.values()].sort((a, b) => a.nama.localeCompare(b.nama, 'id')).map(o => ({ ...o, sub: o.harga == null ? 0 : o.harga * o.qty, untuk: [...o.lokasi].map(([id, q]) => `${lokNama.get(id) || '?'} (${jml(q)})`).join(', ') }));
+      return { nama: t.nama, barang, total: barang.reduce((s, o) => s + o.sub, 0) };
+    });
+  }
+  P.belanja = () => {
+    const p = periodeAktif(); if (!p) return '<div class="card"><p>Pilih atau buat periode dulu.</p></div>';
+    if (!SUDAH_SETUJU.includes(p.status)) return `<div class="ph"><h2>Belanja</h2></div><div class="card"><h3>Daftar belanja belum tersedia</h3><p class="muted">Daftar barang per toko muncul di sini setelah pengajuan anggaran disetujui kedua pimpinan.</p><p class="kecil muted">Tahap periode ${label(p)} sekarang: <b>${esc(NAMA_ALUR[ALUR.indexOf(p.status)] || p.status)}</b>. Lanjutkan di halaman ${p.status === 'FORM' ? 'Periode' : p.status === 'REKAP' ? 'Rekap, lalu Pengajuan' : 'Pengajuan'}.</p></div>`;
+    const dt = daftarBelanja(), jenis = dt.reduce((s, t) => s + t.barang.length, 0), total = dt.reduce((s, t) => s + t.total, 0), lok = new Set(((S.rekap && S.rekap.baris) || []).map(b => b.lokasi_id)).size;
+    if (!dt.length) return '<div class="ph"><h2>Belanja</h2></div><div class="card"><p class="muted">Periode ini belum punya permintaan barang.</p></div>';
+    return `<div class="ph"><h2>Belanja</h2><div class="aks"><button class="btn" data-a="unduhExcelToko">Download Excel</button></div></div>
+      <div class="kpi"><div><small>Toko</small><b>${dt.length}</b></div><div><small>Jenis barang</small><b>${jenis}</b></div><div><small>Lokasi</small><b>${lok}</b></div><div><small>Total belanja</small><b>${rp(total)}</b></div></div>
+      <p class="kecil muted" style="margin:0 0 12px">Barang yang sama dari beberapa lokasi sudah dijumlahkan per toko. Harga memakai harga beli toko saat ini.</p>
+      ${dt.map(t => `<div class="card"><h3>${t.nama === 'LAIN LAIN' ? 'Lain-lain (tanpa toko)' : 'Toko ' + esc(t.nama)} <span class="lencana">${t.barang.length} barang</span></h3>
+        <div class="tw"><table class="tbl"><thead><tr><th style="width:42px">No</th><th>Barang</th><th>Sat.</th><th class="r">Jumlah</th><th class="r">Harga beli</th><th class="r">Subtotal</th><th>Untuk lokasi</th></tr></thead><tbody>
+        ${t.barang.map((o, i) => `<tr><td>${i + 1}</td><td>${esc(o.nama)}</td><td>${esc(o.satuan)}</td><td class="r">${jml(o.qty)}</td><td class="r">${o.harga == null ? '<span class="muted">belum ada</span>' : ang(o.harga)}</td><td class="r">${ang(o.sub)}</td><td class="kecil muted">${esc(o.untuk)}</td></tr>`).join('')}
+        <tr><td colspan="5" class="r tebal">Jumlah ${t.nama === 'LAIN LAIN' ? 'lain-lain' : 'Toko ' + esc(t.nama)}</td><td class="r tebal">${ang(t.total)}</td><td></td></tr></tbody></table></div></div>`).join('')}`;
+  };
+
+  // Excel per toko: satu sheet per toko; di tiap sheet satu blok per lokasi berisi barang toko itu, subtotal (kuning), dan total toko (hijau)
+  // di bawah. Tata letak meniru berkas contoh (contih rekap per toko chemical.xlsx).
+  async function unduhExcelToko() {
+    const p = periodeAktif(), baris = (S.rekap && S.rekap.baris) || [];
+    if (!p || !baris.length) { pesan('Belum ada permintaan pada periode ini.', true); return; }
+    try { await muatExcelJS(); } catch (e) { pesan(e.message, true); return; }
+    const BLN = BULAN[p.bulan - 1].toUpperCase(), AKUN = '_-* #,##0_-;\\-* #,##0_-;_-* "-"_-;_-@_-', AKUN2 = '_(* #,##0_);_(* \\(#,##0\\);_(* "-"??_);_(@_)';
+    const BIRU = 'FF002060', MERAH = 'FFC00000', KUNING = 'FFFFFF00', HIJAU = 'FF00FF00', PUTIH = 'FFFFFFFF', HITAM = 'FF000000';
+    const garis = { style: 'medium', color: { argb: 'FFD9D9D9' } }, kotak = { top: garis, left: garis, bottom: garis, right: garis };   // garis abu-abu muda bertebal medium, seperti contoh
+    const warna = a => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: a } }), F = (sz, o) => ({ name: 'Segoe UI', size: sz, ...(o || {}) });
+    const tengah = { horizontal: 'center', vertical: 'middle' }, kiriIn = { horizontal: 'left', vertical: 'middle', indent: 1 }, kiri = { horizontal: 'left', vertical: 'middle' }, kananIn = { horizontal: 'right', vertical: 'middle', indent: 1 };
+    // nomor dan urutan lokasi sama dengan Excel PO; tiap lokasi dipecah menurut toko belanjanya
+    const blok = S.rekap.lokasi.map(l => ({ l, rows: baris.filter(b => b.lokasi_id === l.id) })).filter(x => x.rows.length);
+    const perToko = new Map();
+    blok.forEach(({ l, rows }, n) => {
+      const g = new Map(); rows.forEach(b => { const k = namaTokoPendek(b.toko); (g.get(k) || g.set(k, []).get(k)).push(b); });
+      g.forEach((rs, k) => { (perToko.get(k) || perToko.set(k, []).get(k)).push({ no: n + 1, lokasi: l.nama, rows: rs }); });
+    });
+    const wb = new ExcelJS.Workbook(); wb.creator = 'Pengadaan PT Ray Mitra Perkasa'; wb.created = new Date();
+    [...perToko.keys()].sort(urutToko).forEach(nm => {
+      const ws = wb.addWorksheet(nm.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31), { properties: { defaultRowHeight: 16.5, defaultColWidth: 8.7109375 }, views: [{ zoomScale: 70, showGridLines: false }] });
+      [8.7109375, 8.42578125, 55.5703125, 20.5703125, 20.5703125, 10.42578125, 10.42578125, 15.5703125].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+      const sel = (a, v, g) => { const c = ws.getCell(a); if (v !== undefined) c.value = v; if (g.font) c.font = g.font; if (g.fill) c.fill = g.fill; if (g.border) c.border = g.border; if (g.align) c.alignment = g.align; if (g.fmt) c.numFmt = g.fmt; return c; };
+      ws.mergeCells('B2:H2'); sel('B2', `PRE ORDER CHEMICAL BULAN ${BLN} ${p.tahun}`, { font: F(20, { bold: true, color: { argb: BIRU } }), fill: warna(PUTIH), align: { horizontal: 'center' } });
+      ws.getRow(2).height = 30.75; ws.getRow(3).height = 30.75;
+      let r = 5; const subs = []; let total = 0;
+      perToko.get(nm).forEach(bl => {
+        const jud = r, kep = r + 1, awal = r + 2, akhir = r + 1 + bl.rows.length, sub = akhir + 1;
+        sel(`B${jud}`, bl.no, { font: F(14, { bold: true, color: { argb: MERAH } }), fill: warna(PUTIH), align: tengah });
+        sel(`C${jud}`, bl.lokasi, { font: F(14, { bold: true, color: { argb: MERAH } }), fill: warna(PUTIH), align: kiriIn }); ws.getRow(jud).height = 21;
+        ['NO', 'PRE ORDER', 'PERKIRAAN HARGA TOKO', 'NAMA TOKO', 'JUMLAH', 'SATUAN', 'TOTAL'].forEach((t, i) => sel(String.fromCharCode(66 + i) + kep, t, { font: F(10, { bold: true, color: { argb: PUTIH } }), fill: warna(BIRU), border: kotak, align: i === 2 ? { ...tengah, wrapText: true } : tengah }));
+        ws.getRow(kep).height = 29.25;
+        let jumlah = 0;
+        bl.rows.forEach((b, i) => {
+          const x = awal + i, harga = b.harga_beli == null ? null : Number(b.harga_beli); jumlah += (harga || 0) * Number(b.qty);
+          sel(`B${x}`, i + 1, { font: F(10), fill: warna(PUTIH), border: kotak, align: tengah });
+          sel(`C${x}`, b.nama, { font: F(10), border: kotak, align: kiriIn });
+          sel(`D${x}`, harga, { font: F(10), fill: warna(PUTIH), border: kotak, align: { vertical: 'middle' }, fmt: AKUN });
+          sel(`E${x}`, nm, { font: F(10), fill: warna(PUTIH), border: kotak, align: kiri, fmt: AKUN });
+          sel(`F${x}`, Number(b.qty), { font: F(10), fill: warna(PUTIH), border: kotak, align: tengah });
+          sel(`G${x}`, b.satuan || '', { font: F(10), fill: warna(PUTIH), border: kotak, align: tengah });
+          sel(`H${x}`, { formula: `D${x}*F${x}`, result: (harga || 0) * Number(b.qty) }, { font: F(10), fill: warna(PUTIH), border: kotak, align: { vertical: 'middle' }, fmt: AKUN2 });
+          ws.getRow(x).height = 17.25;
+        });
+        sel(`H${sub}`, { formula: `SUM(H${awal}:H${akhir})`, result: jumlah }, { font: F(11, { bold: true }), fill: warna(KUNING), align: { vertical: 'middle' }, fmt: AKUN2 });
+        subs.push(sub); total += jumlah; r = sub + 2;
+      });
+      const rt = subs[subs.length - 1] + 3;   // dua baris kosong setelah subtotal terakhir
+      sel(`H${rt}`, { formula: `SUM(${subs.map(s => 'H' + s).join(',')})`, result: total }, { font: F(10, { bold: true }), fill: warna(HIJAU), align: kananIn, fmt: '#,##0' });
+      ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, printArea: `B2:H${rt}`, margins: { left: 0.21, right: 0.12, top: 0.15, bottom: 0.15, header: 0.12, footer: 0.13 } };
+    });
+    const buf = await wb.xlsx.writeBuffer(), url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })), a = document.createElement('a');
+    a.href = url; a.download = `REKAP PER TOKO CHEMICAL ${BLN} ${p.tahun}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    pesan('Excel belanja per toko ' + label(p) + ' diunduh.');
   }
   window.addEventListener('hashchange', () => pindah(location.hash.slice(1)));
   if (window.top !== window.self) document.body.classList.add('dalam');
