@@ -2,14 +2,27 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { test } from 'node:test';
-import { bangunBarangDatang, bangunTagihan, tafsirBalasan, tandatangani, type BarisStok } from './inti.ts';
+import { bangunBarangDatang, bangunBarangKeluar, bangunTagihan, tafsirBalasan, tandatangani, type BarisStok } from './inti.ts';
 
 const stok = (o: Partial<BarisStok> = {}): BarisStok => ({ sku: 'SRG-001', item_no: 1, item_nama: 'SERAGAM PDL', jenis_ukuran: 'baju', ukuran: 'L', qty: 5, tanggal: '2026-11-14', no_dokumen: 'SJ-77', keterangan: null, ...o });
 
 test('barang datang: jumlah digabung per SKU, urutan SKU mengikuti kemunculan', () => {
   const h = bangunBarangDatang('BD-9', [stok(), stok({ ukuran: 'XL', qty: 3 }), stok({ sku: 'SPT-001', item_no: 2, item_nama: 'SEPATU PDH', jenis_ukuran: 'sepatu', ukuran: '42', qty: 2 })]);
   assert.ok(h.ok);
-  assert.deepEqual(h.event, { type: 'goods_received', receipt_no: 'BD-9', po_number: 'SJ-77', received_date: '2026-11-14', items: [{ sku: 'SRG-001', quantity: 8 }, { sku: 'SPT-001', quantity: 2 }] });
+  assert.deepEqual(h.event, { type: 'goods_received', client: 'RMP', receipt_no: 'BD-9', po_number: 'SJ-77', received_date: '2026-11-14', items: [{ sku: 'SRG-001', quantity: 8 }, { sku: 'SPT-001', quantity: 2 }] });
+});
+
+test('barang keluar: jadi goods_issued untuk klien, jumlah digabung per SKU, nomor surat jalan sebagai po_number', () => {
+  const h = bangunBarangKeluar('BK-5', [stok({ no_dokumen: 'SJ/2026/10/0001' }), stok({ ukuran: 'XL', qty: 3 }), stok({ sku: 'SRG-002', item_no: 1, jenis_ukuran: 'celana', ukuran: '32', qty: 4 })]);
+  assert.ok(h.ok);
+  assert.deepEqual(h.event, { type: 'goods_issued', client: 'RMP', issue_no: 'BK-5', po_number: 'SJ/2026/10/0001', issued_date: '2026-11-14', items: [{ sku: 'SRG-001', quantity: 8 }, { sku: 'SRG-002', quantity: 4 }] });
+});
+
+test('barang keluar: ada yang belum dipetakan -> seluruh pengiriman tertahan; baris kosong ditolak', () => {
+  const h = bangunBarangKeluar('BK-6', [stok(), stok({ sku: null, item_nama: 'SEPATU PDH', jenis_ukuran: 'sepatu', ukuran: '42' })]);
+  assert.equal(h.ok, false);
+  assert.match((h as { alasan: string }).alasan, /SEPATU PDH sepatu 42/);
+  assert.equal(bangunBarangKeluar('BK-7', []).ok, false);
 });
 
 test('barang datang: ada yang belum dipetakan -> tidak ada yang dikirim, daftar disebut', () => {
@@ -33,7 +46,7 @@ test('tagihan: pemetaan field, jatuh tempo kosong tetap null, status batal', () 
   const t = { no_invoice: 'INV-1', tanggal: '2026-11-10T00:00:00Z', jatuh_tempo: null, total: '5000000', status: 'belum', catatan: 'PO-530' };
   const h = bangunTagihan(t, [{ item_nama: 'SERAGAM PDL', qty: 20, harga: '195000' }], false);
   assert.ok(h.ok);
-  assert.deepEqual(h.event, { type: 'invoice', invoice_number: 'INV-1', issued_date: '2026-11-10', due_date: null, total_amount: 5000000, status: 'MENDATANG', notes: 'PO-530', items: [{ description: 'SERAGAM PDL', quantity: 20, unit_price: 195000 }] });
+  assert.deepEqual(h.event, { type: 'invoice', client: 'RMP', invoice_number: 'INV-1', issued_date: '2026-11-10', due_date: null, total_amount: 5000000, status: 'MENDATANG', notes: 'PO-530', items: [{ description: 'SERAGAM PDL', quantity: 20, unit_price: 195000 }] });
   const b = bangunTagihan({ ...t, jatuh_tempo: '2026-12-01', status: 'batal' }, [], true);
   assert.ok(b.ok);
   assert.equal((b.event as { status: string }).status, 'DIBATALKAN');

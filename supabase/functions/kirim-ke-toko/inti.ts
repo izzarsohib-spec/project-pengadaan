@@ -26,16 +26,18 @@ export interface Tagihan {
 export type Hasil<T> = { ok: true; event: T } | { ok: false; alasan: string };
 
 export const BATAS_RUPIAH = 2_000_000_000;
+/** Kode klien titipan di toko (PT Ray Mitra Perkasa); seluruh kiriman pengadaan ini milik klien tersebut. */
+export const KLIEN_TOKO = 'RMP';
 
 const label = (b: Pick<BarisStok, 'item_nama' | 'jenis_ukuran' | 'ukuran'>) =>
   b.item_nama + (b.jenis_ukuran && b.jenis_ukuran !== '-' ? ' ' + b.jenis_ukuran + (b.ukuran && b.ukuran !== '-' ? ' ' + b.ukuran : '') : '');
 
 /**
- * Barang datang -> kiriman `goods_received`. Semua-atau-tidak-sama-sekali: bila ada baris yang belum punya SKU toko,
- * tidak ada yang dikirim (stok toko tidak boleh bertambah sebagian), dan daftar yang belum dipetakan dikembalikan.
+ * Gabungkan baris stok per SKU toko. Semua-atau-tidak-sama-sekali: bila ada baris yang belum punya SKU toko,
+ * tidak ada yang dikirim (stok titipan di toko tidak boleh berubah sebagian), dan daftar yang belum dipetakan dikembalikan.
  */
-export function bangunBarangDatang(kunci: string, baris: BarisStok[]): Hasil<Record<string, unknown>> {
-  if (!baris.length) return { ok: false, alasan: 'Baris barang masuk tidak ditemukan (sudah dihapus?)' };
+function kumpulkan(baris: BarisStok[], kosong: string): Hasil<{ items: { sku: string; quantity: number }[]; dok: string | null; ket: string | null; tanggal: string }> {
+  if (!baris.length) return { ok: false, alasan: kosong };
   const belum = new Set<string>();
   const jumlah = new Map<string, number>();
   for (const b of baris) {
@@ -44,17 +46,51 @@ export function bangunBarangDatang(kunci: string, baris: BarisStok[]): Hasil<Rec
     jumlah.set(sku, (jumlah.get(sku) ?? 0) + Number(b.qty));
   }
   if (belum.size) return { ok: false, alasan: 'Belum ada SKU toko untuk: ' + [...belum].join(', ') + '. Petakan di Administrator > Seragam > SKU toko.' };
-  const dok = baris.find((b) => b.no_dokumen)?.no_dokumen ?? null;
-  const ket = baris.find((b) => b.keterangan)?.keterangan ?? null;
+  return {
+    ok: true,
+    event: {
+      items: [...jumlah].map(([sku, quantity]) => ({ sku, quantity })),
+      dok: baris.find((b) => b.no_dokumen)?.no_dokumen ?? null,
+      ket: baris.find((b) => b.keterangan)?.keterangan ?? null,
+      tanggal: baris[0].tanggal,
+    },
+  };
+}
+
+/** Barang datang dari Mas Wahyu -> kiriman `goods_received` (menambah stok titipan klien di toko). */
+export function bangunBarangDatang(kunci: string, baris: BarisStok[]): Hasil<Record<string, unknown>> {
+  const k = kumpulkan(baris, 'Baris barang masuk tidak ditemukan (sudah dihapus?)');
+  if (!k.ok) return k;
+  const { items, dok, ket, tanggal } = k.event;
   return {
     ok: true,
     event: {
       type: 'goods_received',
+      client: KLIEN_TOKO,
       receipt_no: kunci,
       ...(dok ? { po_number: String(dok).slice(0, 60) } : {}),
-      received_date: baris[0].tanggal,
+      received_date: tanggal,
       ...(ket ? { notes: String(ket).slice(0, 500) } : {}),
-      items: [...jumlah].map(([sku, quantity]) => ({ sku, quantity })),
+      items,
+    },
+  };
+}
+
+/** Pengiriman ke lokasi (surat jalan) -> kiriman `goods_issued` (mengurangi stok titipan klien di toko). */
+export function bangunBarangKeluar(kunci: string, baris: BarisStok[]): Hasil<Record<string, unknown>> {
+  const k = kumpulkan(baris, 'Baris barang keluar tidak ditemukan (sudah dihapus?)');
+  if (!k.ok) return k;
+  const { items, dok, ket, tanggal } = k.event;
+  return {
+    ok: true,
+    event: {
+      type: 'goods_issued',
+      client: KLIEN_TOKO,
+      issue_no: kunci,
+      ...(dok ? { po_number: String(dok).slice(0, 60) } : {}),
+      issued_date: tanggal,
+      ...(ket ? { notes: String(ket).slice(0, 500) } : {}),
+      items,
     },
   };
 }
@@ -71,6 +107,7 @@ export function bangunTagihan(t: Tagihan, items: BarisTagihan[], batal: boolean)
     ok: true,
     event: {
       type: 'invoice',
+      client: KLIEN_TOKO,
       invoice_number: t.no_invoice,
       issued_date: String(t.tanggal).slice(0, 10),
       due_date: t.jatuh_tempo ? String(t.jatuh_tempo).slice(0, 10) : null,

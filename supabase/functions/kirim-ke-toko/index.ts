@@ -1,5 +1,6 @@
-// Pengirim ke toko Mas Wahyu: barang datang (menambah stok toko) dan tagihan (tampil di halaman Administrator toko).
-// Antrean = tabel kirim_toko, diisi trigger database saat Barang datang dari Mas Wahyu dicatat atau tagihan dibuat/dibatalkan.
+// Pengirim ke toko Mas Wahyu: barang datang (menambah stok titipan klien), barang keluar (mengurangi stok titipan), dan tagihan
+// (tampil di halaman Titipan Seragam toko).
+// Antrean = tabel kirim_toko, diisi trigger database saat Barang datang dari Mas Wahyu dicatat, pengiriman ke lokasi dibuat, atau tagihan dibuat/dibatalkan.
 // Semua akses data lewat fungsi SQL (kirim_toko_ambil, kirim_toko_data, kirim_toko_catat) supaya logikanya teruji di database.
 //   POST {aksi:'proses'}            : kirim yang menunggu / tertahan / gagal (jeda 5 menit antar percobaan, maks 60). Dipanggil pg_cron tiap menit (header X-Token).
 //   POST {aksi:'ulang'}             : kirim ulang semua yang belum terkirim sekarang juga (admin login).
@@ -9,7 +10,7 @@
 // (sama dengan PENGADAAN_WEBHOOK_SECRET di server toko, min. 32 karakter), KIRIM_TOKO_TOKEN (untuk pg_cron).
 // Aman dari kiriman ganda: toko menolak penerimaan dengan receipt_no yang sama dan menimpa tagihan per nomor, jadi dua pemanggilan bersamaan tidak menambah stok dua kali.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { bangunBarangDatang, bangunTagihan, tafsirBalasan, tandatangani, type StatusAntrean } from './inti.ts';
+import { bangunBarangDatang, bangunBarangKeluar, bangunTagihan, tafsirBalasan, tandatangani, type StatusAntrean } from './inti.ts';
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-client-info, x-token' };
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
@@ -36,6 +37,7 @@ async function bangunEvent(id: number) {
   if (error) throw new Error(error.message);
   if (!data) return { ok: false as const, alasan: 'Data kiriman tidak ditemukan' };
   if (data.jenis === 'barang_datang') return bangunBarangDatang(data.kunci, data.baris);
+  if (data.jenis === 'barang_keluar') return bangunBarangKeluar(data.kunci, data.baris);
   if (!data.tagihan) return { ok: false as const, alasan: 'Tagihan tidak ditemukan (sudah dihapus?)' };
   return bangunTagihan(data.tagihan, data.items ?? [], String(data.kunci).endsWith('#batal'));
 }

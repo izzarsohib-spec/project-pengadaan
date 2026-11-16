@@ -1,5 +1,6 @@
 # Memasang pengirim ke toko Mas Wahyu (integrasi toko): barang datang menambah stok toko, tagihan tampil di Administrator toko.
-#   1. migrasi database: migrasi-sku-toko.sql lalu migrasi-kirim-toko.sql (keduanya aman dijalankan ulang)
+#   1. migrasi database: migrasi-sku-toko.sql, migrasi-kirim-toko.sql lalu migrasi-kirim-toko-keluar.sql (semuanya aman dijalankan ulang)
+#      URUTAN PEMASANGAN: toko (migrasi 0004 + aplikasi) dipasang LEBIH DULU, karena toko lama menolak kiriman barang keluar (goods_issued).
 #   2. deploy fungsi kirim-ke-toko (index.ts + inti.ts, tanpa verify_jwt: pg_cron tidak membawa JWT; dijaga X-Token atau admin login)
 #   3. rahasia fungsi: KIRIM_TOKO_TOKEN (acak, untuk pg_cron), TOKO_WEBHOOK_URL dan TOKO_WEBHOOK_SECRET (bila diberikan)
 #   4. jadwal pg_cron "kirim-ke-toko" tiap menit (memanggil fungsi dengan X-Token)
@@ -24,7 +25,7 @@ function Kueri($q) {
 }
 
 # 1. migrasi
-foreach ($berkas in @('migrasi-sku-toko.sql', 'migrasi-kirim-toko.sql')) {
+foreach ($berkas in @('migrasi-sku-toko.sql', 'migrasi-kirim-toko.sql', 'migrasi-kirim-toko-keluar.sql')) {
   Kueri ([IO.File]::ReadAllText("$repo\supabase\$berkas")) | Out-Null
   Write-Host "migrasi database: $berkas selesai"
 }
