@@ -55,6 +55,26 @@ test('tagihan: pemetaan field, jatuh tempo kosong tetap null, status batal', () 
   assert.equal((s as { event: { status: string } }).event.status, 'DIBATALKAN');
 });
 
+test('tagihan: lunas di pengadaan -> LUNAS dengan tanggal bayar; sebagian tetap MENDATANG dengan catatan jumlah', () => {
+  const t = { no_invoice: 'INV-3', tanggal: '2026-11-10', jatuh_tempo: '2026-11-24', total: 2180000, status: 'lunas', catatan: null, terbayar: 2180000, tgl_bayar: '2026-11-16' };
+  const l = bangunTagihan(t, [], false);
+  assert.ok(l.ok);
+  assert.equal((l.event as { status: string }).status, 'LUNAS');
+  assert.equal((l.event as { paid_date: string }).paid_date, '2026-11-16');
+  assert.equal('notes' in l.event, false);
+  const s = bangunTagihan({ ...t, status: 'sebagian', terbayar: 1090000, tgl_bayar: '2026-11-16', catatan: 'DEMO' }, [], false);
+  assert.ok(s.ok);
+  assert.equal((s.event as { status: string }).status, 'MENDATANG');
+  assert.equal('paid_date' in s.event, false);
+  assert.match((s.event as { notes: string }).notes, /^DEMO · Dibayar sebagian Rp1\.090\.000 dari Rp2\.180\.000$/);
+  // lunas tanpa tanggal bayar (data lama): tetap LUNAS, toko memakai waktu terima
+  const n = bangunTagihan({ ...t, tgl_bayar: null }, [], false);
+  assert.equal((n as { event: { status: string } }).event.status, 'LUNAS');
+  assert.equal('paid_date' in (n as { event: object }).event, false);
+  // batal mengalahkan lunas
+  assert.equal((bangunTagihan(t, [], true) as { event: { status: string } }).event.status, 'DIBATALKAN');
+});
+
 test('tagihan: melewati batas rupiah toko ditolak dengan alasan', () => {
   const t = { no_invoice: 'INV-2', tanggal: '2026-11-10', jatuh_tempo: null, total: 3_000_000_000, status: 'belum', catatan: null };
   const h = bangunTagihan(t, [], false);

@@ -22,6 +22,9 @@ export interface Tagihan {
   total: number | string;
   status: string;
   catatan: string | null;
+  /** Jumlah yang sudah dibayar dan tanggal pembayaran terakhir (kosong untuk data lama). */
+  terbayar?: number | string | null;
+  tgl_bayar?: string | null;
 }
 export type Hasil<T> = { ok: true; event: T } | { ok: false; alasan: string };
 
@@ -103,6 +106,13 @@ export function bangunTagihan(t: Tagihan, items: BarisTagihan[], batal: boolean)
   if (baris.some((i) => !Number.isInteger(i.quantity) || i.quantity < 1 || !Number.isFinite(i.unit_price) || i.unit_price < 0 || i.unit_price > BATAS_RUPIAH)) {
     return { ok: false, alasan: 'Ada baris tagihan dengan jumlah atau harga di luar batas toko' };
   }
+  // Lunas di pengadaan -> LUNAS di toko (dengan tanggal bayar terakhir). Sebagian dibayar tetap MENDATANG, jumlahnya dicatat di catatan.
+  const dibatal = batal || t.status === 'batal';
+  const lunas = !dibatal && t.status === 'lunas';
+  const terbayar = Number(t.terbayar ?? 0);
+  const rp = (n: number) => 'Rp' + Math.round(n).toLocaleString('id-ID');
+  const sebagian = !dibatal && t.status === 'sebagian' && terbayar > 0 ? `Dibayar sebagian ${rp(terbayar)} dari ${rp(total)}` : '';
+  const catatan = [t.catatan ? String(t.catatan) : '', sebagian].filter(Boolean).join(' · ').slice(0, 500);
   return {
     ok: true,
     event: {
@@ -112,8 +122,9 @@ export function bangunTagihan(t: Tagihan, items: BarisTagihan[], batal: boolean)
       issued_date: String(t.tanggal).slice(0, 10),
       due_date: t.jatuh_tempo ? String(t.jatuh_tempo).slice(0, 10) : null,
       total_amount: Math.round(total),
-      status: batal || t.status === 'batal' ? 'DIBATALKAN' : 'MENDATANG',
-      ...(t.catatan ? { notes: String(t.catatan).slice(0, 500) } : {}),
+      status: dibatal ? 'DIBATALKAN' : lunas ? 'LUNAS' : 'MENDATANG',
+      ...(lunas && t.tgl_bayar ? { paid_date: String(t.tgl_bayar).slice(0, 10) } : {}),
+      ...(catatan ? { notes: catatan } : {}),
       items: baris,
     },
   };

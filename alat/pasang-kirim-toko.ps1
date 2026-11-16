@@ -25,7 +25,7 @@ function Kueri($q) {
 }
 
 # 1. migrasi
-foreach ($berkas in @('migrasi-sku-toko.sql', 'migrasi-kirim-toko.sql', 'migrasi-kirim-toko-keluar.sql')) {
+foreach ($berkas in @('migrasi-sku-toko.sql', 'migrasi-kirim-toko.sql', 'migrasi-kirim-toko-keluar.sql', 'migrasi-kirim-toko-bayar.sql')) {
   Kueri ([IO.File]::ReadAllText("$repo\supabase\$berkas")) | Out-Null
   Write-Host "migrasi database: $berkas selesai"
 }
