@@ -18,7 +18,7 @@
   .rl { display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px solid var(--garis); font-size:.9rem; }
   .rl:last-child { border-bottom:0; } .rl span:first-child { color:var(--redup); } .rl span:last-child { text-align:right; font-weight:600; }
   label { display:block; font-weight:600; font-size:.88rem; margin:12px 0 5px; }
-  input[type=text], textarea { width:100%; padding:11px 12px; border:1px solid var(--garis); border-radius:12px; background:transparent; color:inherit; font:inherit; }
+  input[type=text], textarea, select { width:100%; padding:11px 12px; border:1px solid var(--garis); border-radius:12px; background:transparent; color:inherit; font:inherit; }
   textarea { min-height:80px; resize:vertical; }
   .brg { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--garis); cursor:pointer; margin:0; font-weight:400; }
   .brg:last-child { border-bottom:0; } .brg input { width:22px; height:22px; flex:none; accent-color:var(--ok); }
@@ -42,18 +42,23 @@
 <main>
   <div class="kartu" id="info"><h1>Form Pengiriman Chemical</h1><p class="sub" id="sub">Memuat daftar barang…</p><div id="meta"></div></div>
   <form id="f" hidden>
-    <div class="kartu"><h2>1. Barang yang diantar</h2><p class="sub">Centang barang yang sudah diturunkan di lokasi.</p><div id="barang"></div></div>
-    <div class="kartu"><h2>2. Foto pengiriman</h2><p class="sub">Foto barang di lokasi dan serah terima (maksimal 8 foto).</p>
+    <div class="kartu"><h2>1. Lokasi dan pengirim</h2>
+      <label for="lok">Lokasi tujuan</label><select id="lok"></select>
+      <label for="pengirim">Nama Anda (yang mengantar)</label><input type="text" id="pengirim" maxlength="120" required autocomplete="name"></div>
+    <div id="bagian" hidden>
+    <div class="kartu"><h2>2. Barang yang diantar</h2><p class="sub">Centang barang yang sudah diturunkan di lokasi.</p><div id="barang"></div></div>
+    <div class="kartu"><h2>3. Foto pengiriman</h2><p class="sub">Foto barang di lokasi dan serah terima (maksimal 8 foto).</p>
       <div class="aksi"><button type="button" class="tombol" id="btnKamera">📷 Ambil foto</button><label class="tombol" for="fotoIn">🖼️ Pilih dari galeri</label></div>
       <div class="sub" id="infoFoto" style="margin:8px 0 0"></div>
       <input type="file" id="fotoKamera" accept="image/*" capture="environment" hidden><input type="file" id="fotoIn" accept="image/*" multiple hidden><div class="foto" id="foto"></div></div>
-    <div class="kartu"><h2>3. Penerima dan kondisi</h2>
+    <div class="kartu"><h2>4. Penerima dan kondisi</h2>
       <label for="penerima">Nama penerima</label><input type="text" id="penerima" maxlength="120" required autocomplete="off">
       <label for="jabatan">Jabatan (opsional)</label><input type="text" id="jabatan" maxlength="80" autocomplete="off" placeholder="Misalnya: Staf umum">
       <label>Kondisi barang</label>
       <div class="pil"><label><input type="radio" name="kondisi" value="sesuai" checked> Semua sesuai</label><label><input type="radio" name="kondisi" value="kurang"> Ada yang kurang</label><label><input type="radio" name="kondisi" value="rusak"> Ada yang rusak</label></div>
       <label for="catatan">Catatan <span class="sub" id="wajibCat" style="margin:0"></span></label><textarea id="catatan" maxlength="500" placeholder="Opsional bila semua sesuai"></textarea></div>
-    <button class="kirim" id="kirim" type="submit">Kirim laporan pengiriman</button><div id="pesan" role="status"></div>
+    <button class="kirim" id="kirim" type="submit">Kirim laporan pengiriman</button></div>
+    <div id="pesan" role="status"></div>
   </form>
 </main>
 <div id="kamera" role="dialog" aria-label="Kamera"><video id="video" playsinline autoplay muted></video><div class="bar"><button type="button" class="tutup" id="kTutup">Selesai</button><button type="button" class="jepret" id="kJepret" aria-label="Ambil foto"></button><div class="info" id="kInfo">0 foto</div></div></div>
@@ -63,7 +68,8 @@
   const t = new URLSearchParams(location.search).get('t') || '';
   const $ = i => document.getElementById(i), esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const jml = n => (+n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
-  let fotos = [], barang = [];
+  let fotos = [], barang = [], D = null, lokasi = null;
+  const NAMA_KEY = 'chemical-kirim-pengirim';
   // foto diperkecil dulu di perangkat agar cepat terkirim
   const kecilkan = file => new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file); img.onload = () => { const m = 1280, s = Math.min(1, m / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', 0.72)); }; img.onerror = () => no(new Error('Foto tidak terbaca')); img.src = u; });
   function renderFoto() { $('foto').innerHTML = fotos.map((f, i) => `<div><img src="${f}" alt="foto ${i + 1}"><button type="button" data-fx="${i}" aria-label="Hapus foto">×</button></div>`).join(''); }
@@ -104,31 +110,43 @@
     }
   });
 
+  // pilih lokasi: tampilkan daftar barang lokasi itu; form lain muncul setelah lokasi dipilih
+  function pilihLokasi(id) {
+    lokasi = (D.lokasi || []).find(l => String(l.id) === String(id)) || null; barang = lokasi ? lokasi.barang || [] : []; fotos = []; renderFoto();
+    $('bagian').hidden = !lokasi; if (!lokasi) return;
+    $('barang').innerHTML = barang.map((b, i) => `<label class="brg"><input type="checkbox" data-b="${i}" checked><span class="nm"><b>${esc(b.nama)}</b></span><span class="qt">${jml(b.qty)} ${esc(b.satuan)}</span></label>`).join('');
+    $('penerima').value = $('jabatan').value = $('catatan').value = ''; document.querySelector('input[name=kondisi][value=sesuai]').checked = true; $('wajibCat').textContent = '';
+  }
+  $('lok').onchange = e => pilihLokasi(e.target.value);
+
   async function muat() {
     if (t.length < 32) { $('sub').innerHTML = '<span class="gagal">Tautan tidak valid.</span>'; return; }
     try {
       const r = await fetch(`${FN}?t=${encodeURIComponent(t)}`), j = await r.json();
       if (!r.ok) { $('sub').innerHTML = `<span class="gagal">${esc(j.error || 'Tautan tidak dikenali.')}</span>`; return; }
-      barang = j.barang || [];
-      $('sub').textContent = 'Form ini khusus untuk kurir atau PIC yang mengantar chemical ke lokasi.';
-      $('meta').innerHTML = [['Lokasi', j.lokasi], ['Periode', BULAN[j.bulan - 1] + ' ' + j.tahun], ['Jumlah barang', barang.length + ' jenis · ' + jml(barang.reduce((a, b) => a + +b.qty, 0)) + ' unit']].map(([a, b]) => `<div class="rl"><span>${a}</span><span>${esc(b)}</span></div>`).join('');
-      if (j.sudah) { $('meta').innerHTML += `<div class="sukses" style="margin-top:10px">Pengiriman sudah dilaporkan (penerima: ${esc(j.sudah.penerima)}). Terima kasih.</div>`; return; }
-      $('barang').innerHTML = barang.map((b, i) => `<label class="brg"><input type="checkbox" data-b="${i}" checked><span class="nm"><b>${esc(b.nama)}</b></span><span class="qt">${jml(b.qty)} ${esc(b.satuan)}</span></label>`).join('');
+      D = j; const sisa = (j.lokasi || []).filter(l => !l.sudah);
+      $('sub').textContent = 'Form ini khusus untuk orang lapangan yang mengantar chemical. Pilih lokasi tujuan, lalu isi laporannya.';
+      $('meta').innerHTML = [['Periode', BULAN[j.bulan - 1] + ' ' + j.tahun], ['Lokasi belum dilaporkan', sisa.length + ' dari ' + (j.lokasi || []).length]].map(([a, b]) => `<div class="rl"><span>${a}</span><span>${esc(b)}</span></div>`).join('');
+      if (!['DISETUJUI', 'BELANJA', 'PLOTING', 'PENGIRIMAN', 'DILAPORKAN'].includes(j.status)) { $('meta').innerHTML += '<div class="gagal" style="margin-top:10px">Pengiriman periode ini belum dibuka.</div>'; return; }
+      if (!sisa.length) { $('meta').innerHTML += '<div class="sukses" style="margin-top:10px">Semua lokasi sudah dilaporkan. Terima kasih.</div>'; return; }
+      $('lok').innerHTML = '<option value="">— Pilih lokasi —</option>' + (j.lokasi || []).map(l => `<option value="${l.id}" ${l.sudah ? 'disabled' : ''}>${esc(l.nama)}${l.sudah ? ' (sudah dilaporkan)' : ''}</option>`).join('');
+      try { $('pengirim').value = localStorage.getItem(NAMA_KEY) || ''; } catch (e) {}
       $('f').hidden = false;
     } catch (e) { $('sub').innerHTML = '<span class="gagal">Tidak bisa terhubung. Periksa koneksi lalu muat ulang.</span>'; }
   }
   $('f').onsubmit = async e => {
     e.preventDefault(); const ps = $('pesan'); ps.className = ''; ps.textContent = '';
     const diantar = barang.map((_, i) => document.querySelector(`[data-b="${i}"]`).checked), kur = diantar.filter(x => !x).length, kd = kondisi();
-    const salah = !fotos.length ? 'Lampirkan minimal satu foto.' : !$('penerima').value.trim() ? 'Isi nama penerima.' : (kd === 'sesuai' && kur) ? `${kur} barang belum dicentang. Pilih "Ada yang kurang" dan jelaskan pada catatan.` : (kd !== 'sesuai' && !$('catatan').value.trim()) ? 'Jelaskan barang yang kurang atau rusak pada catatan.' : '';
+    const salah = !lokasi ? 'Pilih lokasi tujuan.' : !$('pengirim').value.trim() ? 'Isi nama Anda sebagai pengirim.' : !fotos.length ? 'Lampirkan minimal satu foto.' : !$('penerima').value.trim() ? 'Isi nama penerima.' : (kd === 'sesuai' && kur) ? `${kur} barang belum dicentang. Pilih "Ada yang kurang" dan jelaskan pada catatan.` : (kd !== 'sesuai' && !$('catatan').value.trim()) ? 'Jelaskan barang yang kurang atau rusak pada catatan.' : '';
     if (salah) { ps.className = 'gagal'; ps.textContent = salah; return; }
     if (!confirm('Kirim laporan pengiriman? Setelah dikirim tidak bisa diubah.')) return;
     $('kirim').disabled = true; $('kirim').textContent = 'Mengirim…';
     try {
-      const r = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t, penerima: $('penerima').value, jabatan: $('jabatan').value, kondisi: kd, catatan: $('catatan').value, diantar, foto: fotos }) });
+      const r = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t, lokasi_id: lokasi.id, pengirim: $('pengirim').value, penerima: $('penerima').value, jabatan: $('jabatan').value, kondisi: kd, catatan: $('catatan').value, diantar, foto: fotos }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
-      $('f').hidden = true; $('meta').innerHTML += '<div class="sukses" style="margin-top:12px">Laporan pengiriman terkirim. Terima kasih.</div>'; window.scrollTo({ top: 0 });
+      try { localStorage.setItem(NAMA_KEY, $('pengirim').value.trim()); } catch (e) {}
+      $('f').hidden = true; $('meta').innerHTML += `<div class="sukses" style="margin-top:12px">Laporan pengiriman ${esc(lokasi.nama)} terkirim. Terima kasih.</div><button class="kirim" style="margin-top:12px" onclick="location.reload()">Laporkan lokasi lain</button>`; window.scrollTo({ top: 0 });
     } catch (x) { ps.className = 'gagal'; ps.textContent = 'Gagal: ' + x.message; $('kirim').disabled = false; $('kirim').textContent = 'Kirim laporan pengiriman'; }
   };
   muat();

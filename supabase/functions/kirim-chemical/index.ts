@@ -1,7 +1,7 @@
-// Form pengiriman Chemical untuk kurir/PIC di lokasi. Dibuka lewat tautan bertoken per lokasi (chemical_pengiriman.token) tanpa login.
-//  GET  ?t=<token>  -> daftar barang yang harus diantar ke lokasi itu (tanpa harga)
-//  POST {t, penerima, jabatan, kondisi, catatan, diantar:[true/false per barang], foto:[dataURL jpeg...]} -> simpan; lokasi menjadi "Terkirim"
-// Foto (JPEG) disimpan di Storage publik (folder acak). Form hanya bisa dikirim sekali; admin diberi tahu lewat ntfy.
+// Form pengiriman Chemical untuk orang lapangan. SATU tautan bertoken per periode (chemical_periode.token_kirim), tanpa login; lokasi dipilih di dalam form.
+//  GET  ?t=<token>  -> lokasi beserta barang yang harus diantar (tanpa harga) dan status sudah/belum
+//  POST {t, lokasi_id, pengirim, penerima, jabatan, kondisi, catatan, diantar:[true/false per barang], foto:[dataURL jpeg...]} -> simpan; lokasi menjadi "Terkirim"
+// Foto (JPEG) disimpan di Storage publik (folder acak). Tiap lokasi hanya bisa dilaporkan sekali; admin diberi tahu lewat ntfy.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'content-type' };
@@ -33,10 +33,15 @@ Deno.serve(async (req) => {
   if (req.method === 'GET') return balas(info);
 
   // ---- POST ----
-  if (info.sudah) return balas({ error: 'Pengiriman lokasi ini sudah dilaporkan' }, 409);
+  if (!['DISETUJUI', 'BELANJA', 'PLOTING', 'PENGIRIMAN', 'DILAPORKAN'].includes(info.status)) return balas({ error: 'Pengiriman periode ini belum dibuka' }, 403);
+  const lok = (info.lokasi ?? []).find((l: any) => l.id === Number(body.lokasi_id));
+  if (!lok) return balas({ error: 'Pilih lokasi' }, 400);
+  if (lok.sudah) return balas({ error: 'Pengiriman lokasi ini sudah dilaporkan' }, 409);
+  const pengirim = teksBersih(body.pengirim, 120);
+  if (!pengirim) return balas({ error: 'Nama pengirim wajib diisi' }, 400);
   const penerima = teksBersih(body.penerima, 120), jabatan = teksBersih(body.jabatan, 80), catatan = teksBersih(body.catatan, 500);
   if (!penerima) return balas({ error: 'Nama penerima wajib diisi' }, 400);
-  const barang: { nama: string; satuan: string; qty: number }[] = info.barang ?? [];
+  const barang: { nama: string; satuan: string; qty: number }[] = lok.barang ?? [];
   const diantar: unknown[] = Array.isArray(body.diantar) ? body.diantar : [];
   if (diantar.length !== barang.length) return balas({ error: 'Daftar barang tidak cocok, muat ulang halaman' }, 400);
   const hasilBarang = barang.map((b, i) => ({ ...b, diantar: diantar[i] === true }));
@@ -50,20 +55,21 @@ Deno.serve(async (req) => {
   if (!foto.length) return balas({ error: 'Lampirkan minimal satu foto' }, 400);
   if (foto.length !== fotoIn.length) return balas({ error: 'Ada foto yang tidak valid atau terlalu besar' }, 400);
 
-  const folder = `chem-kirim-${info.id}-${acak().slice(0, 24)}`, url = (n: string) => `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/lampiran-surat/${folder}/${n}`;
+  const folder = `chem-kirim-${lok.id}-${acak().slice(0, 24)}`, url = (n: string) => `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/lampiran-surat/${folder}/${n}`;
   try {
     for (let i = 0; i < foto.length; i++) { const { error } = await db.storage.from('lampiran-surat').upload(`${folder}/foto-${i + 1}.jpg`, foto[i], { contentType: 'image/jpeg', upsert: false }); if (error) throw new Error('Gagal menyimpan foto: ' + error.message); }
   } catch (e) { return balas({ error: String((e as Error).message) }, 500); }
+  await db.from('chemical_pengiriman').upsert({ periode_id: info.periode_id, lokasi_id: lok.id }, { onConflict: 'periode_id,lokasi_id', ignoreDuplicates: true });
   // is('terkirim', null): bila dua kiriman datang bersamaan, hanya satu yang menang
-  const { data: upd, error: eUpd } = await db.from('chemical_pengiriman').update({ terkirim: new Date().toISOString(), penerima, jabatan: jabatan || null, kondisi, catatan: catatan || null, barang: hasilBarang, foto_urls: foto.map((_, i) => url(`foto-${i + 1}.jpg`)) })
-    .eq('id', info.id).is('terkirim', null).select('id');
+  const { data: upd, error: eUpd } = await db.from('chemical_pengiriman').update({ terkirim: new Date().toISOString(), pengirim, penerima, jabatan: jabatan || null, kondisi, catatan: catatan || null, barang: hasilBarang, foto_urls: foto.map((_, i) => url(`foto-${i + 1}.jpg`)) })
+    .eq('periode_id', info.periode_id).eq('lokasi_id', lok.id).is('terkirim', null).select('id');
   if (eUpd) return balas({ error: 'Gagal menyimpan pengiriman' }, 500);
   if (!upd?.length) return balas({ error: 'Pengiriman lokasi ini sudah dilaporkan' }, 409);
 
   const topik = Deno.env.get('NTFY_TOPIC_ADMIN');
   if (topik) {
-    try { await fetch(`https://ntfy.sh/${topik}`, { method: 'POST', headers: { Title: kodekan(`Chemical terkirim: ${info.lokasi}`.slice(0, 120)), Priority: kondisi === 'sesuai' ? '3' : '4', Tags: 'package' },
-      body: `Penerima: ${penerima}${jabatan ? ' (' + jabatan + ')' : ''}\nKondisi: ${kondisi}${kurang ? ` · ${kurang} barang belum diantar` : ''}\n${foto.length} foto. Lihat di Chemical > Pengiriman.` }); } catch { /* abaikan */ }
+    try { await fetch(`https://ntfy.sh/${topik}`, { method: 'POST', headers: { Title: kodekan(`Chemical terkirim: ${lok.nama}`.slice(0, 120)), Priority: kondisi === 'sesuai' ? '3' : '4', Tags: 'package' },
+      body: `Pengirim: ${pengirim}\nPenerima: ${penerima}${jabatan ? ' (' + jabatan + ')' : ''}\nKondisi: ${kondisi}${kurang ? ` · ${kurang} barang belum diantar` : ''}\n${foto.length} foto. Lihat di Chemical > Pengiriman.` }); } catch { /* abaikan */ }
   }
   return balas({ ok: true, foto: foto.length });
 });
