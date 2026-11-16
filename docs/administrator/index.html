@@ -133,7 +133,7 @@
   }
 
   const GALAT_LOGIN = 'Sesi login berakhir atau akun tidak punya akses admin. Masuk lagi.';
-  const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', sku_toko: 'SKU toko',peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi' };
+  const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', sku_toko: 'SKU toko',peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi', chemical_lokasi: 'Lokasi Chemical', chemical_periode: 'Periode Chemical', chemical_pengajuan: 'Pengajuan Chemical' };
   const intOrNull = v => v === '' || v == null ? null : Math.round(Number(v));
   const numOrNull = v => v === '' || v == null ? null : Number(v);
 
@@ -147,6 +147,7 @@
   const BULAN_NAMA = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const NAMA_TAHAP = { FORM: 'Form dibuka', REKAP: 'Rekap', DIAJUKAN: 'Pengajuan', DISETUJUI: 'Disetujui', BELANJA: 'Belanja', PLOTING: 'Ploting', PENGIRIMAN: 'Pengiriman', DILAPORKAN: 'Dilaporkan' };
   const labelPeriode = p => BULAN_NAMA[p.bulan - 1] + ' ' + p.tahun;
+  const MODE_ANGGARAN = { ketat: 'Ketat (tidak boleh lewat RAB)', persetujuan: 'Boleh lewat dengan persetujuan', tanpa_batas: 'Tanpa batas' };
   const TABS = {
     chemperiode: {
       grup: 'Chemical', nama: 'Periode', login: true, tanpaTambah: true,
@@ -169,6 +170,30 @@
         return k === null ? null : k.trim();
       },
       hapus: (r, konfirmasi) => chem('chemical_hapus_periode', { p_periode: r.id, p_konfirmasi: konfirmasi || null })
+    },
+    chemlokasi: {
+      grup: 'Chemical', nama: 'Lokasi & RAB', login: true,
+      ket: 'Lokasi yang memesan chemical beserta RAB (anggaran chemical) per bulannya. Lokasi aktif tampil di form korlap dan dicocokkan dengan RAB di halaman Rekap. Lokasi yang sudah pernah dipakai pada suatu periode tidak bisa dihapus; nonaktifkan lewat Ubah agar riwayatnya tetap utuh. Perubahan RAB tercatat di Log perubahan.',
+      muat: () => chem('chemical_lokasi_daftar'), cari: r => [r.nama, r.kebijakan].join(' '), id: r => r.id,
+      statusOpsi: [['semua', 'Semua lokasi'], ['aktif', 'Aktif', r => r.aktif], ['nonaktif', 'Nonaktif', r => !r.aktif], ['terpakai', 'Sudah dipakai periode', r => r.periode > 0], ['tanpa', 'Belum ada RAB', r => r.mode_anggaran !== 'tanpa_batas' && r.rab_bulan == null]],
+      kolom: [['Lokasi', r => `<b>${esc(r.nama)}</b>${r.kebijakan ? `<div class="sub">${esc(r.kebijakan)}</div>` : ''}`],
+        ['RAB per bulan', r => r.mode_anggaran === 'tanpa_batas' ? '<span class="sub">tanpa batas</span>' : r.rab_bulan == null ? '<span class="badge warn">belum diisi</span>' : rp(r.rab_bulan), 'r'],
+        ['Mode anggaran', r => esc(MODE_ANGGARAN[r.mode_anggaran] || r.mode_anggaran)],
+        ['Pinjam anggaran seragam', r => r.pinjam_seragam ? 'Ya' : '-'],
+        ['Dipakai', r => r.periode ? `${num(r.periode)} periode · ${num(r.permintaan)} baris permintaan` : '<span class="sub">belum dipakai</span>'],
+        ['Status', r => r.aktif ? '<span class="badge ok">Aktif</span>' : '<span class="badge">Nonaktif</span>']],
+      kpi: d => [['Lokasi', num(d.length)], ['Aktif', num(d.filter(r => r.aktif).length)], ['Total RAB per bulan (aktif)', rpR(d.filter(r => r.aktif && r.mode_anggaran !== 'tanpa_batas').reduce((a, r) => a + Number(r.rab_bulan || 0), 0))], ['Tanpa batas', num(d.filter(r => r.aktif && r.mode_anggaran === 'tanpa_batas').length)]],
+      mati: r => !r.aktif,
+      form: r => [
+        { k: 'nama', l: 'Nama lokasi', v: r?.nama, req: true },
+        { k: 'mode', l: 'Mode anggaran', v: r?.mode_anggaran || 'ketat', req: true, sel: Object.entries(MODE_ANGGARAN) },
+        { k: 'rab', l: 'RAB chemical per bulan (Rp)', t: 'number', min: 0, v: r && r.rab_bulan != null ? Number(r.rab_bulan) : '', hint: 'Anggaran chemical lokasi ini tiap bulan. Wajib diisi kecuali mode tanpa batas (kolom ini diabaikan).' },
+        { k: 'kebijakan', l: 'Catatan kebijakan (opsional)', v: r?.kebijakan },
+        { k: 'pinjam', l: 'Boleh memakai anggaran seragam bila anggaran chemical kurang', cek: true, v: r ? r.pinjam_seragam : false },
+        { k: 'aktif', l: 'Aktif (tampil di form korlap)', cek: true, v: r ? r.aktif : true }],
+      simpan: (v, r) => chem('chemical_simpan_lokasi', { p_id: r ? r.id : null, p_nama: v.nama, p_rab_bulan: v.mode === 'tanpa_batas' ? null : numOrNull(v.rab), p_mode: v.mode, p_pinjam: !!v.pinjam, p_kebijakan: v.kebijakan || null, p_aktif: !!v.aktif }),
+      hapus: r => chem('chemical_hapus_lokasi', { p_id: r.id }), bisaHapus: r => !(r.kiriman || r.permintaan || r.pencocokan || r.biaya),
+      namaBaris: r => r.nama
     },
     acuan: {
       grup: 'Seragam', nama: 'Anggaran & anggota', ket: 'RAB seragam, jumlah anggota, bagian kerja, dan masa kontrak per lokasi (dipakai di halaman Seragam). Nama lokasi harus sama dengan pilihan lokasi di Google Form supaya pengisian ukuran terhitung.',
