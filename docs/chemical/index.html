@@ -456,7 +456,7 @@
   }
   // foto diperkecil dulu agar cepat terkirim, tetap cukup besar supaya tulisan nota terbaca
   const kecilkanFoto = file => new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file); img.onload = () => { const m = 1800, s = Math.min(1, m / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', 0.85)); }; img.onerror = () => no(new Error('Foto tidak terbaca. Coba ambil ulang.')); img.src = u; });
-  const draBaru = (jenis, extra) => ({ id: null, jenis, foto_url: null, foto_tampil: null, membaca: false, galat: '', ai: null, toko: '', tanggal: hariIni(), no_nota: '', total: '', kategori: '', catatan: '', rincian: [], ...(extra || {}) });
+  const draBaru = (jenis, extra) => ({ id: null, jenis, foto_url: null, foto_tampil: null, bukti_url: null, bukti_tampil: null, mengunggah: '', membaca: false, galat: '', ai: null, toko: '', tanggal: hariIni(), no_nota: '', total: '', kategori: '', catatan: '', rincian: [], ...(extra || {}) });
 
   function formNota() {
     const d = S.draf, kk = v => (adaNilai(v) ? '' : 'perlu');
@@ -470,7 +470,11 @@
     return `<div class="card"><h3>${d.id ? 'Ubah nota' : 'Periksa dan simpan nota'}</h3>
       ${d.galat ? `<div class="peringatan">${esc(d.galat)}</div>` : ''}${ai}
       <div class="notaform"><div class="notafoto">${d.foto_tampil ? `<a href="${esc(d.foto_tampil)}" target="_blank" rel="noopener"><img src="${esc(d.foto_tampil)}" alt="Foto nota"></a>` : '<p class="kecil muted">Tanpa foto.</p>'}
-        ${d.mengunggah ? '<p class="kecil muted">Mengunggah foto…</p>' : `<div class="aksirow"><button class="btn mini" data-nota-a="fotokamera">📷 ${d.foto_tampil ? 'Ganti foto' : 'Tambah foto'}</button><button class="btn mini" data-nota-a="fotogaleri">🖼 Galeri</button></div><input type="file" id="fotoTambahKamera" accept="image/*" capture="environment" hidden><input type="file" id="fotoTambahGaleri" accept="image/*" hidden>`}</div>
+        ${d.mengunggah === 'foto' ? '<p class="kecil muted">Mengunggah foto…</p>' : `<div class="aksirow"><button class="btn mini" data-nota-a="fotokamera">📷 ${d.foto_tampil ? 'Ganti foto nota' : 'Tambah foto nota'}</button><button class="btn mini" data-nota-a="fotogaleri">🖼 Galeri</button></div><input type="file" id="fotoTambahKamera" accept="image/*" capture="environment" hidden><input type="file" id="fotoTambahGaleri" accept="image/*" hidden>`}
+        <h4 style="margin:16px 0 6px">Bukti transfer</h4>
+        ${d.bukti_tampil ? `<a href="${esc(d.bukti_tampil)}" target="_blank" rel="noopener"><img src="${esc(d.bukti_tampil)}" alt="Bukti transfer"></a>` : '<p class="kecil muted">Belum ada bukti transfer.</p>'}
+        ${d.mengunggah === 'bukti' ? '<p class="kecil muted">Mengunggah bukti…</p>' : `<div class="aksirow"><button class="btn mini" data-nota-a="buktikamera">📷 ${d.bukti_tampil ? 'Ganti bukti' : 'Tambah bukti transfer'}</button><button class="btn mini" data-nota-a="buktigaleri">🖼 Galeri</button></div><input type="file" id="buktiKamera" accept="image/*" capture="environment" hidden><input type="file" id="buktiGaleri" accept="image/*" hidden>`}
+      </div>
       <div class="notaisi">
         <label class="kecil">Jenis</label><select data-nf="jenis">${Object.keys(NOTA_JENIS).map(k => `<option value="${k}" ${d.jenis === k ? 'selected' : ''}>${NOTA_JENIS[k]}</option>`).join('')}</select>
         <label class="kecil">Toko / pihak</label><input type="text" maxlength="150" data-nf="toko" value="${esc(d.toko)}" class="${kk(d.toko)}">
@@ -492,10 +496,10 @@
     const nt = S.nota || [], tot = j => nt.filter(n => n.jenis === j).reduce((s, n) => s + Number(n.total), 0);
     const rencBelanja = daftarBelanja().reduce((s, t) => s + t.total, 0), rencOps = (S.biaya || []).reduce((s, b) => s + Number(b.estimasi || 0), 0);
     return `<div class="ph"><h2>Laporan pengeluaran</h2></div>
-      <div class="kpi"><div><small>Belanja (nota)</small><b>${rp(tot('belanja'))}</b><em>rencana ${rp(rencBelanja)}</em></div><div><small>Operasional (nota)</small><b>${rp(tot('operasional'))}</b><em>rencana ${rp(rencOps)}</em></div><div><small>Total pengeluaran</small><b>${rp(tot('belanja') + tot('operasional'))}</b><em>rencana ${rp(rencBelanja + rencOps)}</em></div><div><small>Jumlah nota</small><b>${nt.length}</b></div></div>
+      <div class="kpi"><div><small>Belanja (nota)</small><b>${rp(tot('belanja'))}</b><em>rencana ${rp(rencBelanja)}</em></div><div><small>Operasional (nota)</small><b>${rp(tot('operasional'))}</b><em>rencana ${rp(rencOps)}</em></div><div><small>Total pengeluaran</small><b>${rp(tot('belanja') + tot('operasional'))}</b><em>rencana ${rp(rencBelanja + rencOps)}</em></div><div><small>Jumlah nota</small><b>${nt.length}</b></div><div><small>Belum ada bukti transfer</small><b>${nt.filter(n => !n.bukti_url).length}</b></div></div>
       ${formNota()}
-      <div class="card"><h3>Nota tercatat</h3>${nt.length ? `<div class="tw"><table class="tbl"><thead><tr><th>Tanggal</th><th>Jenis</th><th>Toko / No. nota</th><th>Kategori</th><th class="r">Total</th><th>Foto</th><th></th></tr></thead><tbody>
-        ${nt.map(n => `<tr><td>${esc(n.tanggal)}</td><td><span class="lencana ${n.jenis === 'belanja' ? 'info' : 'warn'}">${NOTA_JENIS[n.jenis]}</span></td><td>${esc(n.toko)}${n.no_nota ? '<br><span class="kecil muted">' + esc(n.no_nota) + '</span>' : ''}</td><td>${esc(n.kategori || '—')}</td><td class="r">${ang(n.total)}</td><td>${n.foto_url ? `<a class="notathumb" href="${esc(n.foto_url)}" target="_blank" rel="noopener"><img src="${esc(n.foto_url)}" alt="Foto nota ${esc(n.toko)}" loading="lazy"></a>` : '—'}</td><td><button class="btn mini" data-nota-a="ubah" data-id="${n.id}">Ubah</button> <button class="btn mini bahaya" data-nota-a="hapus" data-id="${n.id}">Hapus</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Belum ada nota. Tambahkan lewat foto di atas.</p>'}</div>`;
+      <div class="card"><h3>Nota tercatat</h3>${nt.length ? `<div class="tw"><table class="tbl"><thead><tr><th>Tanggal</th><th>Jenis</th><th>Toko / No. nota</th><th>Kategori</th><th class="r">Total</th><th>Nota</th><th>Bukti transfer</th><th></th></tr></thead><tbody>
+        ${nt.map(n => `<tr><td>${esc(n.tanggal)}</td><td><span class="lencana ${n.jenis === 'belanja' ? 'info' : 'warn'}">${NOTA_JENIS[n.jenis]}</span></td><td>${esc(n.toko)}${n.no_nota ? '<br><span class="kecil muted">' + esc(n.no_nota) + '</span>' : ''}</td><td>${esc(n.kategori || '—')}</td><td class="r">${ang(n.total)}</td><td>${n.foto_url ? `<a class="notathumb" href="${esc(n.foto_url)}" target="_blank" rel="noopener"><img src="${esc(n.foto_url)}" alt="Foto nota ${esc(n.toko)}" loading="lazy"></a>` : '—'}</td><td>${n.bukti_url ? `<a class="notathumb" href="${esc(n.bukti_url)}" target="_blank" rel="noopener"><img src="${esc(n.bukti_url)}" alt="Bukti transfer ${esc(n.toko)}" loading="lazy"></a>` : '<span class="lencana warn">Belum ada</span>'}</td><td><button class="btn mini" data-nota-a="ubah" data-id="${n.id}">Ubah</button> <button class="btn mini bahaya" data-nota-a="hapus" data-id="${n.id}">Hapus</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Belum ada nota. Tambahkan lewat foto di atas.</p>'}</div>`;
   };
   async function bacaFotoNota(file) {
     if (!file) return;
@@ -512,17 +516,17 @@
     if (S.draf) S.draf.membaca = false; render();
   }
   // tambah/ganti foto pada form tanpa membaca isinya (isi manual, atau bila kuota Gemini habis): foto hanya diunggah dan disimpan
-  async function tambahFotoNota(file) {
+  async function tambahFotoNota(file, jenisFoto) {   // jenisFoto: 'foto' (nota) atau 'bukti' (bukti transfer)
     const d = S.draf; if (!file || !d) return;
-    d.mengunggah = true; d.galat = ''; render();
+    d.mengunggah = jenisFoto; d.galat = ''; render();
     try {
       const foto = await kecilkanFoto(file); await Masuk.wajib();
       const r = await fetch(URL_ + '/functions/v1/baca-nota', { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ foto, jenis: d.jenis, baca: false }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.foto_url) throw new Error(j.error || 'Gagal mengunggah foto (' + r.status + ')');
-      d.foto_url = j.foto_url; d.foto_tampil = j.foto_url;
+      if (jenisFoto === 'bukti') { d.bukti_url = j.foto_url; d.bukti_tampil = j.foto_url; } else { d.foto_url = j.foto_url; d.foto_tampil = j.foto_url; }
     } catch (e) { d.galat = e.message; }
-    d.mengunggah = false; if (S.draf === d) render();
+    d.mengunggah = ''; if (S.draf === d) render();
   }
   async function simpanNota() {
     const d = S.draf; if (!d) return;
@@ -531,7 +535,7 @@
     if (salah) { pesan(salah, true); return; }
     const rin = d.rincian.filter(b => (b.nama || '').trim()).map(b => ({ nama: b.nama.trim(), qty: adaNilai(b.qty) ? +b.qty : null, satuan: (b.satuan || '').trim() || null, harga: adaNilai(b.harga) ? +b.harga : null, subtotal: subRinci(b) }));
     try {
-      await aksi('chemical_simpan_nota', { p_id: d.id, p_periode: S.pid, p_jenis: d.jenis, p_toko: d.toko, p_tanggal: d.tanggal, p_no_nota: d.no_nota || null, p_total: +d.total, p_kategori: d.kategori || null, p_catatan: d.catatan || null, p_rincian: rin, p_foto_url: d.foto_url, p_baca: d.ai || null }, 'Nota disimpan.');
+      await aksi('chemical_simpan_nota', { p_id: d.id, p_periode: S.pid, p_jenis: d.jenis, p_toko: d.toko, p_tanggal: d.tanggal, p_no_nota: d.no_nota || null, p_total: +d.total, p_kategori: d.kategori || null, p_catatan: d.catatan || null, p_rincian: rin, p_foto_url: d.foto_url, p_bukti_url: d.bukti_url, p_baca: d.ai || null }, 'Nota disimpan.');
       S.draf = null; await segarkan();
     } catch (e) { /* pesan sudah tampil */ }
   }
@@ -543,7 +547,8 @@
   document.addEventListener('change', e => {
     const t = e.target;
     if (t.id === 'fotoNota' || t.id === 'fotoGaleri') { const f = t.files && t.files[0]; t.value = ''; bacaFotoNota(f); }
-    else if (t.id === 'fotoTambahKamera' || t.id === 'fotoTambahGaleri') { const f = t.files && t.files[0]; t.value = ''; tambahFotoNota(f); }
+    else if (t.id === 'fotoTambahKamera' || t.id === 'fotoTambahGaleri') { const f = t.files && t.files[0]; t.value = ''; tambahFotoNota(f, 'foto'); }
+    else if (t.id === 'buktiKamera' || t.id === 'buktiGaleri') { const f = t.files && t.files[0]; t.value = ''; tambahFotoNota(f, 'bukti'); }
     else if (t.dataset && t.dataset.nf === 'jenis' && S.draf) S.draf.jenis = t.value;
   });
   document.addEventListener('click', async e => {
@@ -553,12 +558,14 @@
     else if (a === 'galeri') $('fotoGaleri').click();
     else if (a === 'fotokamera') $('fotoTambahKamera').click();
     else if (a === 'fotogaleri') $('fotoTambahGaleri').click();
+    else if (a === 'buktikamera') $('buktiKamera').click();
+    else if (a === 'buktigaleri') $('buktiGaleri').click();
     else if (a === 'manual') { S.draf = draBaru(S.jenisNota); render(); }
     else if (a === 'tambahbaris') { d.rincian.push({ nama: '', qty: null, satuan: '', harga: null, subtotal: null }); render(); }
     else if (a === 'hapusbaris') { d.rincian.splice(+t.dataset.i, 1); render(); }
     else if (a === 'batal') { S.draf = null; render(); }
     else if (a === 'simpan') simpanNota();
-    else if (a === 'ubah') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n) { S.draf = draBaru(n.jenis, { id: n.id, foto_tampil: n.foto_url, toko: n.toko, tanggal: n.tanggal, no_nota: n.no_nota || '', total: n.total, kategori: n.kategori || '', catatan: n.catatan || '', rincian: (n.rincian || []).map(b => ({ ...b })) }); render(); window.scrollTo(0, 0); } }
+    else if (a === 'ubah') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n) { S.draf = draBaru(n.jenis, { id: n.id, foto_tampil: n.foto_url, bukti_tampil: n.bukti_url, toko: n.toko, tanggal: n.tanggal, no_nota: n.no_nota || '', total: n.total, kategori: n.kategori || '', catatan: n.catatan || '', rincian: (n.rincian || []).map(b => ({ ...b })) }); render(); window.scrollTo(0, 0); } }
     else if (a === 'hapus') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n && confirm('Hapus nota ' + n.toko + ' (' + rp(n.total) + ')?')) { await aksi('chemical_hapus_nota', { p_id: n.id }, 'Nota dihapus.'); segarkan(); } }
   });
 

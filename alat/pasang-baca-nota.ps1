@@ -1,5 +1,5 @@
 # Memasang pembaca nota Chemical (Laporan):
-#   1. migrasi database (tabel chemical_nota + fungsi chemical_nota_daftar / chemical_simpan_nota / chemical_hapus_nota)
+#   1. migrasi database (tabel chemical_nota, kolom bukti transfer + fungsi chemical_nota_daftar / chemical_simpan_nota / chemical_hapus_nota)
 #   2. deploy fungsi baca-nota (tanpa verify_jwt; admin diperiksa di dalam fungsi)
 #   3. memasang rahasia GEMINI_API_KEY di server bila -Kunci diberikan (atau ada di keystore dengan nama "gemini")
 # Jalankan:  powershell -ExecutionPolicy Bypass -File alat\pasang-baca-nota.ps1 [-Kunci <API key>] [-Model gemini-3.6-flash]
@@ -13,9 +13,11 @@ $mgmt = @{ Authorization = "Bearer $sbp" }
 $api  = "https://api.supabase.com/v1/projects/$ref"
 function Json-Utf8($o) { $b = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -Compress -Depth 5 -InputObject $o)); return ,$b }   # koma: jaga agar tetap satu array byte
 
-$sql = [IO.File]::ReadAllText("$repo\supabase\migrasi-chemical-nota.sql")
-Invoke-RestMethod -Method Post -Uri "$api/database/query" -Headers $mgmt -ContentType 'application/json; charset=utf-8' -Body (Json-Utf8 @{ query = [string]$sql }) | Out-Null
-Write-Host 'migrasi database selesai'
+foreach ($berkas in @('migrasi-chemical-nota.sql', 'migrasi-chemical-nota-2.sql')) {
+  $sql = [IO.File]::ReadAllText("$repo\supabase\$berkas")
+  Invoke-RestMethod -Method Post -Uri "$api/database/query" -Headers $mgmt -ContentType 'application/json; charset=utf-8' -Body (Json-Utf8 @{ query = [string]$sql }) | Out-Null
+  Write-Host "migrasi database: $berkas selesai"
+}
 
 $slug = 'baca-nota'
 $meta = Join-Path $env:TEMP "meta-$slug.json"
