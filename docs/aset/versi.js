@@ -1,5 +1,5 @@
 // Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.344', tanggal: '2026-11-16', catatan: 'Chemical: halaman Belanja per toko dan Download Excel per toko' };
+window.VERSI = { no: '1.345', tanggal: '2026-11-16', catatan: 'Chemical: menu Ploting dan Pengeluaran dihapus' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');

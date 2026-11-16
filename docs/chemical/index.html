@@ -96,7 +96,7 @@
   const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const ALUR = ['FORM', 'REKAP', 'DIAJUKAN', 'DISETUJUI', 'BELANJA', 'PLOTING', 'PENGIRIMAN', 'DILAPORKAN'];
   const NAMA_ALUR = ['Form dibuka', 'Rekap', 'Pengajuan', 'Disetujui', 'Belanja', 'Ploting', 'Pengiriman', 'Dilaporkan'];
-  const PAGES = ['beranda', 'periode', 'rekap', 'pengajuan', 'belanja', 'ploting', 'pengiriman', 'pengeluaran', 'laporan'];
+  const PAGES = ['beranda', 'periode', 'rekap', 'pengajuan', 'belanja', 'pengiriman', 'laporan'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const rp = n => 'Rp' + Math.round(Number(n) || 0).toLocaleString('id-ID');
@@ -162,7 +162,7 @@
   P.beranda = () => {
     const p = periodeAktif(); const ps = S.master.periode.slice().reverse();
     const lok = S.rekap ? S.rekap.lokasi.filter(l => l.aktif || l.kiriman) : [], isi = lok.filter(l => l.kiriman).length, cocok = lok.filter(l => l.kiriman && l.cocok).length;
-    const langkah = !p ? 'Buat periode baru untuk memulai.' : ({ FORM: 'Sebarkan tautan form ke korlap, lalu tutup form bila sudah cukup.', REKAP: 'Cocokkan permintaan tiap lokasi di halaman Rekap, lalu susun pengajuan.', DIAJUKAN: 'Pengajuan menunggu keputusan pimpinan.', DISETUJUI: 'Disetujui. Belanja, ploting, dan pengiriman dikerjakan pada tahap berikutnya.' }[p.status] || 'Tahap ini dikerjakan pada pembaruan berikutnya.');
+    const langkah = !p ? 'Buat periode baru untuk memulai.' : ({ FORM: 'Sebarkan tautan form ke korlap, lalu tutup form bila sudah cukup.', REKAP: 'Cocokkan permintaan tiap lokasi di halaman Rekap, lalu susun pengajuan.', DIAJUKAN: 'Pengajuan menunggu keputusan pimpinan.', DISETUJUI: 'Disetujui. Belanja dan pengiriman dikerjakan pada tahap berikutnya.' }[p.status] || 'Tahap ini dikerjakan pada pembaruan berikutnya.');
     return `<div class="ph"><h2>Beranda</h2></div>
       <div class="card"><h3>Langkah berikutnya</h3><p>${langkah}</p>${p ? `<button class="cta" data-pg="${p.status === 'FORM' ? 'periode' : p.status === 'REKAP' ? 'rekap' : 'pengajuan'}">${p.status === 'FORM' ? 'Ke Periode' : p.status === 'REKAP' ? 'Ke Rekap' : 'Ke Pengajuan'}</button>` : '<button class="cta" data-a="periodeBaru">+ Periode baru</button>'}</div>
       ${p ? `<div class="kpi"><div><small>Lokasi sudah mengisi</small><b>${isi} dari ${lok.length}</b></div><div><small>Lokasi cocok</small><b>${cocok} dari ${isi}</b></div><div><small>Baris barang</small><b>${S.rekap.baris.length}</b></div><div><small>Barang lain tanpa harga</small><b>${S.rekap.baris.filter(b => b.bebas).length}</b></div></div>` : ''}
@@ -248,7 +248,7 @@
   };
 
   // --- tahap berikutnya ---
-  const NANTI = { ploting: ['Ploting', 'Membagi barang yang terbeli ke tiap lokasi dan membuat packing list.'], pengiriman: ['Pengiriman', 'Tautan form pengiriman per lokasi dengan foto bukti.'], pengeluaran: ['Pengeluaran', 'Rekap belanja dari nota ditambah biaya operasional.'], laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
+  const NANTI = { pengiriman: ['Pengiriman', 'Tautan form pengiriman per lokasi dengan foto bukti.'], laporan: ['Laporan', 'Laporan PDF ke pimpinan beserta lampiran nota dan foto.'] };
   Object.keys(NANTI).forEach(k => { P[k] = () => `<div class="ph"><h2>${NANTI[k][0]}</h2></div><div class="card"><h3>Dikerjakan pada tahap berikutnya</h3><p class="muted">${NANTI[k][1]}</p><p class="kecil muted">Rancangan tampilannya ada di dokumen Gambaran Modul Chemical.</p></div>`; });
 
   // ---------- render dan navigasi ----------
