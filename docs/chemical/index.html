@@ -80,11 +80,6 @@
   .link { font-family:Consolas, monospace; font-size:.8rem; background:#F4F7FB; border:1px dashed #B8C4D6; border-radius:10px; padding:8px 10px; word-break:break-all; }
   .aksirow { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; } .kecil { font-size:.84rem; } .tebal { font-weight:700; }
   .lencana.info { background:#DDEBFA; color:#245A8F; }
-  #cetakMemo { display:none; } .memo { width:210mm; min-height:297mm; padding:6mm 15mm 28mm; background:#fff; color:#111; font:11px/1.45 "IBM Plex Sans", Arial, sans-serif; position:relative; }
-  .memo img.kop { width:100%; display:block; } .memo img.kaki { position:absolute; left:0; right:0; bottom:0; width:100%; } .memo h2 { text-align:center; font-size:14px; margin:10px 0 2px; letter-spacing:.03em; } .memo .no2 { text-align:center; color:#444; margin-bottom:10px; }
-  .memo table { width:100%; border-collapse:collapse; font-size:10.5px; margin:4px 0 8px; } .memo th { background:#E9EDF4; border:1px solid #B9C1D0; padding:4px 6px; text-align:left; } .memo td { border:1px solid #CFD5E0; padding:4px 6px; } .memo .r { text-align:right; } .memo .tot td { font-weight:700; background:#F6F8FB; } .memo .meta td { border:0; padding:2px 4px; }
-  .memo .ttd { display:flex; justify-content:space-around; margin-top:18px; text-align:center; } .memo .ttd div { min-width:46mm; } .memo .ttd .gb { height:48px; }
-  @media print { body > *:not(#cetakMemo) { display:none !important; } #cetakMemo { display:block !important; } @page { size:A4; margin:0; } body { background:#fff; } .memo { page-break-after:always; } }
 </style>
 <div class="wrap">
   <header class="kop"><h1>SISTEM BELANJA &amp; DISTRIBUSI CHEMICAL</h1><div class="perusahaan">PT. RAY MITRA PERKASA</div></header>
@@ -92,7 +87,6 @@
   <main id="main"><p class="muted">Memuat…</p></main>
 </div>
 <dialog id="dlg"></dialog>
-<div id="cetakMemo"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="../aset/auth.js"></script>
 <script>
@@ -239,14 +233,14 @@
     const st = s => s === 'SETUJU' ? '<span class="lencana ok">Disetujui</span>' : s === 'TOLAK' ? '<span class="lencana bad">Ditolak</span>' : '<span class="lencana warn">Menunggu</span>';
     const pimp = g ? [['yasir', 'Pak Yasir (Direktur)'], ['ferry', 'Pak Ferry (Direktur Utama)']].map(([k, n]) => `<div style="border-bottom:1px solid #E5EAF1;padding:8px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>${n}</b>${st(g['status_' + k])}</div>${g['waktu_' + k] ? `<div class="kecil muted">${waktu(g['waktu_' + k])}</div>` : ''}${g['alasan_' + k] ? `<div class="kecil neg">Alasan: ${esc(g['alasan_' + k])}</div>` : ''}
       ${g.status === 'MENUNGGU' && g['status_' + k] === 'MENUNGGU' ? `<div class="aksirow" style="margin-top:6px"><button class="btn mini" data-salin="${esc(tautSetuju(g['token_' + k]))}">Salin tautan</button><a class="btn mini" target="_blank" rel="noopener" href="${wa('Mohon persetujuan pengajuan anggaran belanja chemical ' + label(p) + ' (' + rp(g.total) + '):\n' + tautSetuju(g['token_' + k]))}">Kirim lewat WhatsApp</a></div>` : ''}</div>`).join('') : '';
-    return `<div class="ph"><h2>Pengajuan anggaran belanja</h2><div class="aks">${R.total ? '<button class="btn" data-a="memo">Pratinjau memo / PDF</button>' : ''}</div></div>
+    return `<div class="ph"><h2>Pengajuan anggaran belanja</h2><div class="aks">${R.total ? '<button class="btn" data-a="unduhExcel">Download Excel</button>' : ''}</div></div>
       <div class="grid2"><div>
         <div class="card"><h3>Biaya operasional (estimasi)</h3><div class="tw"><table class="tbl"><thead><tr><th>Kategori</th><th class="r">Estimasi (Rp)</th><th>Dibagi ke lokasi</th><th></th></tr></thead><tbody>${rowsBiaya || '<tr><td colspan="4" class="muted">Belum ada biaya operasional.</td></tr>'}</tbody></table></div>
           ${kunci ? '' : `<div class="aksirow"><input list="katBiaya" id="katBaru" placeholder="Kategori (mis. Bensin)" style="width:190px"><datalist id="katBiaya">${KAT.map(k => `<option value="${k}">`).join('')}</datalist><input type="number" min="0" id="estBaru" placeholder="Estimasi Rp" style="width:130px"><button class="btn" data-a="tambahBiaya">+ Tambah</button></div>`}</div>
         <div class="card"><h3>Rincian dana yang diajukan</h3><table class="tbl"><tbody>${R.toko.map(t => `<tr><td>Belanja Toko ${esc(t.toko)}</td><td class="r">${ang(t.total)}</td></tr>`).join('')}<tr><td class="tebal">Subtotal belanja</td><td class="r tebal">${ang(R.beli)}</td></tr>${R.ops.map(o => `<tr><td>${esc(o.kategori)}</td><td class="r">${ang(o.estimasi)}</td></tr>`).join('')}<tr><td class="tebal">Subtotal operasional</td><td class="r tebal">${ang(R.ops_total)}</td></tr><tr><td class="tebal">TOTAL DIAJUKAN</td><td class="r tebal">${ang(R.total)}</td></tr></tbody></table></div></div>
       <div>
         ${I.masalah.length && !g ? `<div class="peringatan"><b>Belum bisa diajukan:</b><ul>${I.masalah.map(m => `<li>${esc(m)}</li>`).join('')}</ul></div>` : ''}
-        ${!aktif ? `<div class="card"><h3>Ajukan ke pimpinan</h3><label class="kecil">Catatan untuk pimpinan (opsional, tercetak di memo)</label><textarea id="catAjuan" rows="3" placeholder="Misalnya: lokasi X melebihi RAB dan diajukan sebagai pengecualian."></textarea><div class="aksirow"><button class="cta" data-a="ajukan" ${I.masalah.length || p.status !== 'REKAP' ? 'disabled' : ''}>Ajukan ke pimpinan</button></div>${g && g.status === 'DITOLAK' ? '<p class="kecil neg">Pengajuan sebelumnya ditolak. Perbaiki data lalu ajukan lagi.</p>' : ''}${g && g.status === 'DITARIK' ? '<p class="kecil muted">Pengajuan sebelumnya ditarik.</p>' : ''}</div>` : ''}
+        ${!aktif ? `<div class="card"><h3>Ajukan ke pimpinan</h3><label class="kecil">Catatan untuk pimpinan (opsional)</label><textarea id="catAjuan" rows="3" placeholder="Misalnya: lokasi X melebihi RAB dan diajukan sebagai pengecualian."></textarea><div class="aksirow"><button class="cta" data-a="ajukan" ${I.masalah.length || p.status !== 'REKAP' ? 'disabled' : ''}>Ajukan ke pimpinan</button></div>${g && g.status === 'DITOLAK' ? '<p class="kecil neg">Pengajuan sebelumnya ditolak. Perbaiki data lalu ajukan lagi.</p>' : ''}${g && g.status === 'DITARIK' ? '<p class="kecil muted">Pengajuan sebelumnya ditarik.</p>' : ''}</div>` : ''}
         ${g ? `<div class="card"><h3>Pengajuan ke-${g.ke} ${g.status === 'MENUNGGU' ? '<span class="lencana warn">menunggu</span>' : g.status === 'DISETUJUI' ? '<span class="lencana ok">disetujui</span>' : g.status === 'DITOLAK' ? '<span class="lencana bad">ditolak</span>' : '<span class="lencana">ditarik</span>'}</h3>
           <p class="kecil muted" style="margin:0">Dibuat ${waktu(g.dibuat)} · total ${rp(g.total)}${g.catatan ? '<br>Catatan: ' + esc(g.catatan) : ''}</p>${pimp}
           ${g.status === 'MENUNGGU' ? '<div class="aksirow"><button class="btn bahaya" data-a="tarik">Tarik pengajuan</button></div>' : ''}</div>` : ''}
@@ -299,7 +293,7 @@
     tambahBiaya: async () => { const k = $('katBaru').value.trim(), e = $('estBaru').value; if (!k) return pesan('Isi kategori biaya.', true); await aksi('chemical_simpan_biaya', { p_id: null, p_periode: S.pid, p_kategori: k, p_estimasi: +e || 0, p_aktual: null, p_metode: 'proporsional', p_lokasi: null }, 'Biaya ditambahkan.'); segarkan(); },
     ajukan: async () => { if (!confirm('Ajukan ke pimpinan? Setelah diajukan, data rekap dan biaya dikunci sampai ada keputusan.')) return; await aksi('chemical_ajukan', { p_periode: S.pid, p_catatan: ($('catAjuan') || {}).value || null }, 'Pengajuan dibuat. Kirim tautan persetujuan ke pimpinan.'); segarkan(true); },
     tarik: async () => { if (!confirm('Tarik pengajuan ini? Tautan pimpinan tidak berlaku lagi.')) return; await aksi('chemical_tarik', { p_pengajuan: S.info.pengajuan.id }, 'Pengajuan ditarik.'); segarkan(true); },
-    memo: () => memo(),
+    unduhExcel: () => unduhExcel(),
     tutupDlg: () => $('dlg').close()
   };
 
@@ -326,29 +320,91 @@
     } catch (x) { segarkan(); }
   });
 
-  // ---------- memo cetak ----------
-  function memo() {
-    const p = periodeAktif(), I = S.info, g = I.pengajuan, R = g && ['MENUNGGU', 'DISETUJUI'].includes(g.status) ? g.rincian : I.rincian, kop = new URL('../aset/kop-surat.png', location.href).href, kaki = new URL('../aset/kaki-surat.png', location.href).href;
-    const tgl = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), lewat = R.lokasi.filter(l => l.lewat_rab);
-    const stat = l => l.mode === 'tanpa_batas' ? 'Tanpa batas' : l.jual > l.rab ? 'Lewat RAB' : l.jual / l.rab >= .9 ? 'Hampir habis' : 'Cukup';
-    const no = 'CHEM/' + p.tahun + '/' + String(p.bulan).padStart(2, '0') + (g ? '/' + g.ke : '');
-    const halaman = (isi) => `<div class="memo"><img class="kop" src="${kop}">${isi}<img class="kaki" src="${kaki}"></div>`;
-    const h1 = `<h2>MEMO PENGAJUAN ANGGARAN BELANJA CHEMICAL</h2><div class="no2">No. ${no}</div>
-      <table class="meta"><tr><td style="width:24mm">Kepada</td><td>: Direktur dan Direktur Utama</td></tr><tr><td>Dari</td><td>: PIC Pengadaan</td></tr><tr><td>Tanggal</td><td>: ${tgl}</td></tr><tr><td>Perihal</td><td>: Pengajuan dana belanja chemical periode ${label(p)}</td></tr></table>
-      <p>Bersama ini kami mengajukan dana belanja chemical dan perlengkapan kebersihan untuk ${R.lokasi.length} lokasi dengan rincian berikut:</p>
-      <table><tr><th style="width:9mm">No</th><th>Uraian</th><th class="r" style="width:36mm">Jumlah (Rp)</th></tr>${R.toko.map((t, i) => `<tr><td>${i + 1}</td><td>Belanja Toko ${esc(t.toko)}</td><td class="r">${ang(t.total)}</td></tr>`).join('')}<tr class="tot"><td></td><td>Subtotal belanja</td><td class="r">${ang(R.beli)}</td></tr>${R.ops.map((o, i) => `<tr><td>${R.toko.length + i + 1}</td><td>${esc(o.kategori)}</td><td class="r">${ang(o.estimasi)}</td></tr>`).join('')}<tr class="tot"><td></td><td>Subtotal biaya operasional (estimasi)</td><td class="r">${ang(R.ops_total)}</td></tr><tr class="tot"><td></td><td>TOTAL DANA DIAJUKAN</td><td class="r">${ang(R.total)}</td></tr></table>
-      <p style="margin:8px 0 3px"><b>Rekap permintaan terhadap anggaran lokasi</b></p><table><tr><th>Lokasi</th><th class="r">Permintaan (harga jual)</th><th class="r">RAB per bulan</th><th class="r">%</th><th>Status</th></tr>${R.lokasi.map(l => `<tr><td>${esc(l.lokasi)}</td><td class="r">${ang(l.jual)}</td><td class="r">${l.mode === 'tanpa_batas' ? 'tanpa batas' : ang(l.rab)}</td><td class="r">${l.mode === 'tanpa_batas' ? '–' : Math.round(l.jual / l.rab * 100) + '%'}</td><td>${stat({ ...l })}${l.lewat_rab ? ' (pengecualian)' : ''}</td></tr>`).join('')}</table>
-      ${lewat.length ? `<p><i>Catatan:</i> ${lewat.map(l => esc(l.lokasi) + ' melebihi RAB sebesar ' + rp(l.jual - l.rab)).join('; ')}, diajukan sebagai pengecualian sesuai kebijakan lokasi.</p>` : ''}${g && g.catatan ? `<p><i>${esc(g.catatan)}</i></p>` : ''}
-      <p>Demikian kami sampaikan, mohon persetujuan Bapak. Terima kasih.</p>
-      <div class="ttd"><div>Dibuat oleh,<div class="gb"></div><b>PIC Pengadaan</b></div><div>Menyetujui,<div class="gb">${g && g.status_yasir === 'SETUJU' ? '<i>disetujui digital ' + waktu(g.waktu_yasir) + '</i>' : ''}</div><b>Direktur</b></div><div>Menyetujui,<div class="gb">${g && g.status_ferry === 'SETUJU' ? '<i>disetujui digital ' + waktu(g.waktu_ferry) + '</i>' : ''}</div><b>Direktur Utama</b></div></div>`;
-    // lampiran: daftar belanja per toko (jumlah dari rekap)
-    const per = new Map(); (S.rekap.baris || []).filter(b => !b.bebas).forEach(b => { const o = per.get(b.item_id) || { b, qty: 0 }; o.qty += b.qty; per.set(b.item_id, o); });
-    const tk = new Map(); [...per.values()].forEach(o => { (tk.get(o.b.toko) || tk.set(o.b.toko, []).get(o.b.toko)).push(o); });
-    const h2 = `<h2>LAMPIRAN — DAFTAR BELANJA PER TOKO</h2><div class="no2">Periode ${label(p)} · centang kolom ✓ saat barang terbeli</div>${[...tk].sort((a, b) => a[0].localeCompare(b[0])).map(([t, os]) => `<p style="margin:8px 0 3px"><b>Toko ${esc(t)}</b></p><table><tr><th style="width:8mm">✓</th><th>Barang</th><th>Sat.</th><th class="r">Jumlah</th><th class="r">Harga est.</th><th class="r">Subtotal</th></tr>${os.sort((a, b) => a.b.nama.localeCompare(b.b.nama)).map(o => `<tr><td>☐</td><td>${esc(o.b.nama)}</td><td>${esc(o.b.satuan)}</td><td class="r">${jml(o.qty)}</td><td class="r">${ang(o.b.harga_beli)}</td><td class="r">${ang(o.qty * o.b.harga_beli)}</td></tr>`).join('')}<tr class="tot"><td colspan="5">Jumlah Toko ${esc(t)}</td><td class="r">${ang(os.reduce((s, o) => s + o.qty * o.b.harga_beli, 0))}</td></tr></table>`).join('')}`;
-    $('cetakMemo').innerHTML = halaman(h1) + halaman(h2);
-    const imgs = [...$('cetakMemo').querySelectorAll('img')]; Promise.all(imgs.map(i => i.complete ? 1 : new Promise(r => { i.onload = i.onerror = r; }))).then(() => window.print());
+  // ---------- unduh Excel PO ----------
+  // Tata letak meniru sheet "PO OKT 2026" pada berkas contoh (contoh rekap chemical.xlsx): satu blok per lokasi (kepala, barang, TOTAL),
+  // lalu "REKAP BELANJA" per area di bawahnya, yang juga menjadi area cetak. Total dan rekap memakai rumus supaya ikut berubah bila diedit.
+  const BULAN_SINGKAT = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+  const muatExcelJS = () => window.ExcelJS ? Promise.resolve() : new Promise((ok, gagal) => {
+    const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    s.onload = ok; s.onerror = () => gagal(new Error('Pustaka Excel gagal dimuat. Periksa koneksi internet lalu coba lagi.')); document.head.appendChild(s);
+  });
+  // keterangan anggaran di kolom paling kanan tiap blok, mis. "RAB 3,648 JT/BULAN"; lokasi tanpa batas = "UNLIMITED"
+  const labelRab = l => {
+    if (l.mode === 'tanpa_batas') return 'UNLIMITED';
+    const r = Number(l.rab_bulan); if (!r) return '';
+    return 'RAB ' + (r >= 1e6 ? (r / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' JT' : r.toLocaleString('id-ID')) + '/BULAN';
+  };
+  async function unduhExcel() {
+    const p = periodeAktif(), baris = (S.rekap && S.rekap.baris) || [];
+    if (!p || !baris.length) { pesan('Belum ada permintaan pada periode ini.', true); return; }
+    try { await muatExcelJS(); } catch (e) { pesan(e.message, true); return; }
+    const blok = S.rekap.lokasi.map(l => ({ l, rows: baris.filter(b => b.lokasi_id === l.id) })).filter(x => x.rows.length);
+    const BLN = BULAN[p.bulan - 1].toUpperCase(), AKUN = '_-* #,##0_-;\\-* #,##0_-;_-* "-"_-;_-@_-', AKUN2 = '_(* #,##0_);_(* \\(#,##0\\);_(* "-"??_);_(@_)';
+    const BIRU = 'FF002060', MERAH = 'FFC00000', KUNING = 'FFFFFF00', PUTIH = 'FFFFFFFF', ABU = 'FFD9D9D9', HITAM = 'FF000000';
+    const garis = { style: 'thin', color: { argb: HITAM } }, kotak = { top: garis, left: garis, bottom: garis, right: garis };
+    const warna = a => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: a } }), F = (sz, o) => ({ name: 'Segoe UI', size: sz, ...(o || {}) });
+    const tengah = { horizontal: 'center', vertical: 'middle' }, kiri = { horizontal: 'left', vertical: 'middle' }, kanan = { horizontal: 'right', vertical: 'middle' }, tengahBungkus = { ...tengah, wrapText: true };
+    const kiriIn = { ...kiri, indent: 1 }, kananIn = { ...kanan, indent: 1 };   // teks nama dan kata TOTAL menjorok satu tingkat, seperti contoh
+    const wb = new ExcelJS.Workbook(); wb.creator = 'Pengadaan PT Ray Mitra Perkasa'; wb.created = new Date();
+    const ws = wb.addWorksheet('PO ' + BULAN_SINGKAT[p.bulan - 1] + ' ' + p.tahun, { properties: { tabColor: { argb: 'FF00B050' }, defaultRowHeight: 16.5, defaultColWidth: 8.7109375 }, views: [{ zoomScale: 70, showGridLines: false }] });
+    [8.7109375, 8.42578125, 69.42578125, 55.5703125, 20.5703125, 20.5703125, 10.42578125, 10.42578125, 15.5703125, 30.5703125, 25.5703125, 15.28515625, 16.28515625].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    const sel = (a, v, g) => { const c = ws.getCell(a); if (v !== undefined) c.value = v; if (g.font) c.font = g.font; if (g.fill) c.fill = g.fill; if (g.border) c.border = g.border; if (g.align) c.alignment = g.align; if (g.fmt) c.numFmt = g.fmt; return c; };
+
+    ws.mergeCells('B2:K2');
+    sel('B2', `PRE ORDER CHEMICAL BULAN ${BLN} ${p.tahun}`, { font: F(20, { bold: true, color: { argb: BIRU } }), fill: warna(PUTIH), align: { horizontal: 'center' } }); ws.getRow(2).height = 30.75; ws.getRow(3).height = 30.75;
+
+    let r = 5; const hasil = [];
+    blok.forEach(({ l, rows }, n) => {
+      const jud = r, kep = r + 1, awal = r + 2, akhir = r + 1 + rows.length, tot = akhir + 1;
+      sel(`B${jud}`, n + 1, { font: F(14, { bold: true, color: { argb: MERAH } }), fill: warna(KUNING), border: kotak, align: tengah });
+      sel(`C${jud}`, l.nama, { font: F(14, { bold: true, color: { argb: MERAH } }), fill: warna(KUNING), border: kotak, align: kiriIn }); ws.getRow(jud).height = 24.95;
+      'DEFGHIJK'.split('').forEach(k => sel(`${k}${jud}`, undefined, { font: F(14, { bold: true, color: { argb: MERAH } }), fill: warna(PUTIH), align: kiriIn }));
+      ['NO', 'ALAT & BAHAN', 'PRE ORDER', 'PERKIRAAN HARGA TOKO', 'NAMA TOKO', 'JUMLAH', 'SATUAN', 'TOTAL', 'KETERANGAN'].forEach((t, i) => sel(String.fromCharCode(66 + i) + kep, t, { font: F(10, { bold: true, color: { argb: PUTIH } }), fill: warna(BIRU), border: kotak, align: i === 3 || i === 8 ? tengahBungkus : tengah }));
+      ws.getRow(kep).height = 35.1;
+      rows.forEach((b, i) => {
+        const x = awal + i, harga = b.harga_beli == null ? null : Number(b.harga_beli), toko = b.toko ? String(b.toko).replace(/^toko\s+/i, '').toUpperCase() : null;
+        sel(`B${x}`, i + 1, { font: F(10), fill: warna(PUTIH), border: kotak, align: tengah });
+        sel(`C${x}`, b.nama, { font: F(10), border: kotak, align: kiriIn });
+        sel(`D${x}`, b.nama, { font: F(10), border: kotak, align: kiriIn }); ws.getRow(x).height = 16.5;
+        sel(`E${x}`, harga, { font: F(10), fill: warna(PUTIH), border: kotak, align: { vertical: 'middle' }, fmt: AKUN });
+        sel(`F${x}`, toko, { font: F(10), fill: warna(PUTIH), border: kotak, align: kiri, fmt: AKUN });
+        sel(`G${x}`, Number(b.qty), { font: F(10), fill: warna(PUTIH), border: kotak, align: tengah });
+        sel(`H${x}`, b.satuan || '', { font: F(10), fill: warna(PUTIH), border: kotak, align: tengah });
+        sel(`I${x}`, { formula: `E${x}*G${x}`, result: (harga || 0) * Number(b.qty) }, { font: F(10), fill: warna(PUTIH), border: kotak, align: { vertical: 'middle' }, fmt: AKUN2 });
+        sel(`J${x}`, harga == null ? 'Belum ada harga' : null, { font: F(10), fill: warna(PUTIH), border: kotak, align: { vertical: 'middle' }, fmt: AKUN2 });
+      });
+      const jumlah = rows.reduce((s, b) => s + (b.harga_beli == null ? 0 : Number(b.harga_beli)) * Number(b.qty), 0);
+      ['B', 'C', 'D', 'E', 'F', 'J'].forEach(k => sel(`${k}${tot}`, undefined, { font: F(10, { bold: true }), fill: warna(k === 'J' ? PUTIH : ABU), border: kotak, align: { vertical: 'middle' }, fmt: AKUN }));
+      ws.mergeCells(`G${tot}:H${tot}`); sel(`G${tot}`, 'TOTAL', { font: F(10, { bold: true }), fill: warna(ABU), border: kotak, align: kananIn, fmt: AKUN });
+      sel(`I${tot}`, { formula: `SUM(I${awal}:I${akhir})`, result: jumlah }, { font: F(10, { bold: true }), fill: warna(KUNING), border: kotak, align: { vertical: 'middle' }, fmt: AKUN });
+      ws.getRow(tot).height = 24.95;
+      ws.mergeCells(`K${kep}:K${tot}`); sel(`K${kep}`, labelRab(l), { font: F(10, { bold: true }), fill: warna(ABU), border: kotak, align: tengahBungkus });
+      hasil.push({ nama: l.nama, jud, tot, jumlah }); r = tot + 4;
+    });
+
+    // total semua blok (penolong di atas rekap) lalu REKAP BELANJA per area
+    const akhirBlok = hasil[hasil.length - 1].tot, gt = akhirBlok + 3, rt = akhirBlok + 4, total = hasil.reduce((s, h) => s + h.jumlah, 0);
+    sel(`I${gt}`, { formula: `SUM(${hasil.map(h => 'I' + h.tot).join(',')})`, result: total }, { font: F(10, { color: { argb: MERAH } }), fill: warna(PUTIH), align: { vertical: 'middle' }, fmt: AKUN2 });
+    ws.mergeCells(`B${rt}:D${rt}`); sel(`B${rt}`, `REKAP BELANJA BULAN ${BLN} ${p.tahun}`, { font: F(18, { bold: true, color: { argb: MERAH } }), fill: warna(PUTIH), align: tengah }); ws.getRow(rt).height = 26.25;
+    ['NO', 'AREA', 'PRE ORDER', 'BELANJA'].forEach((t, i) => sel(String.fromCharCode(66 + i) + (rt + 1), t, { font: F(12, { bold: true, color: { argb: PUTIH } }), fill: warna(BIRU), border: kotak, align: tengah }));
+    ws.getRow(rt + 1).height = 38.1;
+    hasil.forEach((h, i) => {
+      const x = rt + 2 + i;
+      sel(`B${x}`, i + 1, { font: F(12), border: kotak, align: tengah });
+      sel(`C${x}`, { formula: `C${h.jud}`, result: h.nama }, { font: F(12), border: kotak, align: kiriIn });
+      sel(`D${x}`, 'PO', { font: F(12), border: kotak, align: tengah });
+      sel(`E${x}`, { formula: `I${h.tot}`, result: h.jumlah }, { font: F(12), border: kotak, align: tengah, fmt: AKUN }); ws.getRow(x).height = 23.1;
+    });
+    const rr = rt + 2 + hasil.length;
+    ['C', 'D'].forEach(k => sel(`${k}${rr}`, undefined, { border: kotak }));
+    ws.mergeCells(`B${rr}:D${rr}`); sel(`B${rr}`, 'TOTAL', { font: F(12, { bold: true }), fill: warna(ABU), border: kotak, align: kananIn });
+    sel(`E${rr}`, { formula: `SUM(E${rt + 2}:E${rr - 1})`, result: total }, { font: F(12, { bold: true }), fill: warna(KUNING), border: kotak, align: tengah, fmt: AKUN }); ws.getRow(rr).height = 30;
+
+    ws.pageSetup = { paperSize: 9, orientation: 'landscape', scale: 94, fitToPage: true, fitToWidth: 1, fitToHeight: 1, horizontalCentered: true, printArea: `B${rt}:E${rr}`, margins: { left: 0.21, right: 0.12, top: 0.15, bottom: 0.15, header: 0.12, footer: 0.13 } };
+    const buf = await wb.xlsx.writeBuffer(), url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })), a = document.createElement('a');
+    a.href = url; a.download = `PO CHEMICAL ${BLN} ${p.tahun}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    pesan('Excel PO ' + label(p) + ' diunduh.');
   }
-  window.addEventListener('afterprint', () => { $('cetakMemo').innerHTML = ''; });
   window.addEventListener('hashchange', () => pindah(location.hash.slice(1)));
   if (window.top !== window.self) document.body.classList.add('dalam');
   (async () => { S.page = PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'beranda'; try { await muatMaster(); await muatPeriode(); render(); } catch (e) { renderBar(); galatLayar(e); } })();

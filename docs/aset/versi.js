@@ -1,5 +1,5 @@
 // Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.340', tanggal: '2026-11-16', catatan: 'Hapus periode Chemical dipindah ke Administrator' };
+window.VERSI = { no: '1.341', tanggal: '2026-11-16', catatan: 'Chemical: Pengajuan mengunduh Excel PO (pengganti pratinjau memo PDF)' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');
