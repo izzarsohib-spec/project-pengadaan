@@ -142,7 +142,34 @@
   let ACUAN = [], CAB = [], PICS = [], HARGA_ADM = [];
   const opsiCab = (aktifSaja = true) => CAB.filter(c => !aktifSaja || c.aktif).map(c => [c.id, c.nama]);
   const opsiPic = cab => PICS.filter(p => p.aktif && String(p.cabang_id) === String(cab)).map(p => [p.id, p.nama]);
+  // Chemical: fungsi chemical_* tidak memakai parameter `kode`, jadi dipanggil langsung setelah memastikan sudah login admin.
+  const chem = async (fn, body) => { await Masuk.wajib(); return rpc(fn, body); };
+  const BULAN_NAMA = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const NAMA_TAHAP = { FORM: 'Form dibuka', REKAP: 'Rekap', DIAJUKAN: 'Pengajuan', DISETUJUI: 'Disetujui', BELANJA: 'Belanja', PLOTING: 'Ploting', PENGIRIMAN: 'Pengiriman', DILAPORKAN: 'Dilaporkan' };
+  const labelPeriode = p => BULAN_NAMA[p.bulan - 1] + ' ' + p.tahun;
   const TABS = {
+    chemperiode: {
+      grup: 'Chemical', nama: 'Periode', login: true, tanpaTambah: true,
+      ket: 'Periode pemesanan chemical. Hapus periode uji atau yang salah dibuat: seluruh isinya ikut terhapus PERMANEN (kiriman form korlap, permintaan, pencocokan lokasi, biaya, dan pengajuan ke pimpinan beserta catatan persetujuannya). Periode yang sudah melewati tahap Rekap harus dikonfirmasi dengan mengetik bulan/tahunnya, mis. 12/2026. Tercatat di Log perubahan.',
+      muat: async () => (await chem('chemical_master')).periode, cari: r => [labelPeriode(r), NAMA_TAHAP[r.status] || r.status].join(' '), id: r => r.id,
+      kolom: [['Periode', r => `<b>${esc(labelPeriode(r))}</b>`],
+        ['Tahap', r => `<span class="badge ${r.status === 'DISETUJUI' ? 'ok' : ''}">${esc(NAMA_TAHAP[r.status] || r.status)}</span>`],
+        ['Form', r => r.form_dibuka ? '<span class="badge ok">dibuka</span>' : '<span class="badge">ditutup</span>']],
+      kpi: d => [['Periode', num(d.length)], ['Sudah diajukan atau lebih', num(d.filter(r => !['FORM', 'REKAP'].includes(r.status)).length)]],
+      namaBaris: r => 'Periode ' + labelPeriode(r),
+      // Dialog konfirmasi khusus: tunjukkan isi yang ikut terhapus. Mengembalikan null (batal) atau teks konfirmasi untuk server.
+      tanyaHapus: async r => {
+        const isi = await chem('chemical_isi_periode', { p_periode: r.id });
+        const kode = String(r.bulan).padStart(2, '0') + '/' + r.tahun, lanjut = !['FORM', 'REKAP'].includes(r.status);
+        const daftar = [['kiriman form korlap', isi.kiriman], ['baris permintaan', isi.permintaan], ['pencocokan lokasi', isi.pencocokan], ['biaya operasional', isi.biaya], ['pengajuan ke pimpinan (beserta catatan persetujuan)', isi.pengajuan]]
+          .filter(a => a[1] > 0).map(a => `- ${a[1]} ${a[0]}`).join('\n') || '- tidak ada data isian';
+        const kepala = `Hapus periode ${labelPeriode(r)} (${NAMA_TAHAP[r.status] || r.status})?\n\nYang ikut terhapus PERMANEN:\n${daftar}\n\nTidak bisa dibatalkan. Penghapusan tercatat di log.`;
+        if (!lanjut) return confirm(kepala) ? '' : null;
+        const k = prompt(kepala + `\n\nPeriode ini sudah melewati tahap Rekap. Ketik ${kode} untuk melanjutkan:`);
+        return k === null ? null : k.trim();
+      },
+      hapus: (r, konfirmasi) => chem('chemical_hapus_periode', { p_periode: r.id, p_konfirmasi: konfirmasi || null })
+    },
     acuan: {
       grup: 'Seragam', nama: 'Anggaran & anggota', ket: 'RAB seragam, jumlah anggota, bagian kerja, dan masa kontrak per lokasi (dipakai di halaman Seragam). Nama lokasi harus sama dengan pilihan lokasi di Google Form supaya pengisian ukuran terhitung.',
       muat: () => rpc('admin_daftar_acuan'), cari: r => [r.client, r.lokasi_form, r.bagian_kerja].join(' '), id: r => r.id, lokasiDari: r => r.lokasi_form,
@@ -472,6 +499,12 @@
     const r = (DATA[tab] || []).find(x => String(t.id(x)) === el.closest('td').dataset.i); if (!r) return;
     if (a === 'ubah') return bukaForm(r);
     if (a === 'kirim') return jalankan(() => kirimKeToko({ aksi: 'ulang', id: r.id }), `Kiriman ${r.kunci} diproses; lihat statusnya di tabel.`, el);
+    if (a === 'hapus' && t.tanyaHapus) {
+      // tab dengan konfirmasi khusus (mis. Chemical > Periode): hasilnya diteruskan ke hapus() sebagai argumen kedua
+      let ket; try { ket = await t.tanyaHapus(r); } catch (err) { alert(err.login ? GALAT_LOGIN : err.message); return; }
+      if (ket === null) return;
+      return jalankan(() => t.hapus(r, ket), `"${t.namaBaris(r)}" dihapus.`, el);
+    }
     if (a === 'hapus') { if (!confirm(`Hapus permanen "${t.namaBaris(r)}"?\n\nData yang sudah punya riwayat akan ditolak otomatis. Penghapusan tercatat di log.`)) return; return jalankan(() => t.hapus(r), `"${t.namaBaris(r)}" dihapus.`, el); }
     if (a === 'keluar' || a === 'aktif') { const keluar = a === 'keluar'; if (!confirm(keluar ? `Tandai "${r.nama}" sudah keluar per hari ini?\nRiwayatnya tetap tersimpan dan bisa diaktifkan lagi.` : `Aktifkan kembali "${r.nama}"?`)) return; return jalankan(() => tulis('admin_status_karyawan', { p_id: r.id, p_aktif: !keluar, p_tanggal: null }), keluar ? `${r.nama} ditandai keluar.` : `${r.nama} aktif kembali.`, el); }
     if (a === 'riwayat') {

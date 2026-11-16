@@ -172,7 +172,7 @@
     return `<div class="ph"><h2>Beranda</h2></div>
       <div class="card"><h3>Langkah berikutnya</h3><p>${langkah}</p>${p ? `<button class="cta" data-pg="${p.status === 'FORM' ? 'periode' : p.status === 'REKAP' ? 'rekap' : 'pengajuan'}">${p.status === 'FORM' ? 'Ke Periode' : p.status === 'REKAP' ? 'Ke Rekap' : 'Ke Pengajuan'}</button>` : '<button class="cta" data-a="periodeBaru">+ Periode baru</button>'}</div>
       ${p ? `<div class="kpi"><div><small>Lokasi sudah mengisi</small><b>${isi} dari ${lok.length}</b></div><div><small>Lokasi cocok</small><b>${cocok} dari ${isi}</b></div><div><small>Baris barang</small><b>${S.rekap.baris.length}</b></div><div><small>Barang lain tanpa harga</small><b>${S.rekap.baris.filter(b => b.bebas).length}</b></div></div>` : ''}
-      <div class="card"><h3>Semua periode</h3><div class="tw"><table class="tbl"><thead><tr><th>Periode</th><th>Status</th><th>Form</th><th></th></tr></thead><tbody>${ps.map(x => `<tr><td><b>${label(x)}</b></td><td><span class="lencana">${NAMA_ALUR[ALUR.indexOf(x.status)] || x.status}</span></td><td>${x.form_dibuka ? '<span class="lencana ok">dibuka</span>' : '<span class="lencana">ditutup</span>'}</td><td class="r"><button class="btn mini" data-pilih="${x.id}">Buka</button> <button class="btn mini" data-hapusperiode="${x.id}" title="Hapus periode ini beserta isinya">Hapus</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Belum ada periode.</td></tr>'}</tbody></table></div></div>`;
+      <div class="card"><h3>Semua periode</h3><div class="tw"><table class="tbl"><thead><tr><th>Periode</th><th>Status</th><th>Form</th><th></th></tr></thead><tbody>${ps.map(x => `<tr><td><b>${label(x)}</b></td><td><span class="lencana">${NAMA_ALUR[ALUR.indexOf(x.status)] || x.status}</span></td><td>${x.form_dibuka ? '<span class="lencana ok">dibuka</span>' : '<span class="lencana">ditutup</span>'}</td><td class="r"><button class="btn mini" data-pilih="${x.id}">Buka</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Belum ada periode.</td></tr>'}</tbody></table></div></div>`;
   };
 
   P.periode = () => {
@@ -267,26 +267,10 @@
   }
 
   // ---------- dialog ----------
-  function dialog(html, onOk, tombol, bahaya) {
-    const d = $('dlg'); d.innerHTML = `<form method="dialog" style="min-width:min(92vw,430px)">${html}<div class="aksirow" style="justify-content:flex-end"><button class="btn" value="x" type="button" data-a="tutupDlg">Batal</button><button class="cta" value="ok"${bahaya ? ' style="background:#b42318;border-color:#b42318"' : ''}>${tombol || 'Simpan'}</button></div></form>`;
+  function dialog(html, onOk) {
+    const d = $('dlg'); d.innerHTML = `<form method="dialog" style="min-width:min(92vw,430px)">${html}<div class="aksirow" style="justify-content:flex-end"><button class="btn" value="x" type="button" data-a="tutupDlg">Batal</button><button class="cta" value="ok">Simpan</button></div></form>`;
     d.onclose = null; d.querySelector('form').onsubmit = async ev => { ev.preventDefault(); try { await onOk(d.querySelector('form')); d.close(); } catch (e) { pesan(e.message, true); } };
     d.showModal();
-  }
-  // Hapus satu periode beserta seluruh isinya. Server menolak bila periode sudah melewati tahap rekap tanpa konfirmasi 'MM/YYYY'.
-  async function hapusPeriode(id) {
-    const x = (S.master ? S.master.periode : []).find(p => p.id === id); if (!x) return;
-    const isi = await aksi('chemical_isi_periode', { p_periode: id });
-    const kode = String(x.bulan).padStart(2, '0') + '/' + x.tahun, lanjut = !['FORM', 'REKAP'].includes(x.status);
-    const daftar = [['kiriman form korlap', isi.kiriman], ['baris permintaan', isi.permintaan], ['pencocokan lokasi', isi.pencocokan], ['biaya operasional', isi.biaya], ['pengajuan ke pimpinan (beserta catatan persetujuan)', isi.pengajuan]]
-      .filter(a => a[1] > 0).map(a => `<li>${a[1]} ${a[0]}</li>`).join('') || '<li>tidak ada data isian</li>';
-    dialog(`<h3>Hapus periode ${esc(label(x))}?</h3>
-      <p>Tahap: <b>${esc(NAMA_ALUR[ALUR.indexOf(x.status)] || x.status)}</b>. Yang ikut terhapus <b>permanen</b>:</p><ul>${daftar}</ul>
-      ${lanjut ? `<p style="color:#b42318">Periode ini sudah melewati tahap rekap. Penghapusan tidak bisa dibatalkan.</p><label>Ketik <b>${kode}</b> untuk melanjutkan</label><input name="k" autocomplete="off" required>` : '<p class="muted kecil">Penghapusan tidak bisa dibatalkan.</p>'}`,
-      async f => {
-        await aksi('chemical_hapus_periode', { p_periode: id, p_konfirmasi: lanjut ? f.k.value.trim() : null }, 'Periode ' + label(x) + ' dihapus.');
-        if (S.pid === id) S.pid = null;
-        await muatMaster(); await muatPeriode(); S.page = 'beranda'; render();
-      }, 'Hapus permanen', true);
   }
   const optBulan = b => BULAN.map((n, i) => `<option value="${i + 1}" ${i + 1 === b ? 'selected' : ''}>${n}</option>`).join('');
 
@@ -320,13 +304,12 @@
   };
 
   document.addEventListener('click', async e => {
-    const t = e.target.closest('[data-a],[data-pg],[data-sub],[data-lok],[data-pilih],[data-bukakembali],[data-hapusbiaya],[data-hapusperiode],[data-salin]'); if (!t) return;
+    const t = e.target.closest('[data-a],[data-pg],[data-sub],[data-lok],[data-pilih],[data-bukakembali],[data-hapusbiaya],[data-salin]'); if (!t) return;
     try {
       if (t.dataset.pg) return pindah(t.dataset.pg);
       if (t.dataset.sub) { S.sub = t.dataset.sub; return render(); }
       if (t.dataset.lok) { S.lok = +t.dataset.lok; return render(); }
       if (t.dataset.pilih) { S.pid = +t.dataset.pilih; try { localStorage.setItem(kunciPid, S.pid); } catch (x) {} S.page = 'periode'; return segarkan(); }
-      if (t.dataset.hapusperiode) return hapusPeriode(+t.dataset.hapusperiode);
       if (t.dataset.salin) return salin(t.dataset.salin);
       if (t.dataset.bukakembali) { if (!confirm('Buka kembali ' + t.dataset.nm + '? Kiriman lokasi ini dihapus dan korlap bisa mengisi ulang.')) return; await aksi('chemical_buka_kembali', { p_kiriman: +t.dataset.bukakembali }, 'Lokasi dibuka kembali.'); return segarkan(); }
       if (t.dataset.hapusbiaya) { await aksi('chemical_hapus_biaya', { p_id: +t.dataset.hapusbiaya }, 'Biaya dihapus.'); return segarkan(); }
