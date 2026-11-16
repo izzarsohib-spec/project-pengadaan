@@ -298,6 +298,7 @@
     tarik: async () => { if (!confirm('Tarik pengajuan ini? Tautan pimpinan tidak berlaku lagi.')) return; await aksi('chemical_tarik', { p_pengajuan: S.info.pengajuan.id }, 'Pengajuan ditarik.'); segarkan(true); },
     unduhExcel: () => unduhExcel(),
     unduhExcelToko: () => unduhExcelToko(),
+    unduhExcelRekap: () => unduhExcelRekap(),
     tautanKirimBaru: async () => { if (!confirm('Buat ulang tautan pengiriman? Tautan lama langsung tidak bisa dipakai lagi.')) return; await aksi('chemical_pengiriman_tautan_baru', { p_periode: S.pid }, 'Tautan baru dibuat. Bagikan tautan yang baru.'); return segarkan(); },
     tutupDlg: () => $('dlg').close()
   };
@@ -456,7 +457,7 @@
   }
   // foto diperkecil dulu agar cepat terkirim, tetap cukup besar supaya tulisan nota terbaca
   const kecilkanFoto = file => new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file); img.onload = () => { const m = 1800, s = Math.min(1, m / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', 0.85)); }; img.onerror = () => no(new Error('Foto tidak terbaca. Coba ambil ulang.')); img.src = u; });
-  const draBaru = (jenis, extra) => ({ id: null, jenis, foto_url: null, foto_tampil: null, bukti_url: null, bukti_tampil: null, mengunggah: '', membaca: false, galat: '', ai: null, toko: '', tanggal: hariIni(), no_nota: '', total: '', kategori: '', catatan: '', rincian: [], ...(extra || {}) });
+  const draBaru = (jenis, extra) => ({ id: null, jenis, foto_url: null, foto_tampil: null, bukti_url: null, bukti_tampil: null, mengunggah: '', toko_id: '', membaca: false, galat: '', ai: null, toko: '', tanggal: hariIni(), no_nota: '', total: '', kategori: '', catatan: '', rincian: [], ...(extra || {}) });
 
   function formNota() {
     const d = S.draf, kk = v => (adaNilai(v) ? '' : 'perlu');
@@ -477,6 +478,7 @@
       </div>
       <div class="notaisi">
         <label class="kecil">Jenis</label><select data-nf="jenis">${Object.keys(NOTA_JENIS).map(k => `<option value="${k}" ${d.jenis === k ? 'selected' : ''}>${NOTA_JENIS[k]}</option>`).join('')}</select>
+        ${d.jenis === 'belanja' ? `<label class="kecil">Toko terdaftar (untuk rekap per toko)</label><select data-nf="toko_id"><option value="">— Toko lain / bukan toko terdaftar —</option>${((S.master && S.master.toko) || []).map(t => `<option value="${t.id}" ${String(d.toko_id) === String(t.id) ? 'selected' : ''}>${esc(t.nama)}</option>`).join('')}</select>` : ''}
         <label class="kecil">Toko / pihak</label><input type="text" maxlength="150" data-nf="toko" value="${esc(d.toko)}" class="${kk(d.toko)}">
         <label class="kecil">Tanggal nota</label><input type="date" data-nf="tanggal" value="${esc(d.tanggal)}" class="${kk(d.tanggal)}">
         <label class="kecil">No. nota (opsional)</label><input type="text" maxlength="60" data-nf="no_nota" value="${esc(d.no_nota)}">
@@ -495,12 +497,103 @@
     if (!SUDAH_SETUJU.includes(p.status)) return `<div class="ph"><h2>Laporan</h2></div><div class="card"><h3>Laporan belum tersedia</h3><p class="muted">Pencatatan nota pengeluaran dibuka setelah pengajuan anggaran disetujui.</p><p class="kecil muted">Tahap periode ${label(p)} sekarang: <b>${esc(NAMA_ALUR[ALUR.indexOf(p.status)] || p.status)}</b>.</p></div>`;
     const nt = S.nota || [], tot = j => nt.filter(n => n.jenis === j).reduce((s, n) => s + Number(n.total), 0);
     const rencBelanja = daftarBelanja().reduce((s, t) => s + t.total, 0), rencOps = (S.biaya || []).reduce((s, b) => s + Number(b.estimasi || 0), 0);
-    return `<div class="ph"><h2>Laporan pengeluaran</h2></div>
+    return `<div class="ph"><h2>Laporan pengeluaran</h2><div class="aks"><button class="btn" data-a="unduhExcelRekap">Download Excel rekap</button></div></div>
       <div class="kpi"><div><small>Belanja (nota)</small><b>${rp(tot('belanja'))}</b><em>rencana ${rp(rencBelanja)}</em></div><div><small>Operasional (nota)</small><b>${rp(tot('operasional'))}</b><em>rencana ${rp(rencOps)}</em></div><div><small>Total pengeluaran</small><b>${rp(tot('belanja') + tot('operasional'))}</b><em>rencana ${rp(rencBelanja + rencOps)}</em></div><div><small>Jumlah nota</small><b>${nt.length}</b></div><div><small>Belum ada bukti transfer</small><b>${nt.filter(n => !n.bukti_url).length}</b></div></div>
+      ${tabelRekap()}
       ${formNota()}
       <div class="card"><h3>Nota tercatat</h3>${nt.length ? `<div class="tw"><table class="tbl"><thead><tr><th>Tanggal</th><th>Jenis</th><th>Toko / No. nota</th><th>Kategori</th><th class="r">Total</th><th>Nota</th><th>Bukti transfer</th><th></th></tr></thead><tbody>
         ${nt.map(n => `<tr><td>${esc(n.tanggal)}</td><td><span class="lencana ${n.jenis === 'belanja' ? 'info' : 'warn'}">${NOTA_JENIS[n.jenis]}</span></td><td>${esc(n.toko)}${n.no_nota ? '<br><span class="kecil muted">' + esc(n.no_nota) + '</span>' : ''}</td><td>${esc(n.kategori || '—')}</td><td class="r">${ang(n.total)}</td><td>${n.foto_url ? `<a class="notathumb" href="${esc(n.foto_url)}" target="_blank" rel="noopener"><img src="${esc(n.foto_url)}" alt="Foto nota ${esc(n.toko)}" loading="lazy"></a>` : '—'}</td><td>${n.bukti_url ? `<a class="notathumb" href="${esc(n.bukti_url)}" target="_blank" rel="noopener"><img src="${esc(n.bukti_url)}" alt="Bukti transfer ${esc(n.toko)}" loading="lazy"></a>` : '<span class="lencana warn">Belum ada</span>'}</td><td><button class="btn mini" data-nota-a="ubah" data-id="${n.id}">Ubah</button> <button class="btn mini bahaya" data-nota-a="hapus" data-id="${n.id}">Hapus</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Belum ada nota. Tambahkan lewat foto di atas.</p>'}</div>`;
   };
+  // ---------- Rekap belanja (anggaran vs realisasi), seperti sheet REKAP pada rekap belanja chemical ----------
+  // Anggaran per toko = total halaman Belanja (harga beli x jumlah). Realisasi = jumlah nota belanja yang dikaitkan ke toko itu.
+  // Belanja di luar toko terdaftar dan pengeluaran operasional ditampilkan per nota/kategori. Sisa = Anggaran - Realisasi di setiap baris.
+  const sama = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+  function rekapBelanja() {
+    const baris = (S.rekap && S.rekap.baris) || [], nota = S.nota || [], toko = (S.master && S.master.toko) || [], out = [];
+    let no = 0;
+    const plan = new Map(); baris.forEach(b => { if (b.toko_id) plan.set(b.toko_id, (plan.get(b.toko_id) || 0) + (b.harga_beli == null ? 0 : Number(b.harga_beli)) * Number(b.qty)); });
+    const real = new Map(); nota.filter(n => n.jenis === 'belanja' && n.toko_id).forEach(n => real.set(n.toko_id, (real.get(n.toko_id) || 0) + Number(n.total)));
+    [...toko].sort((a, b) => a.nama.localeCompare(b.nama, 'id')).forEach(t => {
+      if (plan.get(t.id) || real.get(t.id)) out.push({ tipe: 'baris', no: ++no, nama: t.nama.toUpperCase(), anggaran: plan.get(t.id) || 0, realisasi: real.get(t.id) || 0 });
+    });
+    const lain = nota.filter(n => n.jenis === 'belanja' && !n.toko_id);
+    if (lain.length) { out.push({ tipe: 'judul', no: ++no, nama: 'LAIN-LAIN (BELANJA DI LUAR TOKO TERDAFTAR)' }); lain.forEach(n => out.push({ tipe: 'sub', nama: n.toko + (n.no_nota ? ' · ' + n.no_nota : ''), anggaran: 0, realisasi: Number(n.total) })); }
+    const ops = nota.filter(n => n.jenis === 'operasional'), terpakai = new Set();
+    (S.biaya || []).forEach(b => {
+      const cocok = ops.filter(n => sama(n.kategori, b.kategori)); cocok.forEach(n => terpakai.add(n.id));
+      out.push({ tipe: 'baris', no: ++no, nama: String(b.kategori).toUpperCase(), anggaran: Number(b.estimasi || 0), realisasi: cocok.reduce((s, n) => s + Number(n.total), 0) });
+    });
+    ops.filter(n => !terpakai.has(n.id)).forEach(n => out.push({ tipe: 'baris', no: ++no, nama: (n.kategori || 'OPERASIONAL').toUpperCase() + (n.catatan ? ' - ' + n.catatan : n.toko ? ' - ' + n.toko : ''), anggaran: 0, realisasi: Number(n.total) }));
+    const nilai = out.filter(r => r.tipe !== 'judul');
+    return { baris: out, anggaran: nilai.reduce((s, r) => s + r.anggaran, 0), realisasi: nilai.reduce((s, r) => s + r.realisasi, 0) };
+  }
+  const persen = (a, r) => a > 0 ? (r / a * 100).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '%' : '0%';
+  function tabelRekap() {
+    const k = rekapBelanja(); if (!k.baris.length) return '';
+    return `<div class="card"><h3>Rekap anggaran vs realisasi</h3><p class="kecil muted" style="margin:0 0 8px">Anggaran per toko dari halaman Belanja; realisasi dari nota belanja yang dikaitkan ke toko itu. Sisa = anggaran dikurangi realisasi (merah bila melebihi).</p>
+      <div class="tw"><table class="tbl"><thead><tr><th style="width:44px">No</th><th>Kategori pengeluaran</th><th class="r">Anggaran</th><th class="r">Realisasi</th><th class="r">Sisa / selisih</th><th class="r">% pakai</th></tr></thead><tbody>
+      ${k.baris.map(r => r.tipe === 'judul' ? `<tr><td>${r.no}</td><td colspan="5"><b>${esc(r.nama)}</b></td></tr>`
+        : `<tr><td>${r.no || ''}</td><td${r.tipe === 'sub' ? ' style="padding-left:22px;color:var(--bad)"' : ''}>${esc(r.nama)}</td><td class="r">${ang(r.anggaran)}</td><td class="r">${ang(r.realisasi)}</td><td class="r"${r.anggaran - r.realisasi < 0 ? ' style="color:var(--bad)"' : ''}>${ang(r.anggaran - r.realisasi)}</td><td class="r">${persen(r.anggaran, r.realisasi)}</td></tr>`).join('')}
+      <tr><td></td><td class="r tebal">TOTAL KESELURUHAN</td><td class="r tebal">${ang(k.anggaran)}</td><td class="r tebal">${ang(k.realisasi)}</td><td class="r tebal"${k.anggaran - k.realisasi < 0 ? ' style="color:var(--bad)"' : ''}>${ang(k.anggaran - k.realisasi)}</td><td class="r tebal">${persen(k.anggaran, k.realisasi)}</td></tr></tbody></table></div></div>`;
+  }
+  // Excel rekap: satu sheet "REKAP" dengan tata letak dan format seperti contoh (judul, header biru, baris F2F5F9, total tebal). F dan G berumus.
+  async function unduhExcelRekap() {
+    const p = periodeAktif(), k = rekapBelanja();
+    if (!p || !k.baris.length) { pesan('Belum ada data anggaran atau nota untuk direkap.', true); return; }
+    try { await muatExcelJS(); } catch (e) { pesan(e.message, true); return; }
+    const BLN = BULAN[p.bulan - 1].toUpperCase(), RP = '_-"Rp"* #,##0_-;\\-"Rp"* #,##0_-;_-"Rp"* "-"??_-;_-@_-';
+    const BIRU = 'FF002060', LATAR = 'FFF2F5F9', PUTIH = 'FFFFFFFF', MERAH = 'FFFF0000', gs = { style: 'thin', color: { argb: 'FF000000' } };
+    const warna = a => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: a } }), F = (sz, o) => ({ name: 'Segoe UI', size: sz, ...(o || {}) });
+    const wb = new ExcelJS.Workbook(); wb.creator = 'Pengadaan PT Ray Mitra Perkasa'; wb.created = new Date();
+    const ws = wb.addWorksheet('REKAP', { properties: { defaultRowHeight: 16.5, defaultColWidth: 8.7109375 }, views: [{ zoomScale: 70, showGridLines: false }] });
+    [8.7109375, 8.43, 55.5703125, 25.5703125, 25.5703125, 25.5703125, 20.5703125].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    const sel = (a, v, g) => { const c = ws.getCell(a); if (v !== undefined) c.value = v; if (g.font) c.font = g.font; if (g.fill) c.fill = g.fill; if (g.border) c.border = g.border; if (g.align) c.alignment = g.align; if (g.fmt) c.numFmt = g.fmt; return c; };
+    ws.mergeCells('B3:G3'); sel('B3', `REKAP PENGELUARAN BELANJA BULAN ${BLN} ${p.tahun}`, { font: F(20, { bold: true, color: { argb: BIRU } }), fill: warna(PUTIH), align: { horizontal: 'left', vertical: 'middle' } });
+    ws.getRow(3).height = 30.75; ws.getRow(4).height = 17.25; ws.getRow(5).height = 35.1;
+    const kanan = { horizontal: 'right', vertical: 'middle', indent: 1 };
+    // sisi garis per kolom (meniru contoh: tepi luar tabel tanpa garis)
+    const sisi = (kol, jenis) => { const b = {}, ada = (s) => { b[s] = gs; };
+      if (jenis === 'kepala') { ada('bottom'); if (kol > 2) ada('left'); if (kol < 7) ada('right'); }
+      else if (jenis === 'total') { ada('top'); ada('bottom'); if (kol > 2) ada('left'); if (kol < 7) ada('right'); }
+      else { ada('top'); ada('bottom'); if (kol > 2) ada('left'); if (kol < 7) ada('right'); }
+      return b; };
+    ['No', 'Kategori Pengeluaran', 'Anggaran (Rp)', 'Realisasi (Rp)', 'Sisa / Selisih (Rp)', '% Pakai'].forEach((t, i) => sel(String.fromCharCode(66 + i) + '5', t, { font: F(12, { bold: true, color: { argb: PUTIH } }), fill: warna(BIRU), border: sisi(i + 2, 'kepala'), align: i === 0 ? { horizontal: 'center', vertical: 'middle' } : i === 1 ? { horizontal: 'left', vertical: 'middle', indent: 1 } : kanan }));
+    let r = 6; const awal = r;
+    k.baris.forEach(b => {
+      const merah = b.tipe === 'sub', fn = F(11, merah ? { color: { argb: MERAH } } : {}), dasar = { font: fn, fill: warna(LATAR) };
+      sel(`B${r}`, b.no || null, { ...dasar, border: sisi(2, 'data'), align: { horizontal: 'center', vertical: 'middle' } });
+      sel(`C${r}`, b.nama, { ...dasar, border: sisi(3, 'data'), align: { horizontal: 'left', vertical: 'middle' } });
+      if (b.tipe === 'judul') { ['D', 'E', 'F', 'G'].forEach((c, i) => sel(`${c}${r}`, null, { ...dasar, border: sisi(4 + i, 'data'), align: kanan })); }
+      else {
+        sel(`D${r}`, b.anggaran, { ...dasar, border: sisi(4, 'data'), align: kanan, fmt: RP });
+        sel(`E${r}`, b.realisasi, { ...dasar, border: sisi(5, 'data'), align: kanan, fmt: RP });
+        sel(`F${r}`, { formula: `D${r}-E${r}`, result: b.anggaran - b.realisasi }, { ...dasar, border: sisi(6, 'data'), align: kanan, fmt: RP });
+        sel(`G${r}`, { formula: `IF(D${r}>0,E${r}/D${r},0)`, result: b.anggaran > 0 ? b.realisasi / b.anggaran : 0 }, { ...dasar, border: sisi(7, 'data'), align: kanan, fmt: '0.0%' });
+      }
+      ws.getRow(r).height = 20.1; r++;
+    });
+    const kananT = { horizontal: 'right', vertical: 'middle' };   // baris total di contoh tanpa indentasi
+    const akhir = r - 1, tot = { font: F(11, { bold: true }), fill: warna(LATAR) };
+    sel(`B${r}`, null, { ...tot, border: sisi(2, 'total'), align: { vertical: 'middle' } });
+    sel(`C${r}`, 'TOTAL KESELURUHAN', { ...tot, border: sisi(3, 'total'), align: { horizontal: 'right', vertical: 'middle' } });
+    sel(`D${r}`, { formula: `SUM(D${awal}:D${akhir})`, result: k.anggaran }, { ...tot, border: sisi(4, 'total'), align: kananT, fmt: RP });
+    sel(`E${r}`, { formula: `SUM(E${awal}:E${akhir})`, result: k.realisasi }, { ...tot, border: sisi(5, 'total'), align: kananT, fmt: RP });
+    sel(`F${r}`, { formula: `SUM(F${awal}:F${akhir})`, result: k.anggaran - k.realisasi }, { ...tot, border: sisi(6, 'total'), align: kananT, fmt: RP });
+    sel(`G${r}`, { formula: `IF(D${r}>0,E${r}/D${r},0)`, result: k.anggaran > 0 ? k.realisasi / k.anggaran : 0 }, { ...tot, border: sisi(7, 'total'), align: kananT, fmt: '0.0%' });
+    ws.getRow(r).height = 30;
+    ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, printArea: `B3:G${r}`, margins: { left: 0.21, right: 0.12, top: 0.15, bottom: 0.15, header: 0.12, footer: 0.13 } };
+    const buf = await wb.xlsx.writeBuffer(), url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })), a = document.createElement('a');
+    a.href = url; a.download = `REKAP PENGELUARAN BELANJA ${BLN} ${p.tahun}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    pesan('Excel rekap ' + label(p) + ' diunduh.');
+  }
+
+  // cocokkan nama toko hasil bacaan ke toko terdaftar (abaikan awalan "Toko" dan huruf besar-kecil)
+  const polosToko = t => String(t || '').toLowerCase().replace(/^toko\s+/, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  function cocokToko(nama) {
+    const n = polosToko(nama); if (!n) return '';
+    const t = ((S.master && S.master.toko) || []).find(x => { const m = polosToko(x.nama); return m && (m === n || n.includes(m) || m.includes(n)); });
+    return t ? t.id : '';
+  }
   async function bacaFotoNota(file) {
     if (!file) return;
     const jenis = S.jenisNota; S.draf = draBaru(jenis, { membaca: true }); render();
@@ -511,7 +604,7 @@
       const j = await r.json().catch(() => ({}));
       if (j.foto_url) { S.draf.foto_url = j.foto_url; S.draf.foto_tampil = j.foto_url; }
       if (!r.ok) throw new Error(j.error || 'Gagal membaca nota (' + r.status + ')');
-      const h = j.hasil; Object.assign(S.draf, { ai: h, toko: h.toko || '', tanggal: h.tanggal || '', no_nota: h.no_nota || '', total: adaNilai(h.total) ? h.total : '', kategori: h.kategori || '', rincian: h.rincian || [] });
+      const h = j.hasil; Object.assign(S.draf, { toko_id: cocokToko(h.toko), ai: h, toko: h.toko || '', tanggal: h.tanggal || '', no_nota: h.no_nota || '', total: adaNilai(h.total) ? h.total : '', kategori: h.kategori || '', rincian: h.rincian || [] });
     } catch (e) { if (S.draf) S.draf.galat = e.message + ' Anda bisa mengisi manual.'; }
     if (S.draf) S.draf.membaca = false; render();
   }
@@ -535,7 +628,7 @@
     if (salah) { pesan(salah, true); return; }
     const rin = d.rincian.filter(b => (b.nama || '').trim()).map(b => ({ nama: b.nama.trim(), qty: adaNilai(b.qty) ? +b.qty : null, satuan: (b.satuan || '').trim() || null, harga: adaNilai(b.harga) ? +b.harga : null, subtotal: subRinci(b) }));
     try {
-      await aksi('chemical_simpan_nota', { p_id: d.id, p_periode: S.pid, p_jenis: d.jenis, p_toko: d.toko, p_tanggal: d.tanggal, p_no_nota: d.no_nota || null, p_total: +d.total, p_kategori: d.kategori || null, p_catatan: d.catatan || null, p_rincian: rin, p_foto_url: d.foto_url, p_bukti_url: d.bukti_url, p_baca: d.ai || null }, 'Nota disimpan.');
+      await aksi('chemical_simpan_nota', { p_id: d.id, p_periode: S.pid, p_jenis: d.jenis, p_toko: d.toko, p_tanggal: d.tanggal, p_no_nota: d.no_nota || null, p_total: +d.total, p_kategori: d.kategori || null, p_catatan: d.catatan || null, p_rincian: rin, p_foto_url: d.foto_url, p_bukti_url: d.bukti_url, p_toko_id: d.jenis === 'belanja' && d.toko_id ? +d.toko_id : null, p_baca: d.ai || null }, 'Nota disimpan.');
       S.draf = null; await segarkan();
     } catch (e) { /* pesan sudah tampil */ }
   }
@@ -549,7 +642,8 @@
     if (t.id === 'fotoNota' || t.id === 'fotoGaleri') { const f = t.files && t.files[0]; t.value = ''; bacaFotoNota(f); }
     else if (t.id === 'fotoTambahKamera' || t.id === 'fotoTambahGaleri') { const f = t.files && t.files[0]; t.value = ''; tambahFotoNota(f, 'foto'); }
     else if (t.id === 'buktiKamera' || t.id === 'buktiGaleri') { const f = t.files && t.files[0]; t.value = ''; tambahFotoNota(f, 'bukti'); }
-    else if (t.dataset && t.dataset.nf === 'jenis' && S.draf) S.draf.jenis = t.value;
+    else if (t.dataset && t.dataset.nf === 'jenis' && S.draf) { S.draf.jenis = t.value; if (t.value !== 'belanja') S.draf.toko_id = ''; render(); }
+    else if (t.dataset && t.dataset.nf === 'toko_id' && S.draf) { const m = ((S.master && S.master.toko) || []).find(x => String(x.id) === t.value); S.draf.toko_id = t.value; if (m) S.draf.toko = m.nama; render(); }
   });
   document.addEventListener('click', async e => {
     const t = e.target.closest('[data-nota-a]'); if (!t) return; const a = t.dataset.notaA, d = S.draf;
@@ -565,7 +659,7 @@
     else if (a === 'hapusbaris') { d.rincian.splice(+t.dataset.i, 1); render(); }
     else if (a === 'batal') { S.draf = null; render(); }
     else if (a === 'simpan') simpanNota();
-    else if (a === 'ubah') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n) { S.draf = draBaru(n.jenis, { id: n.id, foto_tampil: n.foto_url, bukti_tampil: n.bukti_url, toko: n.toko, tanggal: n.tanggal, no_nota: n.no_nota || '', total: n.total, kategori: n.kategori || '', catatan: n.catatan || '', rincian: (n.rincian || []).map(b => ({ ...b })) }); render(); window.scrollTo(0, 0); } }
+    else if (a === 'ubah') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n) { S.draf = draBaru(n.jenis, { id: n.id, foto_tampil: n.foto_url, bukti_tampil: n.bukti_url, toko_id: n.toko_id || '', toko: n.toko, tanggal: n.tanggal, no_nota: n.no_nota || '', total: n.total, kategori: n.kategori || '', catatan: n.catatan || '', rincian: (n.rincian || []).map(b => ({ ...b })) }); render(); window.scrollTo(0, 0); } }
     else if (a === 'hapus') { const n = (S.nota || []).find(x => x.id === +t.dataset.id); if (n && confirm('Hapus nota ' + n.toko + ' (' + rp(n.total) + ')?')) { await aksi('chemical_hapus_nota', { p_id: n.id }, 'Nota dihapus.'); segarkan(); } }
   });
 

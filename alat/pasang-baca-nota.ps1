@@ -13,7 +13,7 @@ $mgmt = @{ Authorization = "Bearer $sbp" }
 $api  = "https://api.supabase.com/v1/projects/$ref"
 function Json-Utf8($o) { $b = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -Compress -Depth 5 -InputObject $o)); return ,$b }   # koma: jaga agar tetap satu array byte
 
-foreach ($berkas in @('migrasi-chemical-nota.sql', 'migrasi-chemical-nota-2.sql')) {
+foreach ($berkas in @('migrasi-chemical-nota.sql', 'migrasi-chemical-nota-2.sql', 'migrasi-chemical-nota-3.sql')) {
   $sql = [IO.File]::ReadAllText("$repo\supabase\$berkas")
   Invoke-RestMethod -Method Post -Uri "$api/database/query" -Headers $mgmt -ContentType 'application/json; charset=utf-8' -Body (Json-Utf8 @{ query = [string]$sql }) | Out-Null
   Write-Host "migrasi database: $berkas selesai"
