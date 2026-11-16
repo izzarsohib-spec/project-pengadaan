@@ -1,5 +1,5 @@
 ﻿// Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.349', tanggal: '2026-11-16', catatan: 'Chemical Laporan: catat nota pengeluaran dengan pembaca foto (Gemini)' };
+window.VERSI = { no: '1.350', tanggal: '2026-11-16', catatan: 'Laporan: tambah/ganti foto nota pada isi manual tanpa Gemini' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');

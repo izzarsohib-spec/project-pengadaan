@@ -5,6 +5,7 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
 ## 16 Nov 2026
+- **v1.350** Chemical > Laporan: form isi manual (belanja maupun operasional) punya tombol Tambah/Ganti foto, foto hanya disimpan tanpa dibaca Gemini, jadi nota tetap bisa dilampiri foto bila kuota Gemini habis. Berlaku juga saat mengubah nota lama.
 - **v1.349** Chemical > Laporan: catat nota pengeluaran (belanja dan operasional). Foto nota dibaca Gemini (fungsi Edge baca-nota) menjadi isian form yang diperiksa dan dikoreksi sebelum disimpan; ada pengecekan jumlah rincian vs total, ubah/hapus nota, dan perbandingan rencana vs realisasi. Tabel chemical_nota; pasang lewat alat/pasang-baca-nota.ps1 (perlu rahasia GEMINI_API_KEY).
 - **v1.348** Portal: menu Ploting dan Pengeluaran Chemical dihapus dari bilah menu portal (sebelumnya hanya dihapus di halaman Chemical sendiri).
 - **v1.347** Chemical > Pengiriman: satu tautan form untuk semua lokasi (bukan per lokasi). Di dalam form orang lapangan memilih lokasi tujuan dan mengisi nama pengirim; halaman admin menampilkan tautan tunggal (salin, WhatsApp, buat ulang) dan nama pengirim tiap lokasi.

@@ -1,5 +1,6 @@
 // Pembaca nota: foto nota (belanja atau operasional) dibaca Gemini lalu dikembalikan sebagai isian form. Khusus admin login.
-//  POST {foto: "data:image/jpeg;base64,...", jenis: "belanja"|"operasional"}
+//  POST {foto: "data:image/jpeg;base64,...", jenis: "belanja"|"operasional", baca?: false}
+//   baca:false -> foto hanya disimpan (untuk isi manual / bila kuota Gemini habis): {foto_url}
 //   -> {foto_url, hasil: {toko, tanggal, no_nota, total, kategori, rincian:[{nama, qty, satuan, harga, subtotal}], keyakinan, catatan_baca}, model}
 // Foto disimpan di Storage (folder acak "nota-..."); yang disimpan ke database baru terjadi setelah admin memeriksa dan menekan Simpan.
 // Rahasia: GEMINI_API_KEY (wajib), GEMINI_MODEL (opsional). verify_jwt dimatikan; admin diperiksa di sini.
@@ -59,7 +60,6 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Metode tidak didukung' }, 405);
   if (!(await adalahAdmin(req))) return json({ error: 'login admin diperlukan' }, 401);
   const kunci = Deno.env.get('GEMINI_API_KEY');
-  if (!kunci) return json({ error: 'GEMINI_API_KEY belum dipasang di server' }, 500);
 
   let body: any; try { body = await req.json(); } catch { return json({ error: 'Data tidak terbaca' }, 400); }
   const jenis = body?.jenis === 'operasional' ? 'operasional' : 'belanja';
@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
   const { error: eUp } = await db.storage.from('lampiran-surat').upload(`${folder}/${nama}`, bytes, { contentType: 'image/jpeg', upsert: false });
   if (eUp) return json({ error: 'Gagal menyimpan foto: ' + eUp.message }, 500);
   const foto_url = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/lampiran-surat/${folder}/${nama}`;
+  if (body?.baca !== false && !kunci) return json({ error: 'GEMINI_API_KEY belum dipasang di server', foto_url }, 500);
+
+  if (body?.baca === false) return json({ foto_url });
 
   // 2) baca dengan Gemini
   let r: Response;
