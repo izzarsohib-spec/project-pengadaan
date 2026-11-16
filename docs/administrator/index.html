@@ -133,7 +133,7 @@
   }
 
   const GALAT_LOGIN = 'Sesi login berakhir atau akun tidak punya akses admin. Masuk lagi.';
-  const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', sku_toko: 'SKU toko',peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi', chemical_lokasi: 'Lokasi Chemical', chemical_periode: 'Periode Chemical', chemical_pengajuan: 'Pengajuan Chemical' };
+  const TBL = { acuan_rekap: 'Anggaran seragam', harga_seragam: 'Harga seragam', sku_toko: 'SKU toko',peralatan_lokasi: 'Lokasi peralatan', peralatan_item: 'Peralatan', ukuran_pekerja: 'Karyawan', cabang: 'Cabang', pic_lapangan: 'PIC lapangan', lokasi_penugasan: 'Penugasan lokasi', chemical_lokasi: 'Lokasi Chemical', chemical_periode: 'Periode Chemical', chemical_pengajuan: 'Pengajuan Chemical', chemical_item: 'Barang Chemical', chemical_toko: 'Toko Chemical' };
   const intOrNull = v => v === '' || v == null ? null : Math.round(Number(v));
   const numOrNull = v => v === '' || v == null ? null : Number(v);
 
@@ -148,6 +148,8 @@
   const NAMA_TAHAP = { FORM: 'Form dibuka', REKAP: 'Rekap', DIAJUKAN: 'Pengajuan', DISETUJUI: 'Disetujui', BELANJA: 'Belanja', PLOTING: 'Ploting', PENGIRIMAN: 'Pengiriman', DILAPORKAN: 'Dilaporkan' };
   const labelPeriode = p => BULAN_NAMA[p.bulan - 1] + ' ' + p.tahun;
   const MODE_ANGGARAN = { ketat: 'Ketat (tidak boleh lewat RAB)', persetujuan: 'Boleh lewat dengan persetujuan', tanpa_batas: 'Tanpa batas' };
+  let CHEM_TOKO = [];            // daftar toko untuk pilihan di formulir barang (dimuat bersama daftar barang)
+  const MARKUP_JUAL = 1.25;      // kebiasaan harga jual chemical = harga beli x 1,25 (berlaku di 58 dari 62 barang)
   const TABS = {
     chemperiode: {
       grup: 'Chemical', nama: 'Periode', login: true, tanpaTambah: true,
@@ -193,6 +195,59 @@
         { k: 'aktif', l: 'Aktif (tampil di form korlap)', cek: true, v: r ? r.aktif : true }],
       simpan: (v, r) => chem('chemical_simpan_lokasi', { p_id: r ? r.id : null, p_nama: v.nama, p_rab_bulan: v.mode === 'tanpa_batas' ? null : numOrNull(v.rab), p_mode: v.mode, p_pinjam: !!v.pinjam, p_kebijakan: v.kebijakan || null, p_aktif: !!v.aktif }),
       hapus: r => chem('chemical_hapus_lokasi', { p_id: r.id }), bisaHapus: r => !(r.kiriman || r.permintaan || r.pencocokan || r.biaya),
+      namaBaris: r => r.nama
+    },
+    chembarang: {
+      grup: 'Chemical', nama: 'Barang & harga', login: true,
+      ket: 'Katalog barang chemical: toko tempat membeli, satuan, harga beli, dan harga jual (dipakai untuk mencocokkan permintaan dengan RAB lokasi). Barang aktif muncul di form korlap. Barang yang sudah dipakai pada permintaan tidak bisa dihapus; nonaktifkan lewat Ubah. PERHATIAN: rekap periode menghitung dari harga saat ini, jadi mengubah harga memengaruhi angka rekap yang belum diajukan (pengajuan yang sudah dibuat tidak berubah). Setiap perubahan harga atau toko tercatat di Log perubahan.',
+      muat: async () => { const [b, t] = await Promise.all([chem('chemical_barang_daftar'), chem('chemical_toko_daftar')]); CHEM_TOKO = t; return b; },
+      cari: r => [r.nama, r.toko, r.satuan, r.catatan].join(' '), id: r => r.id,
+      statusOpsi: [['semua', 'Semua barang'], ['aktif', 'Aktif', r => r.aktif], ['nonaktif', 'Nonaktif', r => !r.aktif], ['tinjau', 'Perlu ditinjau', r => r.perlu_ditinjau], ['terpakai', 'Sudah dipakai permintaan', r => r.permintaan > 0], ['tanpajual', 'Belum ada harga jual', r => r.harga_jual == null]],
+      saring: [['toko', 'Semua toko', r => r.toko]],
+      kolom: [['Barang', r => `<b>${esc(r.nama)}</b>${r.perlu_ditinjau ? ' <span class="badge warn">perlu ditinjau</span>' : ''}${r.catatan ? `<div class="sub">${esc(r.catatan)}</div>` : ''}`],
+        ['Toko beli', r => esc(r.toko)], ['Satuan', r => esc(r.satuan)],
+        ['Harga beli', r => rp(r.harga_beli), 'r'],
+        ['Harga jual', r => r.harga_jual == null ? '<span class="badge warn">belum diisi</span>' : rp(r.harga_jual), 'r'],
+        ['Margin', r => r.harga_jual == null || !Number(r.harga_beli) ? '-' : Math.round((r.harga_jual / r.harga_beli - 1) * 100) + '%', 'r'],
+        ['Dipakai', r => r.permintaan ? `${num(r.permintaan)} permintaan · ${num(r.periode)} periode` : '<span class="sub">belum dipakai</span>'],
+        ['Status', r => r.aktif ? '<span class="badge ok">Aktif</span>' : '<span class="badge">Nonaktif</span>']],
+      kpi: d => [['Barang', num(d.length)], ['Aktif', num(d.filter(r => r.aktif).length)], ['Perlu ditinjau', num(d.filter(r => r.perlu_ditinjau).length)], ['Belum ada harga jual', num(d.filter(r => r.harga_jual == null).length)]],
+      mati: r => !r.aktif,
+      form: r => [
+        { k: 'toko', l: 'Toko beli', v: r ? r.toko_id : '', req: true, sel: CHEM_TOKO.filter(t => t.aktif || (r && t.id === r.toko_id)).map(t => [t.id, t.nama]) },
+        { k: 'nama', l: 'Nama barang', v: r?.nama, req: true },
+        { k: 'satuan', l: 'Satuan', v: r?.satuan, req: true, list: uniq(DATA.chembarang || [], x => x.satuan), hint: 'Mis. Pcs, Galon, Pack, Set.' },
+        { k: 'beli', l: 'Harga beli di toko (Rp)', t: 'number', min: 0, v: r ? Number(r.harga_beli) : '', req: true },
+        { k: 'jual', l: 'Harga jual (Rp)', t: 'number', min: 0, v: r && r.harga_jual != null ? Number(r.harga_jual) : '',
+          hint: 'Dipakai untuk mencocokkan dengan RAB lokasi. Kebiasaan: harga beli × 1,25; tombol di bawah mengisinya otomatis.' + (r && r.permintaan ? ` Barang ini dipakai di ${r.permintaan} baris permintaan: mengubah harga mengubah angka rekap periode yang belum diajukan.` : '') },
+        { k: 'catatan', l: 'Catatan (opsional)', v: r?.catatan },
+        { k: 'tinjau', l: 'Perlu ditinjau (harga atau toko belum pasti)', cek: true, v: r ? r.perlu_ditinjau : false },
+        { k: 'aktif', l: 'Aktif (muncul di form korlap)', cek: true, v: r ? r.aktif : true }],
+      tombolForm: [{ label: 'Isi harga jual otomatis (beli × 1,25)', jalan: (v, f) => {
+        const b = numOrNull(v.beli); if (b == null || b < 0) return { ok: false, pesan: 'Isi harga beli dulu.' };
+        f.elements.jual.value = Math.round(b * MARKUP_JUAL); return { ok: true, pesan: `Harga jual diisi ${rp(b * MARKUP_JUAL)} (harga beli × 1,25). Ubah bila perlu.` };
+      } }],
+      simpan: async (v, r) => { const x = await chem('chemical_simpan_item', { p_id: r ? r.id : null, p_toko: v.toko ? +v.toko : null, p_nama: v.nama, p_satuan: v.satuan, p_beli: numOrNull(v.beli), p_jual: numOrNull(v.jual), p_aktif: !!v.aktif, p_tinjau: !!v.tinjau, p_catatan: v.catatan || null }); DATA.chemtoko = null; return x; },
+      hapus: async r => { const x = await chem('chemical_hapus_item', { p_id: r.id }); DATA.chemtoko = null; return x; }, bisaHapus: r => !r.permintaan,
+      namaBaris: r => r.nama
+    },
+    chemtoko: {
+      grup: 'Chemical', nama: 'Toko', login: true,
+      ket: 'Toko tempat barang chemical dibeli. Toko yang masih punya barang tidak bisa dihapus: pindahkan barangnya ke toko lain (lewat Ubah di Barang & harga) atau nonaktifkan tokonya. Toko nonaktif tidak muncul sebagai pilihan saat menambah barang. Perubahan tercatat di Log perubahan.',
+      muat: () => chem('chemical_toko_daftar'), cari: r => [r.nama, r.catatan].join(' '), id: r => r.id,
+      statusOpsi: [['semua', 'Semua toko'], ['aktif', 'Aktif', r => r.aktif], ['nonaktif', 'Nonaktif', r => !r.aktif]],
+      kolom: [['Toko', r => `<b>${esc(r.nama)}</b>${r.catatan ? `<div class="sub">${esc(r.catatan)}</div>` : ''}`],
+        ['Barang', r => `${num(r.barang_aktif)} aktif dari ${num(r.barang)}`, 'r'],
+        ['Status', r => r.aktif ? '<span class="badge ok">Aktif</span>' : '<span class="badge">Nonaktif</span>']],
+      kpi: d => [['Toko', num(d.length)], ['Aktif', num(d.filter(r => r.aktif).length)], ['Total barang', num(d.reduce((a, r) => a + Number(r.barang || 0), 0))]],
+      mati: r => !r.aktif,
+      form: r => [
+        { k: 'nama', l: 'Nama toko', v: r?.nama, req: true },
+        { k: 'catatan', l: 'Catatan (opsional)', v: r?.catatan },
+        { k: 'aktif', l: 'Aktif', cek: true, v: r ? r.aktif : true }],
+      // daftar barang memuat nama dan status toko, jadi cache tab Barang dibuang setiap toko berubah
+      simpan: async (v, r) => { const x = await chem('chemical_simpan_toko', { p_id: r ? r.id : null, p_nama: v.nama, p_aktif: !!v.aktif, p_catatan: v.catatan || null }); DATA.chembarang = null; return x; },
+      hapus: async r => { const x = await chem('chemical_hapus_toko', { p_id: r.id }); DATA.chembarang = null; return x; }, bisaHapus: r => !r.barang,
       namaBaris: r => r.nama
     },
     acuan: {
@@ -474,7 +529,7 @@
       const dl = x.list ? `list="dl-${x.k}"` : '';
       return `<label>${esc(x.l)}<input name="${x.k}" type="${x.t || 'text'}" value="${esc(v)}" ${x.ro ? 'readonly' : ''} ${x.req ? 'required' : ''} ${x.min != null ? `min="${x.min}"` : ''} ${x.t === 'number' ? 'step="any"' : ''} ${dl} autocomplete="off">${x.list ? `<datalist id="dl-${x.k}">${x.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : ''}${x.hint ? `<div class="hint">${esc(x.hint)}</div>` : ''}</label>`;
     }).join('')}</div>
-      <div class="fa"><button class="btn cta" type="submit" id="btnSimpan">Simpan</button><button class="btn" type="button" id="btnBatal">Batal</button>${t.hitung ? '<button class="btn" type="button" id="btnHitung">Hitung RAB otomatis</button>' : ''}<span class="sub" style="color:var(--muted);font-size:.78rem">Perlu login admin untuk menyimpan.</span></div></form>`;
+      <div class="fa"><button class="btn cta" type="submit" id="btnSimpan">Simpan</button><button class="btn" type="button" id="btnBatal">Batal</button>${t.hitung ? '<button class="btn" type="button" id="btnHitung">Hitung RAB otomatis</button>' : ''}${(t.tombolForm || []).map((b, i) => `<button class="btn" type="button" data-fa="${i}">${esc(b.label)}</button>`).join('')}<span class="sub" style="color:var(--muted);font-size:.78rem">Perlu login admin untuk menyimpan.</span></div></form>`;
   }
   // bagian kerja karyawan bergantung pada lokasi yang dipilih
   // pilihan PIC mengikuti cabang (form penugasan dan bar penugasan massal)
@@ -494,7 +549,12 @@
   async function jalankan(fn, sukses, tombol) {
     if (tombol) tombol.disabled = true; pesan = ['', 'Memproses…']; const p = $('pesan'); if (p) { p.className = 'pesan'; p.textContent = 'Memproses…'; }
     try { await fn(); pesan = ['ok', sukses]; edit = undefined; await muatTab(true); }
-    catch (e) { pesan = ['bad', e.login ? GALAT_LOGIN : /Dibatalkan/.test(e.message) ? 'Dibatalkan: login diperlukan untuk menyimpan.' : e.message]; gambar(); }
+    catch (e) {
+      // formulir yang sedang terbuka digambar ulang saat menampilkan galat; isian yang sudah diketik dipulihkan supaya tidak hilang
+      const f = $('form'), isian = f ? nilaiForm(f) : null;
+      pesan = ['bad', e.login ? GALAT_LOGIN : /Dibatalkan/.test(e.message) ? 'Dibatalkan: login diperlukan untuk menyimpan.' : e.message]; gambar();
+      const g = $('form'); if (isian && g) for (const [k, v] of Object.entries(isian)) { const el = g.elements[k]; if (!el) continue; if (el.type === 'checkbox') el.checked = !!v; else el.value = v; }
+    }
   }
 
   // ---------------- peristiwa ----------------
@@ -519,6 +579,10 @@
     }
     if (el.id === 'btnBatal') { edit = undefined; pesan = null; return gambar(); }
     if (el.id === 'btnLagi') { batas += 100; return gambar(); }
+    if (el.dataset && el.dataset.fa !== undefined) {   // tombol tambahan di dalam formulir (mis. isi harga jual otomatis)
+      const b = (t.tombolForm || [])[+el.dataset.fa]; if (!b) return;
+      const m = b.jalan(nilaiForm($('form')), $('form')) || {}; $('pesan').className = 'pesan ' + (m.ok === false ? 'bad' : 'ok'); $('pesan').textContent = m.pesan || ''; return;
+    }
     if (el.id === 'btnHitung') { const h = t.hitung(nilaiForm($('form'))); if (h) { $('form').rab.value = h.rab; $('pesan').className = 'pesan ok'; $('pesan').textContent = 'RAB diisi dari per orang × anggota × bulan.'; } else { $('pesan').className = 'pesan bad'; $('pesan').textContent = 'Isi anggaran per orang, jumlah anggota, dan lama kontrak dulu.'; } return; }
     const a = el.dataset.a; if (!a) return;
     const r = (DATA[tab] || []).find(x => String(t.id(x)) === el.closest('td').dataset.i); if (!r) return;
