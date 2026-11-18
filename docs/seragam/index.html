@@ -4210,7 +4210,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     const dikirim = kData.rows.filter(r => kData.pilih.has(r.id));
     try {
       const h = await rpcKode('catat_pengiriman', { p_permintaan: kData.p.id, p_tanggal: $('kTgl').value || tgl0(), p_ekspedisi: $('kEks').value.trim(), p_resi: $('kResi').value.trim(), p_penerima: $('kPen').value.trim(), p_keterangan: $('kKet').value.trim(), p_ploting_ids: ids });
-      const info = { no: h.no_surat_jalan, tanggal: $('kTgl').value || tgl0(), client: kData.p.client, bagian: kData.p.bagian_kerja, pic: (Saring.picDari(kData.p.lokasi_form) || {}).nama || '', ekspedisi: $('kEks').value.trim(), resi: $('kResi').value.trim(), penerima: $('kPen').value.trim(), rows: dikirim };
+      const info = { no: h.no_surat_jalan, tanggal: $('kTgl').value || tgl0(), client: kData.p.client, bagian: kData.p.bagian_kerja, pic: (Saring.picDari(kData.p.lokasi_form, kData.p.bagian_kerja) || {}).nama || '', ekspedisi: $('kEks').value.trim(), resi: $('kResi').value.trim(), penerima: $('kPen').value.trim(), rows: dikirim };
       await muatHilir(); kData = null; $('kEditor').hidden = false;
       $('kEditor').innerHTML = `<div class="hint" style="color:var(--ok)">✓ Pengiriman ${esc(info.no)} tercatat dan stok sudah dipotong.</div><button class="cta" id="kUnduhSj" style="margin-top:10px">Unduh surat jalan (PDF)</button> <button class="btn" id="kTutup">Tutup</button>`;
       kSuratTerakhir = info; return;
@@ -4746,7 +4746,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   }
   function kartuPimpinan(who) {
     const f = MP[who], inf = PIMP[who], S = window.Saring;
-    const dasar = daftarMinta.filter(p => (!f.area || areaPermintaan(p) === f.area) && (!f.pic || (S && S.picDari(p.lokasi_form) && String(S.picDari(p.lokasi_form).id) === f.pic)));
+    const dasar = daftarMinta.filter(p => (!f.area || areaPermintaan(p) === f.area) && (!f.pic || (S && S.picDari(p.lokasi_form, p.bagian_kerja) && String(S.picDari(p.lokasi_form, p.bagian_kerja).id) === f.pic)));
     const c = { disetujui: 0, menunggu: 0, ditolak: 0 }, nilai = { disetujui: 0, menunggu: 0, ditolak: 0 };
     for (const p of dasar) { const k = statusPimpinan(who, p); if (c[k] !== undefined) { c[k]++; nilai[k] += Number(p.total_jual || 0); } }
     const tot = c.disetujui + c.menunggu + c.ditolak, pilih = f.st === 'semua' ? tot : c[f.st], nil = f.st === 'semua' ? nilai.disetujui + nilai.menunggu : nilai[f.st];
@@ -4887,7 +4887,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   document.querySelectorAll('.mini').forEach(el => {
     pasangTip(el);
     el.addEventListener('input', e => { const w = e.target.dataset && e.target.dataset.pq; if (!w) return; MP[w].q = e.target.value; const c = e.target.closest('.pimp'); if (!c) return; const f = MP[w], S = window.Saring;
-      const dasar = daftarMinta.filter(p => (!f.area || areaPermintaan(p) === f.area) && (!f.pic || (S && S.picDari(p.lokasi_form) && String(S.picDari(p.lokasi_form).id) === f.pic)));
+      const dasar = daftarMinta.filter(p => (!f.area || areaPermintaan(p) === f.area) && (!f.pic || (S && S.picDari(p.lokasi_form, p.bagian_kerja) && String(S.picDari(p.lokasi_form, p.bagian_kerja).id) === f.pic)));
       c.querySelector('.plin').innerHTML = daftarPimp(w, dasar, { disetujui: 'Disetujui', menunggu: 'Menunggu', ditolak: 'Ditolak / revisi' }, { disetujui: BULAT.ok, menunggu: BULAT.jingga, ditolak: BULAT.bahaya }); });
     el.addEventListener('change', e => { const x = e.target.dataset && e.target.dataset.pf; if (!x) return; const [who, k] = x.split('|'); if (who === 'sel') { Object.assign(MP[e.target.value], { st: MP[MP.sel].st, area: MP[MP.sel].area, pic: MP[MP.sel].pic, q: MP[MP.sel].q }); MP.sel = e.target.value; renderMini(); return; } MP[who][k] = e.target.value; if (k === 'area') MP[who].pic = ''; renderMini(); });
     el.addEventListener('click', e => { const b = e.target.closest('[data-md]'); if (b && !b.disabled) { const [k, a, arg] = b.dataset.md.split('|'); aksiMini(k, a, decodeURIComponent(arg || '')); } });
@@ -5101,7 +5101,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
     const b = e.target.closest('.lipatbar'); if (b) { const s = document.getElementById(b.dataset.mini); const t = !s.classList.contains('tutup'); s.classList.toggle('tutup', t); b.textContent = (t ? '▸ ' : '▾ ') + 'Ringkasan halaman'; }
   });
   document.addEventListener('keydown', e => { const h = e.target.closest && e.target.closest('.lipat-h'); if (h && (e.key === 'Enter' || e.key === ' ') && e.target === h) { e.preventDefault(); h.click(); } });
-  const hp = true; // ringkasan mini tertutup bawaan; dibuka lewat tombolnya
+  const hp = false; // ringkasan mini terbuka bawaan tiap halaman dibuka; tombolnya tetap bisa menutup
   document.querySelectorAll('section.mini[id]').forEach(s => {
     const b = document.createElement('button'); b.className = 'lipatbar'; b.dataset.mini = s.id; s.before(b);
     s.classList.toggle('tutup', hp); b.textContent = (hp ? '▸ ' : '▾ ') + 'Ringkasan halaman';

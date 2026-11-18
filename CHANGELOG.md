@@ -5,6 +5,7 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
 ## 18 Nov 2026
+- **v1.358** Seragam: ringkasan mini dashboard (Permintaan, Ploting, Inventaris, Pengiriman, Tagihan) kini terbuka setiap halaman dibuka; sebelumnya tertutup bawaan. Tombol "Ringkasan halaman" tetap bisa menutupnya.
 - **v1.357** Sample form pengisian ukuran buatan sendiri (`docs/form-ukuran/index.html`) meniru Google Form SUKAMARA: lima langkah (data diri, ukuran baju, celana, sepatu, periksa lalu kirim), teks petunjuk yang sama, empat gambar petunjuk ukuran besar (ketuk untuk memperbesar), lokasi tetap lewat `?lokasi=NAMA`. Hanya prototipe: isian tidak dikirim atau disimpan.
 - **v1.357** Dashboard Utama > Tagihan: filter baru Pemasok (Semua / Mas Wahyu / Online) dan kartu angka dipangkas jadi tiga (Total ditagih, Sudah dibayar, Sisa tagihan; Lewat jatuh tempo dan Siap ditagih dihapus). Pilihan Online menampilkan belanja online (item ditandai Online di Rekap Permintaan, harga beli x qty) dengan kartu Total belanja online, Pcs dipesan, Lokasi; grafik dan daftar ikut menyesuaikan. Pilihan Semua menambahkan belanja online ke total, sedangkan Sudah dibayar dan Sisa tetap invoice Mas Wahyu.
 - **v1.356** Dashboard Utama > Pengisian ukuran: kartu Belum mengisi dihapus; urutan kini Pengisian, Lokasi lengkap, Lokasi proses (lokasi sudah terisi sebagian, belum lengkap), Lokasi belum ada yang isi.
