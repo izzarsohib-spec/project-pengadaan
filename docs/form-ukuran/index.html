@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form Pengisian Data Seragam Karyawan</title>
+<style>
+  :root { --bg:#EDF1F6; --panel:#FFFFFF; --stroke:#DCE3EC; --text:#0F172A; --muted:#5B6577; --accent:#2F7F79; --accent2:#246560; --warn:#A8743A; --bad:#B4483E; --track:#E2E8F0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width:720px; margin:0 auto; padding:16px 16px 96px; }
+  .contoh { background:#FFF4DD; border:1px solid #E8CF9B; color:#6B4A12; border-radius:12px; padding:10px 14px; font-size:.86rem; margin-bottom:14px; }
+  header.kop { text-align:center; margin:6px 0 14px; }
+  header.kop .p { font-size:.74rem; letter-spacing:.14em; font-weight:700; color:var(--accent); }
+  header.kop h1 { font-size:1.35rem; margin:4px 0 0; line-height:1.25; }
+  .langkah { display:flex; gap:6px; margin:0 0 14px; }
+  .langkah i { flex:1; height:6px; border-radius:99px; background:var(--track); }
+  .langkah i.on { background:var(--accent); }
+  .kartu { background:var(--panel); border:1px solid var(--stroke); border-radius:16px; padding:18px; box-shadow:0 1px 2px rgba(15,23,42,.04), 0 6px 18px rgba(15,23,42,.05); margin-bottom:14px; }
+  .kartu h2 { font-size:1.05rem; margin:0 0 4px; }
+  .kartu .sub { color:var(--muted); font-size:.88rem; margin:0 0 14px; }
+  .info { background:#F3F7F7; border-left:4px solid var(--accent); border-radius:8px; padding:12px 14px; font-size:.88rem; }
+  .info b.t { display:block; color:var(--bad); margin-bottom:6px; }
+  .info ol { margin:8px 0; padding-left:20px; } .info li { margin:4px 0; }
+  label.f { display:block; font-weight:600; font-size:.9rem; margin:14px 0 6px; }
+  label.f small { font-weight:400; color:var(--muted); }
+  input[type=text] { width:100%; padding:12px 14px; border:1px solid #C5CEDB; border-radius:12px; font:inherit; background:#fff; }
+  input[type=text]:focus { outline:2px solid var(--accent); border-color:transparent; }
+  input[readonly] { background:#F1F4F8; color:#334155; }
+  .err { color:var(--bad); font-size:.82rem; margin-top:6px; min-height:1.1em; }
+  .pil { display:flex; flex-direction:column; gap:8px; }
+  .pil label { display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid #C5CEDB; border-radius:12px; cursor:pointer; background:#fff; font-size:.95rem; }
+  .pil label:has(input:checked) { border-color:var(--accent); background:#EAF4F2; font-weight:600; }
+  .pil input { accent-color:var(--accent); width:18px; height:18px; }
+  .gbr { display:block; width:100%; border:1px solid var(--stroke); border-radius:12px; margin:8px 0 4px; cursor:zoom-in; background:#fff; }
+  .gket { font-size:.78rem; color:var(--muted); margin:0 0 12px; }
+  .chip-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr)); gap:8px; }
+  .chip-grid label { justify-content:center; padding:14px 6px; font-size:1.05rem; font-weight:600; }
+  .chip-grid input { position:absolute; opacity:0; pointer-events:none; }
+  .chip-grid label:has(input:checked) { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .chip-grid label:has(input:focus-visible) { outline:2px solid var(--accent2); outline-offset:2px; }
+  .bar { position:fixed; left:0; right:0; bottom:0; background:rgba(255,255,255,.96); border-top:1px solid var(--stroke); padding:12px 16px; backdrop-filter:blur(6px); }
+  .bar .in { max-width:720px; margin:0 auto; display:flex; gap:10px; }
+  button { font:inherit; border-radius:12px; padding:13px 18px; border:1px solid #C5CEDB; background:#fff; cursor:pointer; font-weight:600; }
+  button.utama { background:var(--accent); color:#fff; border-color:var(--accent); flex:1; }
+  button.utama:disabled { opacity:.45; cursor:not-allowed; }
+  .ring { width:100%; border-collapse:collapse; font-size:.95rem; } .ring td { padding:10px 4px; border-bottom:1px solid var(--stroke); vertical-align:top; } .ring td:first-child { color:var(--muted); width:42%; } .ring tr:last-child td { border:0; }
+  .cek { display:flex; gap:10px; align-items:flex-start; margin:14px 0 0; padding:12px 14px; border:1px solid #E8CF9B; background:#FFF9EC; border-radius:12px; font-size:.9rem; }
+  .cek input { margin-top:3px; accent-color:var(--accent); width:18px; height:18px; flex:none; }
+  .ok { text-align:center; padding:30px 10px; } .ok .c { width:64px; height:64px; margin:0 auto 12px; border-radius:50%; background:#EAF4F2; color:var(--accent); display:grid; place-items:center; font-size:2rem; }
+  .lb { position:fixed; inset:0; background:rgba(15,23,42,.88); display:none; align-items:center; justify-content:center; padding:10px; z-index:9; overflow:auto; }
+  .lb.on { display:flex; } .lb img { max-width:none; width:min(1400px, 220vw); border-radius:8px; background:#fff; } .lb span { position:fixed; top:10px; right:14px; color:#fff; font-size:2rem; line-height:1; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="contoh"><b>CONTOH TAMPILAN.</b> Halaman ini hanya prototipe: isian tidak dikirim ke mana pun dan tidak disimpan.</div>
+  <header class="kop"><div class="p">PT. RAY MITRA PERKASA</div><h1>Form Pengisian Data Seragam Karyawan</h1></header>
+  <div class="langkah" id="langkah"><i></i><i></i><i></i><i></i><i></i></div>
+
+  <!-- 1. data diri -->
+  <section data-hal="0">
+    <div class="kartu info">
+      <b class="t">MOHON DIBACA DAN DICERMATI DENGAN TELITI!</b>
+      Formulir ini digunakan untuk pendataan ukuran seragam dan sepatu karyawan di lokasi <b id="infoLok"></b> untuk tahun 2027. Tujuannya mengumpulkan data ukuran yang pasti sejak awal, supaya pemesanan dan pengiriman seragam bisa dilakukan secepat mungkin. Mohon perhatikan:
+      <ol>
+        <li>Tulis nama lengkap sesuai KTP.</li>
+        <li>Lihat tabel ukuran terlebih dahulu, lalu pilih ukuran sesuai ukuran badan Anda yang sebenarnya.</li>
+        <li>Ukuran yang Anda kirim dianggap <b>FINAL</b> dan menjadi dasar pemesanan. Isi dengan teliti, jangan asal memilih.</li>
+        <li>Formulir hanya bisa diisi <b>SATU KALI</b> per orang. Jika ada kesalahan atau perubahan, hubungi admin, jangan mengisi ulang.</li>
+        <li>Pengisian formulir ini bukan jaminan pemberian seragam. Jenis dan jumlah seragam menyesuaikan kontrak dan anggaran tiap lokasi.</li>
+      </ol>
+      Terima kasih atas kerja samanya.
+    </div>
+    <div class="kartu">
+      <h2>Data diri</h2><p class="sub">Isi sesuai data Anda.</p>
+      <label class="f" for="nama">NAMA LENGKAP <small>(sesuai KTP, tanpa singkatan atau nama panggilan)</small></label>
+      <input type="text" id="nama" autocomplete="name" placeholder="Nama lengkap" inputmode="text">
+      <div class="err" id="eNama"></div>
+      <label class="f">BAGIAN KERJA</label>
+      <div class="pil" id="bagian"></div>
+      <div class="err" id="eBagian"></div>
+      <label class="f" for="lokasi">LOKASI <small>(sudah ditentukan untuk formulir ini)</small></label>
+      <input type="text" id="lokasi" readonly>
+    </div>
+  </section>
+
+  <!-- 2. baju -->
+  <section data-hal="1" hidden>
+    <div class="kartu">
+      <h2>Ukuran baju</h2><p class="sub">Lihat cara mengukur dan tabel ukuran, lalu pilih ukuran yang paling mendekati. <i>Ketuk gambar untuk memperbesar.</i></p>
+      <img class="gbr" src="img/cara-baju.png" alt="Cara mengukur baju"><p class="gket">Cara mengukur baju</p>
+      <img class="gbr" src="img/tabel-baju.png" alt="Tabel ukuran baju"><p class="gket">Tabel ukuran baju (cm)</p>
+      <label class="f">UKURAN BAJU</label>
+      <div class="pil chip-grid" id="uBaju"></div>
+      <div class="err" id="eBaju"></div>
+    </div>
+  </section>
+
+  <!-- 3. celana -->
+  <section data-hal="2" hidden>
+    <div class="kartu">
+      <h2>Ukuran celana</h2><p class="sub">Lihat cara mengukur dan tabel ukuran, lalu pilih ukuran yang paling mendekati. <i>Ketuk gambar untuk memperbesar.</i></p>
+      <img class="gbr" src="img/cara-celana.png" alt="Cara mengukur celana"><p class="gket">Cara mengukur celana</p>
+      <img class="gbr" src="img/tabel-celana.png" alt="Tabel ukuran celana"><p class="gket">Tabel ukuran celana (cm)</p>
+      <label class="f">UKURAN CELANA</label>
+      <div class="pil chip-grid" id="uCelana"></div>
+      <div class="err" id="eCelana"></div>
+    </div>
+  </section>
+
+  <!-- 4. sepatu -->
+  <section data-hal="3" hidden>
+    <div class="kartu">
+      <h2>Ukuran sepatu</h2><p class="sub">Pilih nomor sepatu yang biasa Anda pakai.</p>
+      <label class="f">UKURAN SEPATU</label>
+      <div class="pil chip-grid" id="uSepatu"></div>
+      <div class="err" id="eSepatu"></div>
+    </div>
+  </section>
+
+  <!-- 5. periksa -->
+  <section data-hal="4" hidden>
+    <div class="kartu" id="periksa">
+      <h2>Periksa kembali</h2><p class="sub">Ukuran yang dikirim dianggap final.</p>
+      <table class="ring" id="ringkas"></table>
+      <label class="cek"><input type="checkbox" id="final"><span>Saya sudah memeriksa dan memastikan data di atas benar. Saya mengerti bahwa ukuran ini <b>final</b> dan formulir tidak bisa diisi ulang.</span></label>
+    </div>
+  </section>
+
+  <section data-hal="5" hidden>
+    <div class="kartu ok"><div class="c">✓</div><h2>Terima kasih</h2>
+      <p class="sub">Data ukuran Anda sudah tercatat. Jika ada kesalahan atau perubahan, hubungi admin.</p>
+      <p class="sub"><i>(Contoh tampilan: tidak ada data yang dikirim.)</i></p></div>
+  </section>
+</div>
+
+<div class="bar" id="bar"><div class="in"><button id="kembali" type="button" hidden>Kembali</button><button class="utama" id="lanjut" type="button">Lanjut</button></div></div>
+<div class="lb" id="lb"><span>×</span><img alt=""></div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const lokasi = (new URLSearchParams(location.search).get('lokasi') || 'ATR BPN SUKAMARA').toUpperCase();
+  const BAGIAN = ['KEAMANAN (SECURITY)', 'KEBERSIHAN (CLEANING SERVICE)', 'PENGAWAS (LEADER)', 'PENGEMUDI (DRIVER)', 'PRAMUBAKTI /ADMINISTRASI'];
+  // pilihan mengikuti tabel pada gambar petunjuk
+  const BAJU = ['S', 'M', 'L', 'XL', 'XXL', 'L4', 'L5', 'L6', 'L7'];
+  const CELANA = ['30', '32', '34', '36', '38', '40', '42', '44'];
+  const SEPATU = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47'];
+  const S = { hal: 0, nama: '', bagian: '', baju: '', celana: '', sepatu: '' };
+  $('infoLok').textContent = lokasi; $('lokasi').value = lokasi;
+  $('bagian').innerHTML = BAGIAN.map(b => `<label><input type="radio" name="bagian" value="${b}"><span>${b}</span></label>`).join('');
+  const chips = (id, nama, arr) => { $(id).innerHTML = arr.map(v => `<label><input type="radio" name="${nama}" value="${v}"><span>${v}</span></label>`).join(''); };
+  chips('uBaju', 'baju', BAJU); chips('uCelana', 'celana', CELANA); chips('uSepatu', 'sepatu', SEPATU);
+
+  const NAMA_OK = /^[A-Za-z][A-Za-z .,'-]{2,}$/;
+  const cek = [
+    () => { const n = $('nama').value.trim().replace(/\s+/g, ' '); S.nama = n; S.bagian = (document.querySelector('input[name=bagian]:checked') || {}).value || '';
+      $('eNama').textContent = NAMA_OK.test(n) ? '' : 'Tulis nama lengkap sesuai KTP, hanya huruf (minimal 3 karakter).';
+      $('eBagian').textContent = S.bagian ? '' : 'Pilih bagian kerja.'; return NAMA_OK.test(n) && !!S.bagian; },
+    () => pilih('baju', 'eBaju', 'ukuran baju'), () => pilih('celana', 'eCelana', 'ukuran celana'), () => pilih('sepatu', 'eSepatu', 'ukuran sepatu'),
+    () => $('final').checked
+  ];
+  function pilih(k, e, t) { S[k] = (document.querySelector(`input[name=${k}]:checked`) || {}).value || ''; $(e).textContent = S[k] ? '' : 'Pilih ' + t + '.'; return !!S[k]; }
+
+  function tampil() {
+    document.querySelectorAll('[data-hal]').forEach(s => { s.hidden = Number(s.dataset.hal) !== S.hal; });
+    [...$('langkah').children].forEach((i, n) => i.classList.toggle('on', n <= S.hal));
+    $('langkah').hidden = S.hal > 4; $('bar').hidden = S.hal > 4;
+    $('kembali').hidden = S.hal === 0; $('lanjut').textContent = S.hal === 4 ? 'Kirim' : 'Lanjut';
+    $('lanjut').disabled = S.hal === 4 && !$('final').checked;
+    if (S.hal === 4) $('ringkas').innerHTML = [['Nama lengkap', S.nama], ['Bagian kerja', S.bagian], ['Lokasi', lokasi], ['Ukuran baju', S.baju], ['Ukuran celana', S.celana], ['Ukuran sepatu', S.sepatu]].map(([a, b]) => `<tr><td>${a}</td><td><b>${b.replace(/[<>&]/g, '')}</b></td></tr>`).join('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  $('lanjut').onclick = () => { if (!cek[S.hal]()) return; S.hal++; tampil(); };
+  $('kembali').onclick = () => { S.hal = Math.max(0, S.hal - 1); tampil(); };
+  $('final').onchange = () => { $('lanjut').disabled = !$('final').checked; };
+  document.addEventListener('click', e => { const g = e.target.closest('img.gbr'); if (g) { $('lb').querySelector('img').src = g.src; $('lb').classList.add('on'); } else if (e.target.closest('#lb')) $('lb').classList.remove('on'); });
+  tampil();
+})();
+</script>
+</body>
+</html>
