@@ -1,5 +1,5 @@
 ﻿// Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.354', tanggal: '2026-11-18', catatan: 'Dashboard Stok gudang: filter Kategori (Baju/Celana/Sepatu/Aksesoris) dan Ukuran menyesuaikan kategori' };
+window.VERSI = { no: '1.355', tanggal: '2026-11-18', catatan: 'Dashboard Utama > Permintaan: kartu Nilai jual dan Untung dihapus' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');
