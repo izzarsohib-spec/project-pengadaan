@@ -5,6 +5,7 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
 ## 18 Nov 2026
+- **v1.356** Dashboard Utama > Pengiriman: kartu "Sisa dikirim" dan "Selesai dikirim" diganti tiga kartu status per lokasi/bagian kerja: Sudah terkirim (n / total), Sebagian terkirim (sisa pcs), Belum dikirim (pcs menunggu), di samping kartu Terkirim (% pcs). Grafik Progres pengiriman per bagian mengikuti filter Progres: Semua = yang belum selesai, Selesai/Sebagian/Belum = hanya status itu (sebelumnya kosong bila Selesai dipilih).
 - **v1.355** Dashboard Utama > Permintaan seragam: kartu angka Nilai jual dan Untung dihapus (tersisa Permintaan, Disetujui keduanya, Menunggu persetujuan, Ditolak/revisi).
 - **v1.354** Dashboard Utama > Stok gudang: filter disederhanakan. Kategori kini Baju / Celana / Sepatu / Aksesoris ("Seragam setelan" dihapus, "Baju saja" jadi Baju, Celana ditambah). Filter kedua jadi Ukuran dan mengikuti kategori: baju (S, M, L, XL, XXL, XXXL, XXXXL, L6, L7), celana (27-50), sepatu (36-47); Aksesoris dan Semua kategori tanpa filter ukuran. Filter Batas menipis dihapus (batas tetap 2 pcs). Kartu angka, grafik, dan daftar ikut menyesuaikan.
 
