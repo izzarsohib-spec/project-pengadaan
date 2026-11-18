@@ -4,6 +4,9 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 18 Nov 2026
+- **v1.354** Dashboard Utama > Stok gudang: filter disederhanakan. Kategori kini Baju / Celana / Sepatu / Aksesoris ("Seragam setelan" dihapus, "Baju saja" jadi Baju, Celana ditambah). Filter kedua jadi Ukuran dan mengikuti kategori: baju (S, M, L, XL, XXL, XXXL, XXXXL, L6, L7), celana (27-50), sepatu (36-47); Aksesoris dan Semua kategori tanpa filter ukuran. Filter Batas menipis dihapus (batas tetap 2 pcs). Kartu angka, grafik, dan daftar ikut menyesuaikan.
+
 ## 16 Nov 2026
 - **v1.353** Chemical > Laporan: tombol Download PDF rekap + nota. Halaman 1 berisi tabel rekap (anggaran, realisasi, sisa, % pakai, total, kolom Lampiran), diikuti satu halaman lampiran per nota dengan foto nota dan bukti transfer berdampingan (halaman diberi keterangan bila foto belum ada atau gagal dimuat). Dibuat di peramban dengan jsPDF + AutoTable dari cdnjs.
 - **v1.352** Chemical > Laporan: rekap belanja otomatis (anggaran per toko dari halaman Belanja dibandingkan dengan realisasi nota) dalam tabel dan tombol Download Excel rekap (sheet REKAP, format seperti rekap belanja chemical: anggaran, realisasi, sisa, % pakai, total). Nota belanja kini dikaitkan ke toko terdaftar (pilihan di form, dicocokkan otomatis dari hasil bacaan); operasional dicocokkan ke biaya rencana per kategori. Kolom chemical_nota.toko_id (migrasi-chemical-nota-3.sql).

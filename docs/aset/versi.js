@@ -1,5 +1,5 @@
 ﻿// Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.353', tanggal: '2026-11-16', catatan: 'Laporan: Download PDF rekap belanja beserta nota dan bukti transfer' };
+window.VERSI = { no: '1.354', tanggal: '2026-11-18', catatan: 'Dashboard Stok gudang: filter Kategori (Baju/Celana/Sepatu/Aksesoris) dan Ukuran menyesuaikan kategori' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');

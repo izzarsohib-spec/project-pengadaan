@@ -4448,7 +4448,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   // Lima bagian (pengisian ukuran, permintaan, stok, pengiriman, tagihan). Tiap bagian punya satu baris filter di atas isinya;
   // filter itu mengatur semua angka, grafik, dan tabel di bagian tersebut. Warna kategori sudah divalidasi (biru, oranye, aqua) pada permukaan gelap.
   const WD = { s1: '#4B8F9E', s2: '#C98A6B', abu: '#94A3B8', good: '#5FA37B', warn: '#D9A441', kritis: '#C9645E', track: '#E2E8F0', grid: '#E5EAF1', permukaan: '#FFFFFF' };
-  const D = { pengisian: { status: 'semua', bagian: 'semua', hari: 30 }, permintaan: { hari: 0, status: 'semua', bagian: 'semua' }, stok: { kat: 'semua', jenis: 'semua', batas: 2, hari: 30 }, kirim: { status: 'semua', hari: 30 }, tagihan: { status: 'semua', hari: 0 } };
+  const D = { pengisian: { status: 'semua', bagian: 'semua', hari: 30 }, permintaan: { hari: 0, status: 'semua', bagian: 'semua' }, stok: { kat: 'semua', uk: 'semua', batas: 2, hari: 30 }, kirim: { status: 'semua', hari: 30 }, tagihan: { status: 'semua', hari: 0 } };
   const modeGrafik = new Map(), dataGrafik = new Map();
   const HARI_OPSI = [['7', '7 hari terakhir'], ['30', '30 hari terakhir'], ['90', '90 hari terakhir']], HARI_SEMUA = [['0', 'Semua waktu'], ...HARI_OPSI];
   const hariIni = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
@@ -4542,10 +4542,12 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   }
 
   // ---- bagian 3: stok ----
+  // ukuran yang bisa difilter menurut kategori: baju / celana / sepatu; aksesoris tidak punya ukuran
+  const ukuranStok = kat => { const dasar = daftarUkuran(kat); if (!dasar.length) return []; return [...new Set([...dasar, ...stok.filter(x => x.jenis_ukuran === kat && x.ukuran).map(x => String(x.ukuran))])].sort(urutUkuran); };
   const katItem = no => { const h = HARGA.find(x => x.no === no); return h ? h.kat : ''; };
   function isiStok() {
     if (!hilirMuat) return { kpi: muatBelum, grid: '' };
-    const f = D.stok, dari = mulaiHari(f.hari), cocok = x => (f.kat === 'semua' || katItem(x.item_no) === f.kat) && (f.jenis === 'semua' || x.jenis_ukuran === f.jenis);
+    const f = D.stok, dari = mulaiHari(f.hari), cocok = x => (f.kat === 'semua' || x.jenis_ukuran === f.kat) && (f.uk === 'semua' || String(x.ukuran) === f.uk);
     const s = stok.filter(cocok), g = gerak.filter(x => cocok(x) && (!dari || tanggalLokal(x.tanggal) >= dari));
     const pcs = s.reduce((a, x) => a + Number(x.saldo), 0), tipis = s.filter(x => x.saldo > 0 && x.saldo <= f.batas), habis = s.filter(x => x.saldo <= 0);
     const masuk = g.filter(x => x.jenis === 'masuk').reduce((a, x) => a + x.qty, 0), keluar = g.filter(x => x.jenis === 'keluar').reduce((a, x) => a + x.qty, 0);
@@ -4603,7 +4605,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   const SEK = [
     { k: 'pengisian', tahap: 'Tahap 1 · Monitoring & Permintaan', judul: 'Pengisian ukuran', sumber: 'isian Google Form karyawan', pg: 'monitor', isi: isiPengisian, filter: () => [['status', 'Status lokasi', [['semua', 'Semua status'], ['lengkap', 'Lengkap'], ['kurang', 'Masih kurang'], ['kosong', 'Belum ada yang isi']]], ['bagian', 'Bagian kerja', [['semua', 'Semua bagian'], ...bagianKerjaSemua().map(b => [b, b])]], ['hari', 'Rentang tren', HARI_OPSI]] },
     { k: 'permintaan', tahap: 'Tahap 1 · Monitoring & Permintaan', judul: 'Permintaan seragam', sumber: 'permintaan dan persetujuan pimpinan', pg: 'permintaan', isi: isiPermintaan, filter: () => [['hari', 'Periode dibuat', HARI_SEMUA], ['status', 'Status', STATUS_MINTA], ['bagian', 'Bagian kerja', [['semua', 'Semua bagian'], ...bagianKerjaSemua().map(b => [b, b])]]] },
-    { k: 'stok', tahap: 'Tahap 2 · Rekap Permintaan & Inventaris', judul: 'Stok gudang', sumber: 'inventaris dan riwayat barang', pg: 'inventaris', isi: isiStok, filter: () => [['kat', 'Kategori', [['semua', 'Semua kategori'], ...[...new Set(HARGA.map(h => h.kat))].map(k => [k, k])]], ['jenis', 'Jenis ukuran', [['semua', 'Semua jenis'], ['baju', 'Baju'], ['celana', 'Celana'], ['sepatu', 'Sepatu'], ['-', 'Tanpa ukuran']]], ['batas', 'Batas menipis', [['2', '2 pcs atau kurang'], ['5', '5 pcs atau kurang'], ['10', '10 pcs atau kurang']]], ['hari', 'Periode gerak stok', HARI_SEMUA]] },
+    { k: 'stok', tahap: 'Tahap 2 · Rekap Permintaan & Inventaris', judul: 'Stok gudang', sumber: 'inventaris dan riwayat barang', pg: 'inventaris', isi: isiStok, filter: () => { const uk = ukuranStok(D.stok.kat); return [['kat', 'Kategori', [['semua', 'Semua kategori'], ['baju', 'Baju'], ['celana', 'Celana'], ['sepatu', 'Sepatu'], ['-', 'Aksesoris']]], ...(uk.length ? [['uk', 'Ukuran ' + NAMA_JENIS[D.stok.kat].toLowerCase(), [['semua', 'Semua ukuran'], ...uk.map(u => [u, u])]]] : []), ['hari', 'Periode gerak stok', HARI_SEMUA]]; } },
     { k: 'kirim', tahap: 'Tahap 3 · Ploting & Pengiriman', judul: 'Pengiriman', sumber: 'surat jalan dan progres kirim', pg: 'pengiriman', isi: isiKirim, filter: () => [['status', 'Progres', [['semua', 'Semua'], ['belum', 'Belum dikirim'], ['sebagian', 'Sebagian'], ['selesai', 'Selesai dikirim']]], ['hari', 'Periode surat jalan', HARI_SEMUA]] },
     { k: 'tagihan', tahap: 'Tahap 4 · Tagihan', judul: 'Tagihan', sumber: 'invoice dan pembayaran', pg: 'tagihan', isi: isiTagihan, filter: () => [['status', 'Status', [['semua', 'Semua'], ['belum', 'Belum lunas'], ['sebagian', 'Dibayar sebagian'], ['lunas', 'Lunas']]], ['hari', 'Periode invoice', HARI_SEMUA]] },
   ];
@@ -4625,6 +4627,7 @@ const pic = Saring.picDari(l.lokasi), area = Saring.areaDari(l.lokasi);
   $('dash').onchange = e => {
     const sel = e.target.closest('select[data-s]'); if (!sel) return;
     const p = sel.dataset.p, v = sel.value; D[sel.dataset.s][p] = ['hari', 'batas'].includes(p) ? Number(v) : v;
+    if (sel.dataset.s === 'stok' && p === 'kat') { D.stok.uk = 'semua'; renderDash(); return; } // pilihan ukuran mengikuti kategori
     isiSek(SEK.find(s => s.k === sel.dataset.s));
   };
   $('dash').onclick = e => {
