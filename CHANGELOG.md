@@ -4,6 +4,9 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
+## 25 Nov 2026
+- **v1.360** Administrator > Chemical > Barang & harga: pada form tambah/ubah, pilihan Toko beli kini punya opsi "Toko baru (ketik sendiri)…" di samping toko yang sudah ada. Nama yang diketik otomatis ditambahkan ke daftar Toko (atau memakai toko bernama sama bila sudah ada), lalu dipakai untuk barang itu.
+
 ## 18 Nov 2026
 - **v1.359** Dashboard Utama: grafik tren waktu yang tidak punya padanan di kartu angka diganti grafik status yang sejalan dengan kartunya. Pengisian ukuran: "Pengisian per hari" jadi **Status lokasi** (lengkap / proses / belum ada yang isi; filter Rentang tren dihapus). Pengiriman: "Pcs dikirim per minggu" jadi **Status pengiriman** (bagian kerja sudah/sebagian/belum terkirim + surat jalan dalam pengiriman/diterima). Tagihan: "Pembayaran masuk per minggu" jadi **Status tagihan** (lunas / dibayar sebagian / belum dibayar / lewat jatuh tempo). Permintaan dan Stok tidak berubah.
 - **v1.358** Seragam: ringkasan mini dashboard (Permintaan, Ploting, Inventaris, Pengiriman, Tagihan) kini terbuka setiap halaman dibuka; sebelumnya tertutup bawaan. Tombol "Ringkasan halaman" tetap bisa menutupnya.

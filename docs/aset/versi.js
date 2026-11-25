@@ -1,5 +1,5 @@
 ﻿// Versi aplikasi. Naik 1 untuk setiap permintaan perubahan yang diselesaikan (angka sama dengan jumlah perubahan sejak awal, lihat CHANGELOG.md).
-window.VERSI = { no: '1.357', tanggal: '2026-11-18', catatan: 'Dashboard Tagihan: filter Pemasok (Mas Wahyu/Online), kartu jadi tiga' };
+window.VERSI = { no: '1.360', tanggal: '2026-11-25', catatan: 'Administrator > Barang & harga: toko bisa diketik sendiri' };
 (function () {
   function pasang() {
     var el = document.getElementById('versi');

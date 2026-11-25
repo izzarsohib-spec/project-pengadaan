@@ -214,7 +214,7 @@
       kpi: d => [['Barang', num(d.length)], ['Aktif', num(d.filter(r => r.aktif).length)], ['Perlu ditinjau', num(d.filter(r => r.perlu_ditinjau).length)], ['Belum ada harga jual', num(d.filter(r => r.harga_jual == null).length)]],
       mati: r => !r.aktif,
       form: r => [
-        { k: 'toko', l: 'Toko beli', v: r ? r.toko_id : '', req: true, sel: CHEM_TOKO.filter(t => t.aktif || (r && t.id === r.toko_id)).map(t => [t.id, t.nama]) },
+        { k: 'toko', l: 'Toko beli', v: r ? r.toko_id : '', req: true, baru: 'Toko baru (ketik sendiri)…', sel: CHEM_TOKO.filter(t => t.aktif || (r && t.id === r.toko_id)).map(t => [t.id, t.nama]) },
         { k: 'nama', l: 'Nama barang', v: r?.nama, req: true },
         { k: 'satuan', l: 'Satuan', v: r?.satuan, req: true, list: uniq(DATA.chembarang || [], x => x.satuan), hint: 'Mis. Pcs, Galon, Pack, Set.' },
         { k: 'beli', l: 'Harga beli di toko (Rp)', t: 'number', min: 0, v: r ? Number(r.harga_beli) : '', req: true },
@@ -227,7 +227,16 @@
         const b = numOrNull(v.beli); if (b == null || b < 0) return { ok: false, pesan: 'Isi harga beli dulu.' };
         f.elements.jual.value = Math.round(b * MARKUP_JUAL); return { ok: true, pesan: `Harga jual diisi ${rp(b * MARKUP_JUAL)} (harga beli × 1,25). Ubah bila perlu.` };
       } }],
-      simpan: async (v, r) => { const x = await chem('chemical_simpan_item', { p_id: r ? r.id : null, p_toko: v.toko ? +v.toko : null, p_nama: v.nama, p_satuan: v.satuan, p_beli: numOrNull(v.beli), p_jual: numOrNull(v.jual), p_aktif: !!v.aktif, p_tinjau: !!v.tinjau, p_catatan: v.catatan || null }); DATA.chemtoko = null; return x; },
+      simpan: async (v, r) => {
+        if (v.toko === '__baru__') {   // toko diketik sendiri: pakai toko yang namanya sama bila sudah ada, kalau belum buat dulu
+          const nm = (v.toko_baru || '').trim(); if (!nm) throw new Error('Isi nama toko baru.');
+          const cari = l => l.find(t => String(t.nama).trim().toLowerCase() === nm.toLowerCase());
+          let ada = cari(CHEM_TOKO);
+          if (!ada) { await chem('chemical_simpan_toko', { p_id: null, p_nama: nm, p_aktif: true, p_catatan: null }); CHEM_TOKO = await chem('chemical_toko_daftar'); ada = cari(CHEM_TOKO); }
+          if (!ada) throw new Error('Toko baru gagal dibuat. Coba lagi.');
+          v.toko = ada.id;
+        }
+        const x = await chem('chemical_simpan_item', { p_id: r ? r.id : null, p_toko: v.toko ? +v.toko : null, p_nama: v.nama, p_satuan: v.satuan, p_beli: numOrNull(v.beli), p_jual: numOrNull(v.jual), p_aktif: !!v.aktif, p_tinjau: !!v.tinjau, p_catatan: v.catatan || null }); DATA.chemtoko = null; return x; },
       hapus: async r => { const x = await chem('chemical_hapus_item', { p_id: r.id }); DATA.chemtoko = null; return x; }, bisaHapus: r => !r.permintaan,
       namaBaris: r => r.nama
     },
@@ -354,20 +363,20 @@
     },
     penugasan: {
       grup: 'Organisasi', nama: 'Lokasi & PIC', login: true, tanpaTambah: true, massal: true,
-      ket: 'Cabang dan PIC lapangan untuk setiap lokasi (Seragam dan Peralatan). Ubah satu lokasi dengan tombol Ubah, atau cari/saring lalu terapkan ke semua lokasi yang tampil sekaligus (penugasan massal).',
+      ket: 'Cabang dan PIC lapangan untuk setiap lokasi per bagian kerja (mis. ATR BPN PALANGKARAYA KEAMANAN dan ATR BPN PALANGKARAYA KEBERSIHAN bisa dipegang PIC berbeda). Ubah satu baris dengan tombol Ubah, atau cari/saring lalu terapkan ke semua baris yang tampil sekaligus (penugasan massal).',
       pra: async () => { [CAB, PICS] = await Promise.all([rpc('admin_daftar_cabang'), rpc('admin_daftar_pic', { kode: 'sesi' })]); },
-      muat: () => rpc('admin_daftar_penugasan', { kode: 'sesi' }), cari: r => [r.lokasi, r.cabang, r.pic].join(' '), id: r => r.lokasi, lokasiDari: r => r.lokasi,
+      muat: () => rpc('admin_daftar_penugasan', { kode: 'sesi' }), cari: r => [r.nama_tampil, r.cabang, r.pic].join(' '), id: r => r.lokasi + '|' + r.bagian, lokasiDari: r => r.lokasi,
       statusOpsi: [['semua', 'Semua status'], ['tanpa', 'Belum ada PIC', r => !r.pic], ['ada', 'Sudah ada PIC', r => !!r.pic]],
       saring: [['cabang', 'Semua cabang', r => r.cabang], ['pic', 'Semua PIC', r => r.pic]],
-      kolom: [['Lokasi', r => `<b>${esc(r.lokasi)}</b><div class="sub">${esc({ seragam: 'Seragam', peralatan: 'Peralatan', keduanya: 'Seragam & Peralatan' }[r.sumber] || r.sumber)} · ${num(r.anggota)} anggota</div>`],
+      kolom: [['Lokasi', r => `<b>${esc(r.nama_tampil)}</b><div class="sub">${esc({ seragam: 'Seragam', peralatan: 'Peralatan', keduanya: 'Seragam & Peralatan' }[r.sumber] || r.sumber)} · ${num(r.anggota)} anggota</div>`],
         ['Cabang', r => r.cabang ? `<span class="badge">${esc(r.cabang)}</span>` : '<span class="sub">belum ada</span>'], ['PIC lapangan', r => r.pic ? esc(r.pic) : '<span class="sub">belum ada</span>'], ['Diperbarui', r => r.diperbarui ? waktu(r.diperbarui) : '']],
       kpi: d => { const per = {}; d.forEach(r => { per[r.cabang || '(belum ada cabang)'] = (per[r.cabang || '(belum ada cabang)'] || 0) + 1; });
-        return [['Lokasi', num(d.length)], ['Belum ada PIC', num(d.filter(r => !r.pic).length)], ...Object.entries(per).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => [k, num(v) + ' lokasi'])]; },
+        return [['Lokasi & bagian', num(d.length)], ['Belum ada PIC', num(d.filter(r => !r.pic).length)], ...Object.entries(per).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => [k, num(v) + ' baris'])]; },
       form: r => [
-        { k: 'lokasi', l: 'Lokasi', v: r?.lokasi, ro: true },
+        { k: 'lokasi', l: 'Lokasi', v: r?.nama_tampil, ro: true },
         { k: 'cabang', l: 'Cabang', v: r?.cabang_id || '', sel: [['', '(belum ada cabang)'], ...opsiCab()] },
         { k: 'pic', l: 'PIC lapangan', v: r?.pic_id || '', sel: [['', '(belum ada PIC)'], ...opsiPic(r?.cabang_id)], hint: 'Pilihan PIC mengikuti cabang yang dipilih' }],
-      simpan: (v, r) => tulis('admin_simpan_penugasan', { p_lokasi: [r.lokasi], p_cabang: intOrNull(v.cabang), p_pic: intOrNull(v.pic) }), namaBaris: r => r.lokasi
+      simpan: (v, r) => tulis('admin_simpan_penugasan', { p_lokasi: [r.lokasi], p_bagian: [r.bagian], p_cabang: intOrNull(v.cabang), p_pic: intOrNull(v.pic) }), namaBaris: r => r.nama_tampil
     },
     pic: {
       grup: 'Organisasi', nama: 'PIC lapangan', login: true,
@@ -511,7 +520,7 @@
       + (t.saring || []).map(([k, semua, f]) => `<select data-s="${k}"><option value="">${esc(semua)}</option>${uniq(d, f).map(x => `<option value="${esc(x)}" ${saring[k] === x ? 'selected' : ''}>${esc(TBL[x] || x)}</option>`).join('')}</select>`).join('');
     const b = baris(), tampil = b.slice(0, batas);
     $('isi').innerHTML = `<div class="bar"><input type="search" id="cari" placeholder="Cari…" value="${esc(q)}">${filter}${t.simpan && !t.tanpaTambah ? '<button class="btn cta" id="btnTambah">+ Tambah</button>' : ''}${t.tombolBar ? `<button class="btn cta" id="btnBar">${t.tombolBar[0]}</button>` : ''}<span class="sub" style="color:var(--muted);font-size:.8rem">${num(b.length)} baris</span></div>
-      ${t.massal ? `<div class="massal"><b>Penugasan massal</b><span class="sub">untuk ${num(b.length)} lokasi yang tampil sekarang</span><select id="bCab"><option value="">Pilih cabang</option>${opsiCab().map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select><select id="bPic"><option value="">(tanpa PIC)</option></select><button class="btn cta" id="btnMassal">Terapkan</button></div>` : ''}
+      ${t.massal ? `<div class="massal"><b>Penugasan massal</b><span class="sub">untuk ${num(b.length)} baris yang tampil sekarang</span><select id="bCab"><option value="">Pilih cabang</option>${opsiCab().map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select><select id="bPic"><option value="">(tanpa PIC)</option></select><button class="btn cta" id="btnMassal">Terapkan</button></div>` : ''}
       <div id="formArea">${edit !== undefined ? formHtml() : ''}</div><div class="pesan ${pesan ? pesan[0] : ''}" id="pesan">${pesan ? esc(pesan[1]) : ''}</div>
       <div class="wrap"><table class="${t.log ? 'log' : ''}"><thead><tr>${t.kolom.map(c => `<th class="${c[2] === 'r' ? 'r' : ''}">${esc(c[0])}</th>`).join('')}${t.simpan || t.hapus || t.aksiLain ? '<th></th>' : ''}</tr></thead>
       <tbody>${tampil.map(r => `<tr class="${t.mati && t.mati(r) ? 'mati' : ''}">${t.kolom.map(c => `<td class="${c[2] || ''}">${c[2] === 'diff' ? esc(c[1](r)) : c[1](r)}</td>`).join('')}${t.simpan || t.hapus || t.aksiLain ? `<td class="aksi" data-i="${esc(t.id(r))}">${(t.aksiLain ? t.aksiLain(r) : []).map(([a, l]) => `<button class="btn" data-a="${a}">${l}</button>`).join('')}${t.simpan ? `<button class="btn" data-a="ubah">${t.labelUbah ? t.labelUbah(r) : 'Ubah'}</button>` : ''}${t.hapus && (!t.bisaHapus || t.bisaHapus(r)) ? '<button class="btn bahaya" data-a="hapus">Hapus</button>' : ''}</td>` : ''}</tr>`).join('') || `<tr><td colspan="${t.kolom.length + 1}" class="kosong">Tidak ada data.</td></tr>`}</tbody></table></div>
@@ -525,7 +534,7 @@
     return `<form class="form" id="form"><h3>${r ? 'Ubah: ' + esc(t.namaBaris(r)) : 'Tambah data baru'}</h3><div class="fg">${f.map(x => {
       const v = x.v ?? '';
       if (x.cek) return `<label class="cek"><input type="checkbox" name="${x.k}" ${v ? 'checked' : ''}> ${esc(x.l)}</label>`;
-      if (x.sel) return `<label>${esc(x.l)}<select name="${x.k}" ${x.req ? 'required' : ''}>${!x.req || !v ? (x.req ? '<option value="">Pilih…</option>' : '') : ''}${x.sel.map(([a, b]) => `<option value="${esc(a)}" ${String(a) === String(v) ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select></label>`;
+      if (x.sel) return `<label>${esc(x.l)}<select name="${x.k}" ${x.req ? 'required' : ''}>${!x.req || !v ? (x.req ? '<option value="">Pilih…</option>' : '') : ''}${x.sel.map(([a, b]) => `<option value="${esc(a)}" ${String(a) === String(v) ? 'selected' : ''}>${esc(b)}</option>`).join('')}${x.baru ? `<option value="__baru__">${esc(x.baru)}</option>` : ''}</select></label>${x.baru ? `<label id="lb-${x.k}" style="display:none">Nama toko baru<input name="${x.k}_baru" type="text" maxlength="100" autocomplete="off" placeholder="Ketik nama toko"><div class="hint">Toko ini otomatis ditambahkan ke daftar Toko dan bisa dipakai lagi.</div></label>` : ''}`;
       const dl = x.list ? `list="dl-${x.k}"` : '';
       return `<label>${esc(x.l)}<input name="${x.k}" type="${x.t || 'text'}" value="${esc(v)}" ${x.ro ? 'readonly' : ''} ${x.req ? 'required' : ''} ${x.min != null ? `min="${x.min}"` : ''} ${x.t === 'number' ? 'step="any"' : ''} ${dl} autocomplete="off">${x.list ? `<datalist id="dl-${x.k}">${x.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : ''}${x.hint ? `<div class="hint">${esc(x.hint)}</div>` : ''}</label>`;
     }).join('')}</div>
@@ -570,12 +579,12 @@
     if (el.id === 'btnTambah') return bukaForm(null);
     if (el.id === 'btnBar') return jalankan(() => t.tombolBar[1](), t.tombolBar[2], el);
     if (el.id === 'btnMassal') {
-      const lok = baris().map(r => r.lokasi), cab = intOrNull($('bCab').value), pic = intOrNull($('bPic').value);
+      const bar = baris(), lok = bar.map(r => r.lokasi), bag = bar.map(r => r.bagian), cab = intOrNull($('bCab').value), pic = intOrNull($('bPic').value);
       if (!lok.length) { pesan = ['bad', 'Tidak ada lokasi yang tampil.']; return gambar(); }
       if (!cab) { pesan = ['bad', 'Pilih cabang dulu.']; return gambar(); }
       const nc = CAB.find(c => c.id === cab).nama, np = pic ? PICS.find(p => p.id === pic).nama : 'tanpa PIC';
-      if (!confirm(`Tetapkan ${lok.length} lokasi ke cabang ${nc}, PIC: ${np}?\n\nPenugasan lama pada lokasi-lokasi ini akan diganti. Perubahan tercatat di log.`)) return;
-      return jalankan(() => tulis('admin_simpan_penugasan', { p_lokasi: lok, p_cabang: cab, p_pic: pic }), `${lok.length} lokasi ditetapkan ke ${nc} (${np}).`, el);
+      if (!confirm(`Tetapkan ${lok.length} baris lokasi/bagian ke cabang ${nc}, PIC: ${np}?\n\nPenugasan lama pada baris-baris ini akan diganti. Perubahan tercatat di log.`)) return;
+      return jalankan(() => tulis('admin_simpan_penugasan', { p_lokasi: lok, p_bagian: bag, p_cabang: cab, p_pic: pic }), `${lok.length} baris ditetapkan ke ${nc} (${np}).`, el);
     }
     if (el.id === 'btnBatal') { edit = undefined; pesan = null; return gambar(); }
     if (el.id === 'btnLagi') { batas += 100; return gambar(); }
@@ -605,6 +614,7 @@
   document.addEventListener('input', e => { if (e.target.id === 'cari') { q = e.target.value; batas = 100; const pos = e.target.selectionStart; gambar(); const c = $('cari'); c.focus(); c.setSelectionRange(pos, pos); } });
   document.addEventListener('change', e => {
     if (e.target.dataset.s) { saring[e.target.dataset.s] = e.target.value; batas = 100; gambar(); }
+    if (e.target.name === 'toko' && tab === 'chembarang') { const b = $('lb-toko'), baru = e.target.value === '__baru__'; if (b) { b.style.display = baru ? '' : 'none'; const i = b.querySelector('input'); i.required = baru; if (baru) i.focus(); } }
     if (e.target.name === 'lokasi' && tab === 'karyawan') isiBagian();
     if (e.target.name === 'cabang' && tab === 'penugasan') isiPic($('form').cabang, $('form').pic, '');
     if (e.target.id === 'bCab') isiPic($('bCab'), $('bPic'), '');
