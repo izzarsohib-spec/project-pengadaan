@@ -5,6 +5,7 @@ Ringkasan perubahan sistem pengadaan (seragam, peralatan, chemical), dikelompokk
 Nomor versi tampil di sidebar portal (kiri bawah) dan naik 1 untuk setiap permintaan perubahan yang selesai; sumbernya `docs/aset/versi.js`.
 
 ## 25 Nov 2026
+- **v1.361** Chemical > form korlap: email superadmin (daftar di tabel `chemical_email_super`) boleh mengisi form periode yang sama untuk banyak lokasi; email lain tetap satu kiriman per periode. Migrasi `supabase/migrasi-chemical-form-3.sql` (BELUM terpasang di database: token Supabase di keystore ditolak).
 - **v1.360** Administrator > Chemical > Barang & harga: pada form tambah/ubah, pilihan Toko beli kini punya opsi "Toko baru (ketik sendiri)…" di samping toko yang sudah ada. Nama yang diketik otomatis ditambahkan ke daftar Toko (atau memakai toko bernama sama bila sudah ada), lalu dipakai untuk barang itu.
 
 ## 18 Nov 2026
